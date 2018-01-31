@@ -398,7 +398,7 @@ Helicopter::Helicopter(string model)
 		redFactor = 0.79/*Редуктор*/; //-2
 		vpryam = 0.199/*ВУ*/;//-14
 		cutoffCraneFactor = 0.354/*перекр*/;//-9
-		vintBrakeFactor = 0.2/*Винт тормоз*/;
+		vintBrakeFactor = 0.5/*Винт тормоз*/;
 		vintFlapFactor = 0.5/*Винт хлопки*/;
 		chassisBrakePumpFactor = 0.1/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.1/*Сброс давления*/;
