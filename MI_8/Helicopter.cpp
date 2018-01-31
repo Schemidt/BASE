@@ -1,0 +1,433 @@
+#include "helicopter.h"
+#include "string.h"
+#include "map"
+#include "iostream"
+
+using namespace std;
+
+void Helicopter::setPath(string pathToFile)
+{
+	//TXT
+	//Двигатель
+	shortName["eng_on"] = "eng_on.txt"; //!<имя файла с переходной функцией разгона двигателя до режима МГ
+	shortName["eng_off"] = "eng_off.txt"; //!<имя файла с переходной функцией остановки двигателя 
+	shortName["eng_on_avt"] = "eng_on_avt.txt"; //!<имя файла с переходной функцией разгона двигателя до режима автомат
+	shortName["eng_avt_mg"] = "eng_avt_mg.txt"; //!<имя файла c переходной функцией остановки до режима малого газа
+												//Редуктор
+	shortName["red_on"] = "red_on.txt"; //!<имя файла c переходной функцией разгона редуктора до режима малого газа на 1ом двигателе
+	shortName["red_on_mg"] = "red_on_mg.txt"; //!<имя файла c переходной функцией разгона редуктора до режима малого газа на 2х двигателях
+	shortName["red_mg_avt"] = "red_mg_avt.txt"; //!<имя файла c переходной функцией разгона редуктора до режима автомат
+	shortName["red_avt_mg"] = "red_avt_mg.txt"; //!<имя файла c переходной функцией замедления редуктора до режима мг
+	shortName["red_off"] = "red_off.txt"; //!<имя файла c переходной функцией остановки редуктора ниже режима мг
+										  //WAV
+										  //Двигатель
+	shortName["eng_on_w"] = "eng_on.wav"; //!<имя файла звука разгона двигателя до режима МГ
+	shortName["eng_w_w"] = "eng_w.wav"; //!<имя файла звука работы двигателя на режиме МГ
+	shortName["eng_off_w"] = "eng_off.wav"; //!<имя файла звука остановки двигателя 
+	shortName["eng_on_hp_w"] = "eng_hp_on.wav"; //!<имя файла звука разгона двигателя до режима ХП
+	shortName["eng_w_hp_w"] = "eng_hp_w.wav"; //!<имя файла звука работы двигателя на режиме ХП
+	shortName["eng_off_hp_w"] = "eng_hp_off.wav"; //!<имя файла звука остановки двигателя из ХП
+	shortName["eng_w_avt_w"] = "eng_w_avt.wav"; //!<имя файла звука работы двигателя на режиме автомат
+	shortName["eng_on_avt_w"] = "eng_on_avt.wav"; //!<имя файла звука разгона двигателя до режима автомат
+	shortName["eng_avt_mg_w"] = "eng_avt_mg.wav"; //!<имя файла звука остановки до режима малого газа
+	shortName["eng_pomp_on"] = "pomp_on.wav"; //!<имя файла звука помпажа
+	shortName["eng_pomp_w"] = "pomp_w.wav"; //!<имя файла звука помпажа
+											//Редуктор
+	shortName["red_on_w"] = "red_on.wav"; //!<имя файла звука разгона редуктора до режима малого газа на 1ом двигателе
+	shortName["red_w_w"] = "red_w.wav"; //!<имя файла звука работы редуктора на режиме малого газа на 1ом двигателе
+	shortName["red_on_mg_w"] = "red_on_mg.wav"; //!<имя файла звука разгона редуктора до режима малого газа на 2х двигателях
+	shortName["red_w_mg_w"] = "red_w_mg.wav"; //!<имя файла звука работы редуктора на режиме малого газа на 2х двигателях
+	shortName["red_mg_avt_w"] = "red_mg_avt.wav"; //!<имя файла звука разгона редуктора до режима автомат
+	shortName["red_w_avt_w"] = "red_w_avt.wav"; //!<имя файла звука работы редуктора на режиме автомат
+	shortName["red_avt_mg_w"] = "red_avt_mg.wav"; //!<имя файла звука замедления редуктора до режима мг
+	shortName["red_off_w"] = "red_off.wav"; //!<имя файла звука остановки редуктора ниже режима мг
+	shortName["red_crash"] = "red_crash.wav"; //!<имя файла звука поломки редуктора
+	//ВСУ
+	shortName["vsu_on"] = "vsu_on.wav";//!<имя файла звука запуска ВСУ
+	shortName["vsu_w"] = "vsu_w.wav";//!<имя файла звука работы ВСУ
+	shortName["vsu_off"] = "vsu_off.wav";//!<имя файла звука выключения ВСУ
+	shortName["vsu_hp_on"] = "vsu_hp_on.wav";//!<имя файла звука запуска ВСУ ХП
+	shortName["vsu_hp_w"] = "vsu_hp_w.wav";//!<имя файла звука работы ВСУ ХП
+	shortName["vsu_hp_off"] = "vsu_hp_off.wav";//!<имя файла звука выключения ВСУ ХП
+	shortName["vsu_kran_on"] = "vsu_kran_on.wav";//!<имя файла звука включения перекрывного крана ВСУ
+	shortName["vsu_kran_w"] = "vsu_kran_w.wav";//!<имя файла звука работы перекрывного крана ВСУ
+	//Аккумулятор
+	shortName["accum"] = "accu.wav";//!<имя файла звука Аккумулятора
+	shortName["accum_tr"] = "accu_tr.wav";//!<имя файла звука Аккумулятора
+	shortName["vpryam"] = "vy_tone.wav";//!<имя файла звука Аккумулятора
+										  //ПТС
+	shortName["pts_on"] = "pts_on.wav";//!<имя файла звука включения ПТС
+	shortName["pts_w"] = "pts_w.wav";//!<имя файла звука работы ПТС
+	shortName["pts_off"] = "pts_off.wav";//!<имя файла звука выключения ПТС
+	shortName["pts_tone"] = "pts_tone.wav";//!<имя файла звука ПТС ТОН
+										   //Трансформатор 36В
+	shortName["tr36_on"] = "tr36_on.wav";//!<имя файла звука Трансформатор 36В
+	shortName["tr36_w"] = "tr36_w.wav";//!<имя файла звука Трансформатор 36В
+	shortName["tr36_off"] = "tr36_off.wav";//!<имя файла звука Трансформатор 36В
+										   //Трансформатор 115В
+	shortName["tr115_on"] = "tr115_on.wav";//!<имя файла звука Трансформатор 115В
+	shortName["tr115_w"] = "tr115_w.wav";//!<имя файла звука Трансформатор 115В
+	shortName["tr115_off"] = "tr115_off.wav";//!<имя файла звука Трансформатор 115В
+											 //Насос подкачки
+	shortName["podk_r_on"] = "pump_r_on.wav";//!<имя файла звука насоса подкачки
+	shortName["podk_r_w"] = "pump_r_w.wav";//!<имя файла звука насоса подкачки
+	shortName["podk_r_off"] = "pump_r_off.wav";//!<имя файла звука насоса подкачки
+	shortName["podk_l_on"] = "pump_l_on.wav";//!<имя файла звука насоса подкачки
+	shortName["podk_l_w"] = "pump_l_w.wav";//!<имя файла звука насоса подкачки
+	shortName["podk_l_off"] = "pump_l_off.wav";//!<имя файла звука насоса подкачки
+
+	shortName["cons_tank_on"] = "consum_tank_on.wav";//!<имя файла звука насоса расходного бака
+	shortName["cons_tank_w"] = "consum_tank_w.wav";//!<имя файла звука насоса расходного бака
+												   //Перекрывной кран
+	shortName["perekr_l"] = "kran_l.wav";//!<имя файла звука перекрывного крана
+	shortName["perekr_r"] = "kran_r.wav";//!<имя файла звука перекрывного крана
+										 //КО-50
+	shortName["ko50_on"] = "ko50_on.wav";//!<имя файла звука KO-50
+	shortName["ko50_w"] = "ko50_w.wav";//!<имя файла звука KO-50
+	shortName["ko50_off"] = "ko50_off.wav";//!<имя файла звука KO-50
+										   //СКВ
+	shortName["skv_on"] = "skv_on.wav";//!<имя файла звука СКВ
+	shortName["skv_w"] = "skv_w.wav";//!<имя файла звука СКВ
+	shortName["skv_off"] = "skv_off.wav";//!<имя файла звука СКВ
+										 //Движение по ВПП и РД
+	shortName["runway"] = "driving.wav";//!<имя файла звука звука движения по ВПП и РД
+										//Шум
+	shortName["air"] = "air.wav";//!<имя файла звука аэродинамического шума
+								 //Вооружение
+	shortName["sturm"] = "sturm.wav";//!<имя файла звука ракеты штурм
+	shortName["nar8"] = "s8.wav";//!<имя файла звука НАР 8
+	shortName["nar13"] = "s13.wav";//!<имя файла звука НАР 13
+	shortName["rocket"] = "rocket.wav";//!<имя файла звука попадания ракеты
+	shortName["upk"] = "gun_loop.wav";//!<имя файла звука выстрелов УПК
+	shortName["ppu"] = "gun_loop.wav";//!<имя файла звука выстрелов ППУ
+	shortName["shoot"] = "shoot.wav";//!<имя файла звука выстрелов ППУ
+	shortName["igla"] = "sturm.wav";//!<имя файла звука ракеты штурм
+									//Винт
+	shortName["vint_hi"] = "vint_hi.wav";//!<имя файла звука винта на высоких обортах
+	shortName["vint_low"] = "vint_lo.wav";//!<имя файла звука винта на низких оборотах
+	shortName["vint_torm"] = "tormoz.wav";//!<имя файла звука тормоза винта
+	shortName["vint_flap"] = "vint_flap.wav";//!<имя файла звука равномерных хлопков винта
+	shortName["vint_flap_A"] = "flap_A.wav";//!<имя файла звука равномерных хлопков винта
+	shortName["vint_flap_B"] = "flap_B.wav";//!<имя файла звука неравномерных хлопков винта
+	shortName["vint_flap_C"] = "flap_C.wav";//!<имя файла звука неравномерных хлопков винта
+											//Тормоз шасси
+	shortName["brake"] = "brake_on.wav";//!<имя файла звука тормоза шасси
+	shortName["poff"] = "check_brake.wav";//!<имя файла звука сброса давления
+										  //Разрушение
+	shortName["crash"] = "crash.wav";//!<имя файла звука столкновения с препятствием
+									 //НИП
+	shortName["nip_tone"] = "nip_tone.wav";//
+										   //Пожарный кран
+	shortName["kran_fire_l"] = "kran_fire_l.wav";
+	shortName["kran_fire_r"] = "kran_fire_r.wav";
+	//Гировертикаль
+	shortName["girovert_on"] = "girovert_on.wav";//
+	shortName["girovert_w"] = "girovert_w.wav";
+	shortName["girovert"] = "girovert_on.txt";
+	//Насосная станция
+	shortName["pstat_on"] = "pstat_on.wav";//
+	shortName["pstat_w"] = "pstat_w.wav";//
+	shortName["pstat_off"] = "pstat_off.wav";//
+											 //Кран кольцевания
+	shortName["kran_circle"] = "kran_l.wav";//!<имя файла звука перекрывного крана
+											//Осадки
+	shortName["rain"] = "rain.wav";//
+								   //Зуммер
+	shortName["beep"] = "beep.wav";//
+								   //Неопознанный звук
+	shortName["undefined0_on"] = "undefined0_on.wav";//
+	shortName["undefined0_w"] = "undefined0_w.wav";//
+	shortName["undefined1_on"] = "undefined1_on.wav";//
+	shortName["undefined1_w"] = "undefined1_w.wav";//
+											   //Другое
+	shortName["pinkNoise"] = "vadd.wav";//
+	shortName["planeLikeTakeoffMi8"] = "planeLikeTakeoffMi8.wav";//
+
+	fullName = shortName;
+
+	map<string, string> ::iterator num, num1;
+	for (num = shortName.begin(), num1 = fullName.begin(); num != shortName.end(); num++, num1++)
+	{
+		(*num1).second = pathToFile + (*num).second;
+	}
+}
+
+Helicopter::Helicopter(string model)
+{
+	modelName = model;
+
+	if (modelName == "mi_8_mtv5")
+	{
+		//Константы		
+		engTurnoverHp = 20;
+		engTurnoverMg = 75;
+		engTurnoverAvt = 88;
+		redTurnoverMg1 = 50;
+		redTurnoverMg2 = 63;
+		redTurnoverAvt = 96;
+	   //Множители громкости		
+		vsuFactor = 1/*всу*/;
+		vsuHpFactor = 0.06/*всу хп*/;
+		engFactor = 1/*дв*/;
+		engHpFactor = 0.35/*дв хп*/;
+		redFactor = 1/*Редуктор*/;
+		accumFactor = 0.1/*аккум*/;
+		ptsFactor = 0.18/*птс*/;
+		ptsToneFactor = 0.25/*птс тон*/;
+		tr36Factor = 0.15/*тр36*/;
+		tr115Factor = 0.15/*тр115*/;
+		pumpLeftFactor = 0.08/*подк л*/;
+		pumpRightFactor = 0.12/*подк р*/;
+		cutoffCraneFactor = 0.18/*перекр*/;
+		ko50Factor = 0.5/*КО-50*/;
+		runwayFactor = 1/*ВПП*/;
+		rocketNar8Factor = 1/*НАР8*/;
+		rocketNar13Factor = 1/*НАР13*/;
+		rocketHitFactor = 0.8/*Попадание ракеты*/;
+		upkFactor = 1/*УПК*/;
+		vintSwishFactor = 1/*ВИНТ Верх*/;
+		vintBrakeFactor = 0.2/*Винт тормоз*/;
+		vintFlapFactor = 0.5/*Винт хлопки*/;
+		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
+		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
+		consumTankFactor = 0.25/*Расходный бак*/;
+		rainFactor = 0.5/*Дождь*/;
+	}
+	else if (modelName == "mi_8_amtsh")
+	{
+		//Константы		
+		engTurnoverHp = 20;
+		engTurnoverMg = 75;
+		engTurnoverAvt = 88;
+		redTurnoverMg1 = 50;
+		redTurnoverMg2 = 63;
+		redTurnoverAvt = 96;
+		//Множители громкости		
+		vsuFactor = 1/*всу*/;
+		vsuHpFactor = 0.06/*всу хп*/;
+		engFactor = 1/*дв*/;
+		engHpFactor = 0.35/*дв хп*/;
+		redFactor = 1/*Редуктор*/;
+		accumFactor = 0.1/*аккум*/;
+		ptsFactor = 0.18/*птс*/;
+		ptsToneFactor = 0.25/*птс тон*/;
+		tr36Factor = 0.15/*тр36*/;
+		tr115Factor = 0.15/*тр115*/;
+		pumpLeftFactor = 0.08/*подк л*/;
+		pumpRightFactor = 0.12/*подк р*/;
+		cutoffCraneFactor = 0.18/*перекр*/;
+		ko50Factor = 0.5/*КО-50*/;
+		runwayFactor = 1/*ВПП*/;
+		rocketNar8Factor = 1/*НАР8*/;
+		rocketNar13Factor = 1/*НАР13*/;
+		rocketHitFactor = 0.8/*Попадание ракеты*/;
+		upkFactor = 1/*УПК*/;
+		vintSwishFactor = 1/*ВИНТ Верх*/;
+		vintBrakeFactor = 0.2/*Винт тормоз*/;
+		vintFlapFactor = 0.5/*Винт хлопки*/;
+		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
+		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
+		consumTankFactor = 0.25/*Расходный бак*/;
+		rainFactor = 0.5/*Дождь*/;
+	}
+	else if (modelName == "mi_26")
+	{
+		//Константы		
+		engTurnoverHp = 20;
+		engTurnoverMg = 69;
+		engTurnoverAvt = 84;
+		redTurnoverMg1 = 37;
+		redTurnoverMg2 = 47;
+		redTurnoverAvt = 85;
+		//Множители громкости
+		vsuFactor = 1/*всу*/;
+		vsuHpFactor = 0.06/*всу хп*/;
+		engFactor = 1/*дв*/;
+		engHpFactor = 0.35/*дв хп*/;
+		redFactor = 1/*Редуктор*/;
+		tr115Factor = 0.15/*тр115*/;
+		skvFactor = 0.5/*СКВ*/;
+		runwayFactor = 1/*ВПП*/;
+		airNoiseFactor = 1/*шум*/;
+		rocketHitFactor = 0.8/*Попадание ракеты*/;
+		vintSwishFactor = 1/*ВИНТ Верх*/;
+		vintBrakeFactor = 0.2/*Винт тормоз*/;
+		vintFlapFactor = 0.5/*Винт хлопки*/;
+		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
+		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
+		nipFactor = 0.125/*НИП*/;
+		fireCraneFactor = 0.125/*Пожарный кран*/;
+		girovertFactor = 0.15/*Гировертикаль*/;
+		pumpStationFactor = 0.0725/*Насосная станция*/;
+		consumTankFactor = 0.25/*Расходный бак*/;
+		rainFactor = 0.5/*Дождь*/;
+	}
+	else if (modelName == "mi_28")
+	{
+		//Константы		
+		engTurnoverHp = 20;
+		engTurnoverMg = 73;
+		engTurnoverAvt = 86;
+		redTurnoverMg1 = 48;
+		redTurnoverMg2 = 60;
+		redTurnoverAvt = 93;
+		//Множители громкости
+		vsuFactor = 1/*всу*/;
+		vsuHpFactor = 0.6/*всу хп*/;
+		vsuCraneFactor = 0.8/*всу кран*/;
+		engFactor = 1/*дв*/;
+		engHpFactor = 0.35/*дв хп*/;
+		redFactor = 1/*Редуктор*/;
+		accumFactor = 0.1/*аккум*/;
+		ptsToneFactor = 0.25/*птс тон*/;
+		tr115Factor = 0.15/*тр115*/;
+		skvFactor = 0.5/*СКВ*/;
+		runwayFactor = 1/*ВПП*/;
+		airNoiseFactor = 1/*шум*/;
+		rocketSturmFactor = 1/*ШТУРМ*/;
+		rocketNar8Factor = 1/*НАР8*/;
+		rocketNar13Factor = 1/*НАР13*/;
+		rocketHitFactor = 0.8/*Попадание ракеты*/;
+		ppuFactor = 1/*ППУ*/;
+		vintBrakeFactor = 0.6/*Винт тормоз*/;
+		vintFlapFactor = 0.5/*Винт хлопки*/;
+		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
+		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
+		fireCraneFactor = 0.9/*Пожарный кран*/;
+		pumpStationFactor = 0.0725/*Насосная станция*/;
+		rainFactor = 0.5/*Дождь*/;
+		buzzerFactor = 0.9 /*beep*/;
+		fenFactor = 0.1 /*undefined0*/;
+		undefinedFactor = 0.2 /*undefined1*/;
+		rocketIglaFactor = 1 /*ИГЛА*/;
+	}
+	else if (modelName == "ka_226")
+	{
+		//Константы		
+		engTurnoverHp = 20;
+		engTurnoverMg = 61;
+		engTurnoverAvt = 79;
+		redTurnoverMg1 = 49;
+		redTurnoverMg2 = 62;
+		redTurnoverAvt = 99; 
+		//Множители громкости
+		engFactor = 0.398/*дв*/;
+		engHpFactor = 0.141/*дв хп*/;
+		redFactor = 0.398/*Редуктор*/;
+		accumFactor = 0.100/*аккум*/;
+		pumpLeftFactor = 0.100/*подк л*/;
+		pumpRightFactor = 0.100/*подк р*/;
+		cutoffCraneFactor = 0.126/*перекр*/;
+		runwayFactor = 1/*ВПП*/;
+		airNoiseFactor = 1/*шум*/;
+		vintBrakeFactor = 1/*Винт тормоз*/;
+		vintFlapFactor = 0.5/*Винт хлопки*/;
+		chassisBrakePumpFactor = 0.178/*Тормоз шасси*/;
+		chassisBrakeReleaseFactor = 0.178/*Сброс давления*/;
+		rainFactor = 1/*Дождь*/;
+		circlingCraneFactor = 0.126 /*Кран кольцевания*/;
+	}
+	else if (modelName == "ansat")
+	{
+		//Константы		
+		engTurnoverHp = 20;
+		engTurnoverMg = 65;
+		engTurnoverAvt = 80;
+		redTurnoverMg1 = 65;
+		redTurnoverMg2 = 65;
+		redTurnoverAvt = 100;
+		//Множители громкости
+		engFactor = 0.398/*дв*/;
+		engHpFactor = 0.141/*дв хп*/;
+		redFactor = 0.398/*Редуктор*/;
+		accumFactor = 0.100/*аккум*/;
+		airNoiseFactor = 1/*шум*/;
+		vintBrakeFactor = 1/*Винт тормоз*/;
+		vintFlapFactor = 0.5/*Винт хлопки*/;
+		chassisBrakePumpFactor = 0.178/*Тормоз шасси*/;
+		chassisBrakeReleaseFactor = 0.178/*Сброс давления*/;
+		rainFactor = 1/*Дождь*/;
+	}
+	else if (modelName == "ka_27")
+	{
+		//Константы		
+		engTurnoverHp = 20;
+		engTurnoverMg = 75;
+		engTurnoverAvt = 85;
+		redTurnoverMg1 = 44;
+		redTurnoverMg2 = 60;
+		redTurnoverAvt = 90;
+		//Множители громкости		
+		vsuFactor = 0.237/*всу*/;//-12.5
+		vsuHpFactor = 0.25/*всу хп*/;//-12
+		vsuCraneFactor = 0.354/*всу кран*/;//-9
+		engFactor = 0.79/*дв*/; //-2
+		engHpFactor = 0.237/*дв хп*/;//-12.5
+		redFactor = 0.79/*Редуктор*/; //-2
+		vpryam = 0.199/*ВУ*/;//-14
+		cutoffCraneFactor = 0.354/*перекр*/;//-9
+		vintBrakeFactor = 0.2/*Винт тормоз*/;
+		vintFlapFactor = 0.5/*Винт хлопки*/;
+		chassisBrakePumpFactor = 0.1/*Тормоз шасси*/;
+		chassisBrakeReleaseFactor = 0.1/*Сброс давления*/;
+		undefinedFactor = 0.25; /*хз1*///-12
+		runwayFactor = 0.398/*ВПП*/;
+		//airNoiseFactor = 1/*шум*/;
+
+		rainFactor = 0.5/*Дождь*/;
+
+		//ptsToneFactor = 0.25/*птс тон*/;
+		//vintSwishFactor = 0.5/*ВИНТ Верх*/;
+		fireCraneFactor = 0.354/*Пожарный кран*/;
+	}
+	else if (modelName == "ka_29")
+	{
+		//Константы		
+		engTurnoverHp = 20;
+		engTurnoverMg = 75;
+		engTurnoverAvt = 85;
+		redTurnoverMg1 = 44;
+		redTurnoverMg2 = 60;
+		redTurnoverAvt = 90;
+		//Множители громкости		
+		vsuFactor = 0.237/*всу*/;//-12.5
+		vsuHpFactor = 0.25/*всу хп*/;//-12
+		vsuCraneFactor = 0.354/*всу кран*/;//-9
+		engFactor = 0.79/*дв*/; //-2
+		engHpFactor = 0.237/*дв хп*/;//-12.5
+		redFactor = 0.79/*Редуктор*/; //-2
+		vpryam = 0.199/*ВУ*/;//-14
+		cutoffCraneFactor = 0.354/*перекр*/;//-9
+		vintBrakeFactor = 0.2/*Винт тормоз*/;
+		vintFlapFactor = 0.5/*Винт хлопки*/;
+		chassisBrakePumpFactor = 0.1/*Тормоз шасси*/;
+		chassisBrakeReleaseFactor = 0.1/*Сброс давления*/;
+		undefinedFactor = 0.25; /*хз1*///-12
+		runwayFactor = 0.5/*ВПП*/;
+		//airNoiseFactor = 1/*шум*/;
+
+		rocketSturmFactor = 1/*ШТУРМ*/;
+		rocketNar8Factor = 1/*НАР8*/;
+		rocketNar13Factor = 1/*НАР13*/;
+		rocketHitFactor = 0.8/*Попадание ракеты*/;
+		upkFactor = 1/*УПК*/;
+		ppuFactor = 1/*ППУ*/;
+
+		rainFactor = 0.5/*Дождь*/;
+
+		//ptsToneFactor = 0.25/*птс тон*/;
+		//vintSwishFactor = 0.5/*ВИНТ Верх*/;
+		fireCraneFactor = 0.354/*Пожарный кран*/;
+	}
+	else
+	{
+		cout << " Unknown argument" << endl;
+		throw 0;
+	}
+}
+
+Helicopter::~Helicopter()
+{
+	
+}
+
