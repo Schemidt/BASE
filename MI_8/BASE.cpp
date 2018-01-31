@@ -2819,10 +2819,14 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 
 			//Общее усиление от скорости выше 50м/с
 			if (velocityX >= 50)
+			{
 				velocityGain = (velocityX - 50)* 0.2;//0.1дб на 1 м/с
+			}
 			else
+			{
 				velocityGain = 0;
-
+			}
+				
 			////Ослабление НЧ до 400гц от ускорения
 			//accelerationGain = averangeAcc * (-3.75);
 			//if (accelerationGain < -3)
