@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
 		{
 			if (periodCalc >= window /*vectorTime.size() > 1200*/)
 			{
-				for (size_t i = 0; i < 2; i++)
+				for (int i = 0; i < 2; i++)
 				{
 					if (!vectorTime.empty())
 					{
@@ -364,10 +364,7 @@ int main(int argc, char *argv[])
 					Sound::calcA = attack(Sound::velocityX, vectorVx.front(), Sound::tangaz, Sound::high - vectorHigh.front(), periodCalc);
 				}
 			}
-			if (red && eng[0] && eng[1])
-			{
-				printf("pC %9.3f sZ %9.3i t %9.3f vY %9.3f accY %9.3f accX %9.3f D %9.3f dS %9.3f CA %9.3f arD %9.3f aE1 %9.3f aE2 %9.3f\r", periodCalc, vectorTime.size(), Sound::currentTime, Sound::velocityY, Sound::accelerationVy, Sound::accelerationX, Sound::dash, Sound::derivStep, Sound::calcA, red->averangeTurn, eng[0]->averangeTurn, eng[1]->averangeTurn);
-			}
+				printf("pC %9.3f sZ %9.3i t %9.3f vY %9.3f accY %9.3f accX %9.3f D %9.3f dS %9.3f CA %9.3f\r", periodCalc, vectorTime.size(), Sound::currentTime, Sound::velocityY, Sound::accelerationVy, Sound::accelerationX, Sound::dash, Sound::derivStep, Sound::calcA);
 		}
 		//ВСУ
 		if (helicopter.vsuFactor)//Если ВСУ включено в проект
