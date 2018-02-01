@@ -9,6 +9,9 @@
 der.txt
 flap.txt
 red.txt
+der.xlsx
+flap.xlsx
+red.xlsx
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
