@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	//Helicopter helicopter(model);/*!< Переменная класса Helicopter для хранения параметров выбранного вертолета */
-	Helicopter helicopter("ka_29");/*!< Переменная класса Helicopter для хранения параметров выбранного вертолета */
+	Helicopter helicopter("ka_27");/*!< Переменная класса Helicopter для хранения параметров выбранного вертолета */
 	system("cls");
 	cout << " Using " << helicopter.modelName << endl;
 	helicopter.setPath(helicopter.modelName + "/");
@@ -342,14 +342,15 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-
-			vectorTime.push_back(Sound::currentTime);
-			vectorHigh.push_back(Sound::high);
-			vectorVy.push_back(Sound::velocityY);
-			vectorVx.push_back(Sound::velocityX);
-			vectorAcc.push_back(Sound::accelerationX);
-			vectorStep.push_back(Sound::step);
-
+			if (vectorTime.size()<=20000)//Не более 20000 точек (при частоте 10000 точек в секунду (раз в 0.00005с))
+			{
+				vectorTime.push_back(Sound::currentTime);
+				vectorHigh.push_back(Sound::high);
+				vectorVy.push_back(Sound::velocityY);
+				vectorVx.push_back(Sound::velocityX);
+				vectorAcc.push_back(Sound::accelerationX);
+				vectorStep.push_back(Sound::step);
+			}
 			if (!vectorTime.empty())
 			{
 				//Производные
@@ -364,7 +365,7 @@ int main(int argc, char *argv[])
 					Sound::calcA = attack(Sound::velocityX, vectorVx.front(), Sound::tangaz, Sound::high - vectorHigh.front(), periodCalc);
 				}
 			}
-				printf("pC %9.3f sZ %9.3i t %9.3f vY %9.3f accY %9.3f accX %9.3f D %9.3f dS %9.3f CA %9.3f\r", periodCalc, vectorTime.size(), Sound::currentTime, Sound::velocityY, Sound::accelerationVy, Sound::accelerationX, Sound::dash, Sound::derivStep, Sound::calcA);
+				printf(" pC %9.3f sZ %9.3i t %9.3f vY %9.3f accY %9.3f accX %9.3f D %9.3f dS %9.3f CA %9.3f\r", periodCalc, vectorTime.size(), Sound::currentTime, Sound::velocityY, Sound::accelerationVy, Sound::accelerationX, Sound::dash, Sound::derivStep, Sound::calcA);
 		}
 		//ВСУ
 		if (helicopter.vsuFactor)//Если ВСУ включено в проект
