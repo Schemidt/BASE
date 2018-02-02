@@ -358,12 +358,12 @@ Helicopter::Helicopter(string model)
 		redTurnoverMg2 = 60;
 		redTurnoverAvt = 90;
 		//Множители громкости		
-		vsuFactor = 0.237/*всу*/;//-12.5
+		vsuFactor = 0.05/*всу*/;//-26
 		vsuHpFactor = 0.25/*всу хп*/;//-12
 		vsuCraneFactor = 0.354/*всу кран*/;//-9
-		engFactor = 0.79/*дв*/; //-2
+		engFactor = 0.794/*дв*/; //-2
 		engHpFactor = 0.237/*дв хп*/;//-12.5
-		redFactor = 0.79/*Редуктор*/; //-2
+		redFactor = 0.794/*Редуктор*/; //-2
 		vpryam = 0.199/*ВУ*/;//-14
 		cutoffCraneFactor = 0.354/*перекр*/;//-9
 		vintBrakeFactor = 0.2/*Винт тормоз*/;
@@ -393,9 +393,9 @@ Helicopter::Helicopter(string model)
 		vsuFactor = 0.237/*всу*/;//-12.5
 		vsuHpFactor = 0.25/*всу хп*/;//-12
 		vsuCraneFactor = 0.354/*всу кран*/;//-9
-		engFactor = 0.79/*дв*/; //-2
+		engFactor = 0.794/*дв*/; //-2
 		engHpFactor = 0.237/*дв хп*/;//-12.5
-		redFactor = 0.79/*Редуктор*/; //-2
+		redFactor = 0.794/*Редуктор*/; //-2
 		vpryam = 0.199/*ВУ*/;//-14
 		cutoffCraneFactor = 0.354/*перекр*/;//-9
 		vintBrakeFactor = 0.5/*Винт тормоз*/;
