@@ -141,17 +141,6 @@ fx = fx0 + ((fx1 - fx0) / (x1 - x0))*(x - x0);
 float lineInterpolation(float x0, float fx0, float x1, float fx1, float x);
 /*!\brief Функция отладки*/
 void printProgrammStatus(SOUNDREAD srd);
-/*!\brief Функция выбора вертолета*/
-/*!
-\brief Возвращает значение оборотов
-\details Возвращает значение оборотов по переходной функции в зависимости от прошедшего времени
-
-\param[in] filename имя файла переходной функции
-\param[in] offset время от начала переходной функции
-
-\return обороты в данный момент времени по переходной функции
-*/
-float getParameterFromFile(string filename, float offset);
 /*!
 \brief Возвращает максимальное количество доступных источников
 
@@ -1427,79 +1416,6 @@ float squareInterpolation(float x0, float fx0, float x1, float fx1, float x2, fl
 
 	}
 
-}
-
-float getParameterFromFile(string filename, float offset)
-{
-	float turn = 0;
-	float t = 0;
-	float v = 0;
-	int i = 0;
-	vector <float> time, value;
-
-	//данные в базе должны храниться в строках парами, по паре в каждой строке (не больше)
-	string str;
-	ifstream base(filename);
-	while (!base.eof())
-	{
-		getline(base, str);
-		sscanf(str.c_str(), "%f %f", &t, &v);
-		time.push_back(t);
-		value.push_back(v);
-	}
-	base.close();
-
-	float x, x0, x1, x2, fx, fx0, fx1, fx2, a0, a1, a2;
-	int n = time.size();
-
-	for (i = 0; i < n; i++)
-	{
-		if (offset < time[0])
-		{
-			turn = value[0];//достаем обороты из базы
-			break;
-		}
-		if (offset == time[i])//реальная отметка времени совпала с отметкой из бд
-		{
-			turn = value[i];//достаем обороты из базы
-			break;
-		}
-		if (offset > time[n - 1])//отметка не совпала с базой
-		{
-			turn = value[n - 1];//достаем обороты из базы
-			break;
-		}
-		if (offset > time[i] && offset < time[i + 1])//отметка не совпала с базой
-		{
-
-			//квадратичная интерполяция
-			if (i - 1 == -1 || i + 1 == n)
-			{
-				if (i - 1 == -1)
-				{
-					x = offset; x0 = time[i]; fx0 = value[i]; x1 = time[i + 1]; fx1 = value[i + 1]; x2 = time[i + 2]; fx2 = value[i + 2];
-				}
-				if (i + 1 == n)
-				{
-					x = offset; x0 = time[i - 2]; fx0 = value[i - 2]; x1 = time[i - 1]; fx1 = value[i - 1]; x2 = time[i]; fx2 = value[i];
-				}
-			}
-			else
-			{
-				x = offset; x0 = time[i - 1]; fx0 = value[i - 1]; x1 = time[i]; fx1 = value[i]; x2 = time[i + 1]; fx2 = value[i + 1];
-			}
-			//если квадратичная интерполяция не работает - берем линейную
-			if (x1 == x0 | x2 == x1)
-			{
-				turn = lineInterpolation(x0, fx0, x1, fx1, x);
-			}
-			else
-			{
-				turn = squareInterpolation(x0, fx0, x1, fx1, x2, fx2, x);
-			}
-		}
-	}
-	return turn;
 }
 
 float getPitch(float offset, string filename, float parameter)
