@@ -309,18 +309,18 @@ int main(int argc, char *argv[])
 				}
 				periodCalc = 0;
 			}
-			//Вычисляем изменение времени с прошлого цикла работы программы
-			Sound::deltaTime = localdata.time - Sound::currentTime;
-			Sound::currentTime = localdata.time;
-			Sound::masterGain = localdata.master_gain;
-			Sound::tangaz = localdata.osadki;//тангаж (временно используем параметр инт осадков)
-			Sound::velocityX = abs(localdata.v);//приборная скорость
-			Sound::high = localdata.styk_hv;
-			Sound::step = localdata.ny; //шаг (временно используем параметр перегрузки)
-										//Если не пришел признак остановки модели - вычисляем переменные
-			if (!localdata.p_model_stop)
+			else
 			{
-				if (periodCalc >= window /*vectorTime.size() > 1200*/)
+				//Вычисляем изменение времени с прошлого цикла работы программы
+				Sound::deltaTime = localdata.time - Sound::currentTime;
+				Sound::currentTime = localdata.time;
+				Sound::masterGain = localdata.master_gain;
+				Sound::tangaz = localdata.osadki;//тангаж (временно используем параметр инт осадков)
+				Sound::velocityX = abs(localdata.v);//приборная скорость
+				Sound::high = localdata.styk_hv;
+				Sound::step = localdata.ny; //шаг (временно используем параметр перегрузки)
+				//Если не пришел признак остановки модели - вычисляем переменные
+				if (periodCalc >= window)
 				{
 					for (int i = 0; i < 2; i++)
 					{
@@ -335,14 +335,12 @@ int main(int argc, char *argv[])
 						}
 					}
 				}
-
 				vectorTime.push_back(Sound::currentTime);
 				vectorHigh.push_back(Sound::high);
 				vectorVy.push_back(Sound::velocityY);
 				vectorVx.push_back(Sound::velocityX);
 				vectorAcc.push_back(Sound::accelerationX);
 				vectorStep.push_back(Sound::step);
-
 				if (!vectorTime.empty())
 				{
 					//Производные
@@ -357,972 +355,971 @@ int main(int argc, char *argv[])
 						Sound::calcA = attack(Sound::velocityX, vectorVx.front(), Sound::tangaz, Sound::high - vectorHigh.front(), periodCalc);
 					}
 				}
-				//printf(" pC %9.3f sZ %9.3i t %9.3f vY %9.3f accY %9.3f accX %9.3f D %9.3f dS %9.3f CA %9.3f      \r", periodCalc, vectorTime.size(), Sound::currentTime, Sound::velocityY, Sound::accelerationVy, Sound::accelerationX, Sound::dash, Sound::derivStep, Sound::calcA);
-			}
-			//ВСУ
-			if (helicopter.vsuFactor)//Если ВСУ включено в проект
-			{
-				if (localdata.p_vsu_zap | localdata.p_vsu_ostanov)
+				//ВСУ
+				if (helicopter.vsuFactor)//Если ВСУ включено в проект
 				{
-					if (!vsu)
+					if (localdata.p_vsu_zap | localdata.p_vsu_ostanov)
 					{
-						vsu = new Sound;
-					}
-				}
-				if (vsu)
-				{
-					vsu->lengthOff = vsu->getLengthWAV(helicopter.fullName["vsu_off"]);
-					vsu->lengthOn = vsu->getLengthWAV(helicopter.fullName["vsu_on"]);
-					vsu->offsetOff = vsu->lengthOff * (1 - localdata.vsu_obor / 100.);//Включаем запись с текущего уровня оборотов
-					vsu->offsetOn = vsu->lengthOn * localdata.vsu_obor / 100.;//Включаем запись с текущего уровня оборотов
-																			  //Для 27 29 и 8
-					if (helicopter.modelName == "ka_27" || helicopter.modelName == "ka_29" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_8_amtsh")
-					{
-						//Подсадка ВСУ при запущенном двигателе, но до запуска редуктора
-						if (localdata.reduktor_gl_obor > 0)
+						if (!vsu)
 						{
-							vsu->gain = squareInterpolation(0, 0.7, 2.5, 0.85, 5, 1, vsuUpTimer);
-							vsuUpTimer += Sound::deltaTime;
-							vsuDownTimer = 0;
+							vsu = new Sound;
 						}
-						else
+					}
+					if (vsu)
+					{
+						vsu->lengthOff = vsu->getLengthWAV(helicopter.fullName["vsu_off"]);
+						vsu->lengthOn = vsu->getLengthWAV(helicopter.fullName["vsu_on"]);
+						vsu->offsetOff = vsu->lengthOff * (1 - localdata.vsu_obor / 100.);//Включаем запись с текущего уровня оборотов
+						vsu->offsetOn = vsu->lengthOn * localdata.vsu_obor / 100.;//Включаем запись с текущего уровня оборотов
+																				  //Для 27 29 и 8
+						if (helicopter.modelName == "ka_27" || helicopter.modelName == "ka_29" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_8_amtsh")
 						{
-							if (localdata.p_eng1_zap || localdata.p_eng1_hp || localdata.p_eng2_zap || localdata.p_eng2_hp)
-							{
-								vsu->gain = squareInterpolation(0, 1, 0.25, 0.85, 0.5, 0.7, vsuDownTimer);
-								vsuDownTimer += Sound::deltaTime;
-								vsuUpTimer = 0;
-							}
-							else
+							//Подсадка ВСУ при запущенном двигателе, но до запуска редуктора
+							if (localdata.reduktor_gl_obor > 0)
 							{
 								vsu->gain = squareInterpolation(0, 0.7, 2.5, 0.85, 5, 1, vsuUpTimer);
 								vsuUpTimer += Sound::deltaTime;
 								vsuDownTimer = 0;
 							}
+							else
+							{
+								if (localdata.p_eng1_zap || localdata.p_eng1_hp || localdata.p_eng2_zap || localdata.p_eng2_hp)
+								{
+									vsu->gain = squareInterpolation(0, 1, 0.25, 0.85, 0.5, 0.7, vsuDownTimer);
+									vsuDownTimer += Sound::deltaTime;
+									vsuUpTimer = 0;
+								}
+								else
+								{
+									vsu->gain = squareInterpolation(0, 0.7, 2.5, 0.85, 5, 1, vsuUpTimer);
+									vsuUpTimer += Sound::deltaTime;
+									vsuDownTimer = 0;
+								}
+							}
+						}
+						vsu->initializeSound(localdata.p_vsu_zap, helicopter.fullName["vsu_on"], helicopter.fullName["vsu_w"], helicopter.fullName["vsu_off"], helicopter.vsuFactor);
+					}
+					if (vsu && vsu->sourceStatus[0] != AL_PLAYING)
+					{
+						Free(vsu);
+					}
+
+					//ВСУ ХП
+					if (localdata.p_vsu_hp)
+					{
+						if (!vsuHp)
+						{
+							vsuHp = new Sound;
 						}
 					}
-					vsu->initializeSound(localdata.p_vsu_zap, helicopter.fullName["vsu_on"], helicopter.fullName["vsu_w"], helicopter.fullName["vsu_off"], helicopter.vsuFactor);
-				}
-				if (vsu && vsu->sourceStatus[0] != AL_PLAYING)
-				{
-					Free(vsu);
-				}
-
-				//ВСУ ХП
-				if (localdata.p_vsu_hp)
-				{
-					if (!vsuHp)
+					if (vsuHp)
 					{
-						vsuHp = new Sound;
+						if (localdata.vsu_obor > 0 & localdata.vsu_obor < 35.)
+						{
+							vsuHp->lengthOff = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_off"]);
+							vsuHp->lengthOn = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_on"]);
+							vsuHp->offsetOff = vsuHp->lengthOff * (1 - localdata.vsu_obor / 35.);//Включаем запись с текущего уровня оборотов
+							vsuHp->offsetOn = vsuHp->lengthOn * localdata.vsu_obor / 35.;//Включаем запись с текущего уровня оборотов
+						}
+						if (localdata.p_vsu_zap | localdata.p_vsu_ostanov)//если ВСУ работает - вырубаем прокрутку
+						{
+							vsuHp->initializeSound(localdata.p_vsu_hp, "NULL", "NULL", "NULL", helicopter.vsuHpFactor);
+						}
+						else
+						{
+							vsuHp->initializeSound(localdata.p_vsu_hp, helicopter.fullName["vsu_hp_on"], helicopter.fullName["vsu_hp_w"], helicopter.fullName["vsu_hp_off"], helicopter.vsuHpFactor);
+						}
+						if (vsuHp->sourceStatus[0] != AL_PLAYING)
+						{
+							Free(vsuHp);
+						}
 					}
 				}
-				if (vsuHp)
+				//Аккумулятор
+				if (helicopter.accumFactor)
 				{
-					if (localdata.vsu_obor > 0 & localdata.vsu_obor < 35.)
+					if ("ansat" != helicopter.modelName)//226
 					{
-						vsuHp->lengthOff = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_off"]);
-						vsuHp->lengthOn = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_on"]);
-						vsuHp->offsetOff = vsuHp->lengthOff * (1 - localdata.vsu_obor / 35.);//Включаем запись с текущего уровня оборотов
-						vsuHp->offsetOn = vsuHp->lengthOn * localdata.vsu_obor / 35.;//Включаем запись с текущего уровня оборотов
+						if (localdata.rez_2)//Условие создания объекта
+							if (!accum)//Если объект не создан 
+								accum = new Sound;//Создаем объект
+						if (accum)//Если объект создан - используем его
+						{
+							accum->initializeSound(localdata.rez_2, "NULL", helicopter.fullName["accum"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
+							if (accum->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+								Free(accum);//Удаляем объект
+						}
 					}
-					if (localdata.p_vsu_zap | localdata.p_vsu_ostanov)//если ВСУ работает - вырубаем прокрутку
+					if ("ka_226" == helicopter.modelName || "ansat" == helicopter.modelName)//226
 					{
-						vsuHp->initializeSound(localdata.p_vsu_hp, "NULL", "NULL", "NULL", helicopter.vsuHpFactor);
-					}
-					else
-					{
-						vsuHp->initializeSound(localdata.p_vsu_hp, helicopter.fullName["vsu_hp_on"], helicopter.fullName["vsu_hp_w"], helicopter.fullName["vsu_hp_off"], helicopter.vsuHpFactor);
-					}
-					if (vsuHp->sourceStatus[0] != AL_PLAYING)
-					{
-						Free(vsuHp);
+						if (localdata.rez_2)//Условие создания объекта
+							if (!accumTr)//Если объект не создан 
+								accumTr = new Sound;//Создаем объект
+						if (accumTr)//Если объект создан - используем его
+						{
+							accumTr->initializeSound(localdata.rez_2, "NULL", helicopter.fullName["accum_tr"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
+							if (accumTr->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+								Free(accumTr);//Удаляем объект
+						}
 					}
 				}
-			}
-			//Аккумулятор
-			if (helicopter.accumFactor)
-			{
-				if ("ansat" != helicopter.modelName)//226
+				//ПТС
+				if (helicopter.ptsFactor)
 				{
-					if (localdata.rez_2)//Условие создания объекта
-						if (!accum)//Если объект не создан 
-							accum = new Sound;//Создаем объект
-					if (accum)//Если объект создан - используем его
+					if (localdata.p_pts)//Условие создания объекта
+						if (!pts)//Если объект не создан 
+							pts = new Sound;//Создаем объект
+					if (pts)//Если объект создан - используем его
 					{
-						accum->initializeSound(localdata.rez_2, "NULL", helicopter.fullName["accum"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (accum->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-							Free(accum);//Удаляем объект
+						pts->initializeSound(localdata.p_pts, helicopter.fullName["pts_on"], helicopter.fullName["pts_w"], helicopter.fullName["pts_off"], helicopter.ptsFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (pts->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(pts);//Удаляем объект
 					}
 				}
-				if ("ka_226" == helicopter.modelName || "ansat" == helicopter.modelName)//226
+				//ПТС тон
+				if (helicopter.ptsToneFactor)
 				{
-					if (localdata.rez_2)//Условие создания объекта
-						if (!accumTr)//Если объект не создан 
-							accumTr = new Sound;//Создаем объект
-					if (accumTr)//Если объект создан - используем его
+					//ПТС Тон
+					if (localdata.p_pts)//Условие создания объекта
+						if (!ptsTone)//Если объект не создан 
+							ptsTone = new Sound;//Создаем объект
+					if (ptsTone)//Если объект создан - используем его
 					{
-						accumTr->initializeSound(localdata.rez_2, "NULL", helicopter.fullName["accum_tr"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (accumTr->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-							Free(accumTr);//Удаляем объект
+						ptsTone->initializeSound(localdata.p_pts, "NULL", helicopter.fullName["pts_tone"], "NULL", helicopter.ptsToneFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (ptsTone->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(ptsTone);//Удаляем объект
 					}
 				}
-			}
-			//ПТС
-			if (helicopter.ptsFactor)
-			{
-				if (localdata.p_pts)//Условие создания объекта
-					if (!pts)//Если объект не создан 
-						pts = new Sound;//Создаем объект
-				if (pts)//Если объект создан - используем его
-				{
-					pts->initializeSound(localdata.p_pts, helicopter.fullName["pts_on"], helicopter.fullName["pts_w"], helicopter.fullName["pts_off"], helicopter.ptsFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (pts->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(pts);//Удаляем объект
-				}
-			}
-			//ПТС тон
-			if (helicopter.ptsToneFactor)
-			{
-				//ПТС Тон
-				if (localdata.p_pts)//Условие создания объекта
-					if (!ptsTone)//Если объект не создан 
-						ptsTone = new Sound;//Создаем объект
-				if (ptsTone)//Если объект создан - используем его
-				{
-					ptsTone->initializeSound(localdata.p_pts, "NULL", helicopter.fullName["pts_tone"], "NULL", helicopter.ptsToneFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (ptsTone->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(ptsTone);//Удаляем объект
-				}
-			}
-			//ВУ
-			if (helicopter.vpryam)
-			{
 				//ВУ
-				if (localdata.p_vu1)//Условие создания объекта
-					if (!vpryam)//Если объект не создан 
-						vpryam = new Sound;//Создаем объект
-				if (vpryam)//Если объект создан - используем его
+				if (helicopter.vpryam)
 				{
-					vpryam->initializeSound(localdata.p_vu1, "NULL", helicopter.fullName["vpryam"], "NULL", helicopter.vpryam);//Воспроизводим звук - записываем состояние звука в play
-					if (vpryam->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(vpryam);//Удаляем объект
-				}
-			}
-			//Если Трансформатор 36В присутствует на Борту
-			if (helicopter.tr36Factor)
-			{
-				if (localdata.p_trans_36_osn || localdata.p_trans_36_rez)//Условие создания объекта
-					if (!tr36)//Если объект не создан 
-						tr36 = new Sound;//Создаем объект
-				if (tr36)//Если объект создан - используем его
-				{
-					tr36->initializeSound(localdata.p_trans_36_osn || localdata.p_trans_36_rez, helicopter.fullName["tr36_on"], helicopter.fullName["tr36_w"], helicopter.fullName["tr36_off"], helicopter.tr36Factor);//Воспроизводим звук - записываем состояние звука в play
-					if (tr36->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(tr36);//Удаляем объект
-				}
-			}
-			//Если Трансформатор 115В присутствует на Борту
-			if (helicopter.tr115Factor)
-			{
-				if (localdata.p_po500)//Условие создания объекта
-					if (!tr115)//Если объект не создан 
-						tr115 = new Sound;//Создаем объект
-				if (tr115)//Если объект создан - используем его
-				{
-					tr115->initializeSound(localdata.p_po500, helicopter.fullName["tr115_on"], helicopter.fullName["tr115_w"], helicopter.fullName["tr115_off"], helicopter.tr115Factor);//Воспроизводим звук - записываем состояние звука в play
-					if (tr115->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(tr115);//Удаляем объект
-				}
-			}
-			//НИП
-			if (helicopter.nipFactor)
-			{
-				if (localdata.rez_3)//Условие создания объекта
-					if (!nip)//Если объект не создан 
-						nip = new Sound;//Создаем объект
-				if (nip)//Если объект создан - используем его
-				{
-					nip->initializeSound(localdata.rez_3, "NULL", helicopter.fullName["nip_tone"], "NULL", helicopter.nipFactor);
-					if (nip->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(nip);//Удаляем объект
-					else
+					//ВУ
+					if (localdata.p_vu1)//Условие создания объекта
+						if (!vpryam)//Если объект не создан 
+							vpryam = new Sound;//Создаем объект
+					if (vpryam)//Если объект создан - используем его
 					{
-						float p1 = 1, p2 = 1;
-						//Если включено ВУ, то высота тона повышается на 1.5%
-						if (localdata.p_vu1 && "mi_26" == helicopter.modelName)
-						{
-							p1 = 1.015;
-						}
-						if (!localdata.p_vu1 && "mi_26" == helicopter.modelName)
-						{
-							p1 = 1;
-						}
-						//Прокрутка и запуск ВСУ просаживают НИП по тону
-						if (localdata.p_vsu_hp || localdata.p_vsu_zap)
-						{
-
-							nip->offsetOn += Sound::deltaTime;
-
-							//_____  
-							//  1  \____   
-							//     0.985\  ______
-							//		0.977\/
-							//		 0.946
-							//	    |1c |1c|
-
-							//Сразу провал
-							p2 = squareInterpolation(0, 1, 1.5, 0.946, 2, 0.977, nip->offsetOn);
-
-						}
-						//Прокрутка и запуск ВСУ просаживают НИП по тону
-						if (!localdata.p_vsu_hp && !localdata.p_vsu_zap)
-						{
-							nip->offsetOn = 0;
-							p2 = 1;
-						}
-
-						nip->pitch = 1 * p1 * p2;//
+						vpryam->initializeSound(localdata.p_vu1, "NULL", helicopter.fullName["vpryam"], "NULL", helicopter.vpryam);//Воспроизводим звук - записываем состояние звука в play
+						if (vpryam->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(vpryam);//Удаляем объект
 					}
-
 				}
-			}
-			//Гировертикаль
-			if (helicopter.girovertFactor)
-			{
-				if (localdata.rez_3)//Условие создания объекта
-					if (!girovert)//Если объект не создан 
-						girovert = new Sound;//Создаем объект
-				if (girovert)//Если объект создан - используем его
+				//Если Трансформатор 36В присутствует на Борту
+				if (helicopter.tr36Factor)
 				{
-					girovert->lengthOn = girovert->getLengthWAV(helicopter.fullName["girovert_on"]);
-					if (girovert->pitch < 1)
-						girovert->offsetOn = girovert->lengthOn * girovert->pitch;//Включаем запись с текущего уровня оборотов
-					girovert->initializeSound(localdata.rez_3, helicopter.fullName["girovert_on"], helicopter.fullName["girovert_w"], helicopter.fullName["girovert_w"], helicopter.ptsFactor);
-					if (girovert->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(girovert);//Удаляем объект
-					else
+					if (localdata.p_trans_36_osn || localdata.p_trans_36_rez)//Условие создания объекта
+						if (!tr36)//Если объект не создан 
+							tr36 = new Sound;//Создаем объект
+					if (tr36)//Если объект создан - используем его
 					{
-						if (girovert->soundOn)
-							girovert->pitch = 1;
-						if (girovert->soundOff)
-						{
-							alSourcei(girovert->source[0], AL_LOOPING, AL_TRUE);
-							girovert->pitch -= Sound::deltaTime*0.0024;//уменьшаем питч по 0.0024 в сек
-																	   //если Pitch == 0 - звук пропал, источник можно отключить
-							if (girovert->pitch <= 0.8)
-								girovert->initializeSound(localdata.rez_3, "NULL", "NULL", "NULL", helicopter.ptsFactor);
-
-						}
+						tr36->initializeSound(localdata.p_trans_36_osn || localdata.p_trans_36_rez, helicopter.fullName["tr36_on"], helicopter.fullName["tr36_w"], helicopter.fullName["tr36_off"], helicopter.tr36Factor);//Воспроизводим звук - записываем состояние звука в play
+						if (tr36->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(tr36);//Удаляем объект
 					}
-
-
 				}
-			}
-			//Топливна система
-			//Если насосы подкачки присутствуют на Борту
-			if (helicopter.pumpLeftFactor || helicopter.pumpRightFactor)
-			{
-				if (localdata.p_nasos_podk_1)//Условие создания объекта
-					if (!podk1)//Если объект не создан 
-						podk1 = new Sound;//Создаем объект
-				if (podk1)//Если объект создан - используем его
+				//Если Трансформатор 115В присутствует на Борту
+				if (helicopter.tr115Factor)
 				{
-					//podk1->position = PosLeft;
-					podk1->channel[0] = 1;
-					podk1->channel[1] = 0;
-					if ("ka_226" == helicopter.modelName)
+					if (localdata.p_po500)//Условие создания объекта
+						if (!tr115)//Если объект не создан 
+							tr115 = new Sound;//Создаем объект
+					if (tr115)//Если объект создан - используем его
 					{
-						if (localdata.p_eng1_zap | localdata.p_eng1_hp | localdata.p_eng2_hp | localdata.p_eng2_zap)
-						{
-							timerPodk += Sound::deltaTime;
-							podk1->pitch = squareInterpolation(0, 1, 1, 0.85, 5, 0.88, timerPodk);
-						}
+						tr115->initializeSound(localdata.p_po500, helicopter.fullName["tr115_on"], helicopter.fullName["tr115_w"], helicopter.fullName["tr115_off"], helicopter.tr115Factor);//Воспроизводим звук - записываем состояние звука в play
+						if (tr115->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(tr115);//Удаляем объект
+					}
+				}
+				//НИП
+				if (helicopter.nipFactor)
+				{
+					if (localdata.rez_3)//Условие создания объекта
+						if (!nip)//Если объект не создан 
+							nip = new Sound;//Создаем объект
+					if (nip)//Если объект создан - используем его
+					{
+						nip->initializeSound(localdata.rez_3, "NULL", helicopter.fullName["nip_tone"], "NULL", helicopter.nipFactor);
+						if (nip->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(nip);//Удаляем объект
 						else
 						{
-							timerPodk = 0;
-							podk1->pitch = 1;
-						}
-						podk1->initializeSound(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], helicopter.fullName["podk_l_off"], helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
-					}
-					else
-						podk1->initializeSound(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], "NULL", helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (podk1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(podk1);//Удаляем объект
-				}
-
-				if (localdata.p_nasos_podk_2)//Условие создания объекта
-					if (!podk2)//Если объект не создан 
-						podk2 = new Sound;//Создаем объект
-				if (podk2)//Если объект создан - используем его
-				{
-					//podk2->position = PosRight;
-					podk2->channel[0] = 0;
-					podk2->channel[1] = 1;
-					if ("ka_226" == helicopter.modelName)
-					{
-						if (localdata.p_eng1_zap | localdata.p_eng1_hp | localdata.p_eng2_hp | localdata.p_eng2_zap)
-						{
-							timerPodk += Sound::deltaTime;
-							podk2->pitch = squareInterpolation(0, 1, 1, 0.85, 5, 0.88, timerPodk);
-						}
-						else
-						{
-							timerPodk = 0;
-							podk2->pitch = 1;
-						}
-						podk2->initializeSound(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], helicopter.fullName["podk_r_off"], helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
-					}
-					else
-						podk2->initializeSound(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], "NULL", helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (podk2->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(podk2);//Удаляем объект
-				}
-			}
-			//Если кран кольцевания присутствует на Борту
-			if (helicopter.circlingCraneFactor)
-			{
-				if (localdata.p_kran_kolcev)//Условие создания объекта
-					if (!kranKolc)//Если объект не создан 
-						kranKolc = new Sound;//Создаем объект
-				if (kranKolc)//Если объект создан - используем его
-				{
-					//perek1->position = PosLeft;
-					kranKolc->channel[0] = 1;
-					kranKolc->channel[1] = 1;
-					kranKolc->initializeSound(localdata.p_kran_kolcev, helicopter.fullName["kran_circle"], "NULL", "NULL", helicopter.circlingCraneFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (kranKolc->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_kolcev)//Условие удаления объекта
-						Free(kranKolc);//Удаляем объект
-				}
-			}
-			//Если перекрывные краны присутствуют на Борту
-			if (helicopter.cutoffCraneFactor)
-			{
-				if (localdata.p_kran_perekr_1)//Условие создания объекта
-					if (!perek1)//Если объект не создан 
-						perek1 = new Sound;//Создаем объект
-				if (perek1)//Если объект создан - используем его
-				{
-					//perek1->position = PosLeft;
-					perek1->channel[0] = 1;
-					perek1->channel[1] = 0;
-					perek1->initializeSound(localdata.p_kran_perekr_1, helicopter.fullName["perekr_l"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (perek1->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_1)//Условие удаления объекта
-						Free(perek1);//Удаляем объект
-				}
-
-				if (localdata.p_kran_perekr_2)//Условие создания объекта
-					if (!perek2)//Если объект не создан 
-						perek2 = new Sound;//Создаем объект
-				if (perek2)//Если объект создан - используем его
-				{
-					//perek2->position = PosRight;
-					perek2->channel[0] = 0;
-					perek2->channel[1] = 1;
-					perek2->initializeSound(localdata.p_kran_perekr_2, helicopter.fullName["perekr_r"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (perek2->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_2)//Условие удаления объекта
-						Free(perek2);//Удаляем объект
-				}
-			}
-			//Если СКВ присутствует на Борту
-			if (helicopter.skvFactor)
-			{
-				if (localdata.p_skv_on)//Условие создания объекта
-					if (!skv)//Если объект не создан 
-						skv = new Sound;//Создаем объект
-				if (skv)//Если объект создан - используем его
-				{
-					skv->initializeSound(localdata.p_skv_on, helicopter.fullName["skv_on"], helicopter.fullName["skv_w"], helicopter.fullName["skv_off"], helicopter.skvFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (skv->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(skv);//Удаляем объект
-				}
-			}
-			//Если КО-50 присутствует на Борту
-			if (helicopter.ko50Factor)
-			{
-				if (localdata.rez_9)//Условие создания объекта
-					if (!ko50)//Если объект не создан 
-						ko50 = new Sound;//Создаем объект
-				if (ko50)//Если объект создан - используем его
-				{
-					ko50->initializeSound(localdata.rez_9, helicopter.fullName["ko50_on"], helicopter.fullName["ko50_w"], helicopter.fullName["ko50_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
-					if (ko50->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(ko50);//Удаляем объект
-				}
-			}
-			//Если насос расходного бака
-			if (helicopter.consumTankFactor)
-			{
-				if (localdata.rez_4)//Условие создания объекта
-					if (!consTank)//Если объект не создан 
-						consTank = new Sound;//Создаем объект
-				if (consTank)//Если объект создан - используем его
-				{
-					consTank->initializeSound(localdata.rez_4, helicopter.fullName["cons_tank_on"], helicopter.fullName["cons_tank_w"], "NULL", helicopter.consumTankFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (consTank->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(consTank);//Удаляем объект
-				}
-			}
-			//Пожарный кран
-			if (helicopter.fireCraneFactor)
-			{
-				if (localdata.p_kran_poj_l)//Условие создания объекта
-					if (!fire1)//Если объект не создан 
-						fire1 = new Sound;//Создаем объект
-				if (fire1)//Если объект создан - используем его
-				{
-					//fire1->position = PosLeft;
-					fire1->channel[0] = 1;
-					fire1->channel[1] = 0;
-					fire1->initializeSound(localdata.p_kran_poj_l, helicopter.fullName["kran_fire_l"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (fire1->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_poj_l)//Условие удаления объекта
-						Free(fire1);//Удаляем объект
-				}
-
-				if (localdata.p_kran_poj_r)//Условие создания объекта
-					if (!fire2)//Если объект не создан 
-						fire2 = new Sound;//Создаем объект
-				if (fire2)//Если объект создан - используем его
-				{
-					//fire2->position = PosRight;
-					fire2->channel[0] = 0;
-					fire2->channel[1] = 1;
-					fire2->initializeSound(localdata.p_kran_poj_r, helicopter.fullName["kran_fire_r"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (fire2->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_poj_r)//Условие удаления объекта
-						Free(fire2);//Удаляем объект
-				}
-			}
-			//Насосная станция
-			if (helicopter.pumpStationFactor)
-			{
-				if (localdata.p_nasos)//Условие создания объекта
-					if (!pstat)//Если объект не создан 
-						pstat = new Sound;//Создаем объект
-				if (pstat)//Если объект создан - используем его
-				{
-					pstat->initializeSound(localdata.p_nasos, helicopter.fullName["pstat_on"], helicopter.fullName["pstat_w"], helicopter.fullName["pstat_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
-					if (pstat->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(pstat);//Удаляем объект
-				}
-			}
-			//Движение по ВПП и РД
-			//Если звуки движения по ВПП включены в проект борта
-			if (helicopter.runwayFactor)
-			{
-				if (helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "mi_8_mtv5")
-				{
-					if (localdata.v != 0 && Sound::high <= 0)//Условие создания объекта
-						if (!runwayMi8)//Если объект не создан 
-							runwayMi8 = new Runway;//Создаем объект
-					if (runwayMi8)//Если объект создан - используем его
-					{
-						runwayMi8->Play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-						if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
-							Free(runwayMi8);//Удаляем объект
-					}
-				}
-				else
-				{
-					if (localdata.v != 0 && Sound::high <= 0)//Условие создания объекта
-						if (!runway)//Если объект не создан 
-							runway = new Sound;//Создаем объект
-					if (runway)//Если объект создан - используем его
-					{
-						runway->initializeSound(localdata.p_na_vpp && localdata.v != 0, "NULL", helicopter.fullName["runway"], "NULL", helicopter.runwayFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
-							Free(runway);//Удаляем объект
-						else
-						{
-							runway->gain = Sound::masterGain * lineInterpolation(0, 0, 13.8, 1, localdata.v) * helicopter.runwayFactor;
-						}
-					}
-				}
-			}
-			//Аэродинамический шум
-			//Звуки аэродинамических шумов включены в проект
-			if (helicopter.airNoiseFactor)
-			{
-				if (localdata.v > 20)//Условие создания объекта
-					if (!airNoise)//Если объект не создан 
-						airNoise = new Sound;//Создаем объект
-				if (airNoise)//Если объект создан - используем его
-				{
-					airNoise->initializeSound(localdata.v > 20, "NULL", helicopter.fullName["air"], "NULL", helicopter.airNoiseFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (airNoise->sourceStatus[0] != AL_PLAYING && localdata.v <= 20)//Условие удаления объекта
-						Free(airNoise);//Удаляем объект
-					else
-					{
-						if (localdata.v > 20 && localdata.v < 70)
-							airNoise->gain = Sound::masterGain * helicopter.airNoiseFactor * ((localdata.v / 50.) - .4);
-						else
-							airNoise->gain = Sound::masterGain * helicopter.airNoiseFactor;
-					}
-				}
-			}
-			//Крушение
-			//Если звук столкновения с препятствием включен в проект
-			if (1)
-			{
-				if (localdata.p_crash)//Условие создания объекта
-					if (!crash)//Если объект не создан 
-						crash = new Sound;//Создаем объект
-				if (crash)//Если объект создан - используем его
-				{
-					crash->initializeSound(localdata.p_crash, helicopter.fullName["crash"], "NULL", "NULL", 1);//Воспроизводим звук - записываем состояние звука в play
-					if (crash->sourceStatus[0] != AL_PLAYING && !localdata.p_crash)//Условие удаления объекта
-						Free(crash);//Удаляем объект
-				}
-			}
-			//Винт
-			if (helicopter.vintSwishFactor)
-			{
-				if (localdata.reduktor_gl_obor >= helicopter.redTurnoverMg2)//Условие создания объекта
-					if (!vintSwish)//Если объект не создан 
-						vintSwish = new Sound;//Создаем объект
-				if (vintSwish)//Если объект создан - используем его
-				{
-					vintSwish->initializeSound(localdata.reduktor_gl_obor >= helicopter.redTurnoverMg2, "NULL", helicopter.fullName["vint_hi"], "NULL", helicopter.vintSwishFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (vintSwish->sourceStatus[0] != AL_PLAYING && localdata.reduktor_gl_obor < helicopter.redTurnoverMg2)//Условие удаления объекта
-						Free(vintSwish);//Удаляем объект
-					else
-					{
-						//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
-						vintSwish->pitch = localdata.reduktor_gl_obor / helicopter.redTurnoverAvt;
-						//Выключаем шелест винта на оборотах редуктора ниже оборотов малого газа редуктора
-						//Линейно гасим звук в течении 3х оборотов
-						if (localdata.reduktor_gl_obor <= helicopter.redTurnoverAvt)
-							vintSwish->gain = lineInterpolation(helicopter.redTurnoverAvt, 1, helicopter.redTurnoverMg2, 0, localdata.reduktor_gl_obor);
-					}
-				}
-			}
-			//Если звук тормоза винта включен в проект
-			if (helicopter.vintBrakeFactor)
-			{
-				if (localdata.tormoz_vint)//Условие создания объекта
-					if (!vintBrake)//Если объект не создан 
-						vintBrake = new Sound;//Создаем объект
-				if (vintBrake)//Если объект создан - используем его
-				{
-					vintBrake->initializeSound(localdata.tormoz_vint, "NULL", helicopter.fullName["vint_torm"], "NULL", helicopter.vintBrakeFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (vintBrake->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(vintBrake);//Удаляем объект
-					else
-					{
-						vintBrake->pitch = localdata.reduktor_gl_obor / 30.;
-					}
-				}
-			}
-			//Если звук хлопков винта включен в проект
-			if (helicopter.vintFlapFactor)
-			{
-				if (helicopter.modelName == "ka_27" || helicopter.modelName == "ka_29" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_8_amtsh")
-				{
-					if (localdata.v >= 8.3 && localdata.styk_hv > 0)//Условие создания объекта
-						if (!vintFlap)//Если объект не создан 
-							vintFlap = new VintFlap;//Создаем объект
-					if (vintFlap)//Если объект создан - используем его
-					{
-						vintFlap->Play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-						if (localdata.v < 8.3 || localdata.styk_hv <= 0)//Условие удаления объекта
-							Free(vintFlap);//Удаляем объект
-					}
-				}
-				else
-				{
-					if (localdata.rez_10)//Условие создания объекта
-						if (!vintFlapUniversal)//Если объект не создан 
-							vintFlapUniversal = new Sound;//Создаем объект
-					if (vintFlapUniversal)//Если объект создан - используем его
-					{
-						vintFlapUniversal->initializeSound(localdata.rez_10, "NULL", helicopter.fullName["vint_flap"], "NULL", helicopter.vintFlapFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (vintFlapUniversal->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-							Free(vintFlapUniversal);//Удаляем объект
-					}
-				}
-
-			}
-			//Если тормоза включены на борту
-			if (helicopter.chassisBrakePumpFactor)
-			{
-				if (localdata.p_tormoz)//Условие создания объекта
-					if (!brake)//Если объект не создан 
-						brake = new Sound;//Создаем объект
-				if (brake)//Если объект создан - используем его
-				{
-					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
-					{
-						brake->initializeSound(localdata.p_tormoz, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor);//Воспроизводим звук - записываем состояние звука в play
-					}
-					else
-					{
-						brake->initializeSound(localdata.p_tormoz, helicopter.fullName["brake"], "NULL", helicopter.fullName["poff"], helicopter.chassisBrakePumpFactor);//Воспроизводим звук - записываем состояние звука в play
-					}
-					if (brake->sourceStatus[0] != AL_PLAYING && !localdata.p_tormoz)//Условие удаления объекта
-						Free(brake);//Удаляем объект
-				}
-			}
-			//Дождь
-			if (1)
-			{
-				if (localdata.p_rain)//Условие создания объекта
-					if (!rain)//Если объект не создан 
-						rain = new Sound;//Создаем объект
-				if (rain)//Если объект создан - используем его
-				{
-					rain->initializeSound(localdata.p_rain, "NULL", helicopter.fullName["rain"], "NULL", helicopter.rainFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (rain->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(rain);//Удаляем объект
-				}
-			}
-			//Если звук попадания ракеты включен в проект
-			if (helicopter.rocketHitFactor)
-			{
-				if (localdata.p_rocket_hit)//Условие создания объекта
-					if (!rocket)//Если объект не создан 
-						rocket = new Sound;//Создаем объект
-				if (rocket)//Если объект создан - используем его
-				{
-					rocket->initializeSound(localdata.p_rocket_hit, helicopter.fullName["rocket"], "NULL", "NULL", helicopter.rocketHitFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (rocket->sourceStatus[0] != AL_PLAYING && !localdata.p_rocket_hit)//Условие удаления объекта
-						Free(rocket);//Удаляем объект
-				}
-			}
-			//Если НАР8 имеется на борту
-			if (helicopter.rocketNar8Factor)
-			{
-				if (localdata.p_nar_s8)//Условие создания объекта
-				{
-					timerNar8 += Sound::deltaTime;
-					for (int i = 0; i < 20; i++)
-					{
-						//воспроизводим звук выстрела 1го НАР8 каждые 0.05с - 20 раз
-						//каждые 20 выпусков процесс можно повторить без потери заднего фронта
-						//количество необходимых каналов равно количеству пусков, которое в свою очередь
-						//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
-						if (timerNar8 >= 0.05*i & counterNar8 < 20 & i >= counterNar8)
-						{
-							if (!nar8[i])//Если объект не создан 
-								nar8[i] = new Sound;//Создаем объект
-							if (nar8[i])//Если объект создан - используем его
+							float p1 = 1, p2 = 1;
+							//Если включено ВУ, то высота тона повышается на 1.5%
+							if (localdata.p_vu1 && "mi_26" == helicopter.modelName)
 							{
-								nar8[i]->initializeSound(localdata.p_nar_s8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);//Воспроизводим звук - записываем состояние звука в play
-								nar8[i]->soundOn = 0;
+								p1 = 1.015;
 							}
-							counterNar8++;
+							if (!localdata.p_vu1 && "mi_26" == helicopter.modelName)
+							{
+								p1 = 1;
+							}
+							//Прокрутка и запуск ВСУ просаживают НИП по тону
+							if (localdata.p_vsu_hp || localdata.p_vsu_zap)
+							{
+
+								nip->offsetOn += Sound::deltaTime;
+
+								//_____  
+								//  1  \____   
+								//     0.985\  ______
+								//		0.977\/
+								//		 0.946
+								//	    |1c |1c|
+
+								//Сразу провал
+								p2 = squareInterpolation(0, 1, 1.5, 0.946, 2, 0.977, nip->offsetOn);
+
+							}
+							//Прокрутка и запуск ВСУ просаживают НИП по тону
+							if (!localdata.p_vsu_hp && !localdata.p_vsu_zap)
+							{
+								nip->offsetOn = 0;
+								p2 = 1;
+							}
+
+							nip->pitch = 1 * p1 * p2;//
+						}
+
+					}
+				}
+				//Гировертикаль
+				if (helicopter.girovertFactor)
+				{
+					if (localdata.rez_3)//Условие создания объекта
+						if (!girovert)//Если объект не создан 
+							girovert = new Sound;//Создаем объект
+					if (girovert)//Если объект создан - используем его
+					{
+						girovert->lengthOn = girovert->getLengthWAV(helicopter.fullName["girovert_on"]);
+						if (girovert->pitch < 1)
+							girovert->offsetOn = girovert->lengthOn * girovert->pitch;//Включаем запись с текущего уровня оборотов
+						girovert->initializeSound(localdata.rez_3, helicopter.fullName["girovert_on"], helicopter.fullName["girovert_w"], helicopter.fullName["girovert_w"], helicopter.ptsFactor);
+						if (girovert->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(girovert);//Удаляем объект
+						else
+						{
+							if (girovert->soundOn)
+								girovert->pitch = 1;
+							if (girovert->soundOff)
+							{
+								alSourcei(girovert->source[0], AL_LOOPING, AL_TRUE);
+								girovert->pitch -= Sound::deltaTime*0.0024;//уменьшаем питч по 0.0024 в сек
+																		   //если Pitch == 0 - звук пропал, источник можно отключить
+								if (girovert->pitch <= 0.8)
+									girovert->initializeSound(localdata.rez_3, "NULL", "NULL", "NULL", helicopter.ptsFactor);
+
+							}
+						}
+
+
+					}
+				}
+				//Топливна система
+				//Если насосы подкачки присутствуют на Борту
+				if (helicopter.pumpLeftFactor || helicopter.pumpRightFactor)
+				{
+					if (localdata.p_nasos_podk_1)//Условие создания объекта
+						if (!podk1)//Если объект не создан 
+							podk1 = new Sound;//Создаем объект
+					if (podk1)//Если объект создан - используем его
+					{
+						//podk1->position = PosLeft;
+						podk1->channel[0] = 1;
+						podk1->channel[1] = 0;
+						if ("ka_226" == helicopter.modelName)
+						{
+							if (localdata.p_eng1_zap | localdata.p_eng1_hp | localdata.p_eng2_hp | localdata.p_eng2_zap)
+							{
+								timerPodk += Sound::deltaTime;
+								podk1->pitch = squareInterpolation(0, 1, 1, 0.85, 5, 0.88, timerPodk);
+							}
+							else
+							{
+								timerPodk = 0;
+								podk1->pitch = 1;
+							}
+							podk1->initializeSound(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], helicopter.fullName["podk_l_off"], helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
+						}
+						else
+							podk1->initializeSound(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], "NULL", helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (podk1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(podk1);//Удаляем объект
+					}
+
+					if (localdata.p_nasos_podk_2)//Условие создания объекта
+						if (!podk2)//Если объект не создан 
+							podk2 = new Sound;//Создаем объект
+					if (podk2)//Если объект создан - используем его
+					{
+						//podk2->position = PosRight;
+						podk2->channel[0] = 0;
+						podk2->channel[1] = 1;
+						if ("ka_226" == helicopter.modelName)
+						{
+							if (localdata.p_eng1_zap | localdata.p_eng1_hp | localdata.p_eng2_hp | localdata.p_eng2_zap)
+							{
+								timerPodk += Sound::deltaTime;
+								podk2->pitch = squareInterpolation(0, 1, 1, 0.85, 5, 0.88, timerPodk);
+							}
+							else
+							{
+								timerPodk = 0;
+								podk2->pitch = 1;
+							}
+							podk2->initializeSound(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], helicopter.fullName["podk_r_off"], helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
+						}
+						else
+							podk2->initializeSound(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], "NULL", helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (podk2->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(podk2);//Удаляем объект
+					}
+				}
+				//Если кран кольцевания присутствует на Борту
+				if (helicopter.circlingCraneFactor)
+				{
+					if (localdata.p_kran_kolcev)//Условие создания объекта
+						if (!kranKolc)//Если объект не создан 
+							kranKolc = new Sound;//Создаем объект
+					if (kranKolc)//Если объект создан - используем его
+					{
+						//perek1->position = PosLeft;
+						kranKolc->channel[0] = 1;
+						kranKolc->channel[1] = 1;
+						kranKolc->initializeSound(localdata.p_kran_kolcev, helicopter.fullName["kran_circle"], "NULL", "NULL", helicopter.circlingCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (kranKolc->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_kolcev)//Условие удаления объекта
+							Free(kranKolc);//Удаляем объект
+					}
+				}
+				//Если перекрывные краны присутствуют на Борту
+				if (helicopter.cutoffCraneFactor)
+				{
+					if (localdata.p_kran_perekr_1)//Условие создания объекта
+						if (!perek1)//Если объект не создан 
+							perek1 = new Sound;//Создаем объект
+					if (perek1)//Если объект создан - используем его
+					{
+						//perek1->position = PosLeft;
+						perek1->channel[0] = 1;
+						perek1->channel[1] = 0;
+						perek1->initializeSound(localdata.p_kran_perekr_1, helicopter.fullName["perekr_l"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (perek1->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_1)//Условие удаления объекта
+							Free(perek1);//Удаляем объект
+					}
+
+					if (localdata.p_kran_perekr_2)//Условие создания объекта
+						if (!perek2)//Если объект не создан 
+							perek2 = new Sound;//Создаем объект
+					if (perek2)//Если объект создан - используем его
+					{
+						//perek2->position = PosRight;
+						perek2->channel[0] = 0;
+						perek2->channel[1] = 1;
+						perek2->initializeSound(localdata.p_kran_perekr_2, helicopter.fullName["perekr_r"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (perek2->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_2)//Условие удаления объекта
+							Free(perek2);//Удаляем объект
+					}
+				}
+				//Если СКВ присутствует на Борту
+				if (helicopter.skvFactor)
+				{
+					if (localdata.p_skv_on)//Условие создания объекта
+						if (!skv)//Если объект не создан 
+							skv = new Sound;//Создаем объект
+					if (skv)//Если объект создан - используем его
+					{
+						skv->initializeSound(localdata.p_skv_on, helicopter.fullName["skv_on"], helicopter.fullName["skv_w"], helicopter.fullName["skv_off"], helicopter.skvFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (skv->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(skv);//Удаляем объект
+					}
+				}
+				//Если КО-50 присутствует на Борту
+				if (helicopter.ko50Factor)
+				{
+					if (localdata.rez_9)//Условие создания объекта
+						if (!ko50)//Если объект не создан 
+							ko50 = new Sound;//Создаем объект
+					if (ko50)//Если объект создан - используем его
+					{
+						ko50->initializeSound(localdata.rez_9, helicopter.fullName["ko50_on"], helicopter.fullName["ko50_w"], helicopter.fullName["ko50_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
+						if (ko50->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(ko50);//Удаляем объект
+					}
+				}
+				//Если насос расходного бака
+				if (helicopter.consumTankFactor)
+				{
+					if (localdata.rez_4)//Условие создания объекта
+						if (!consTank)//Если объект не создан 
+							consTank = new Sound;//Создаем объект
+					if (consTank)//Если объект создан - используем его
+					{
+						consTank->initializeSound(localdata.rez_4, helicopter.fullName["cons_tank_on"], helicopter.fullName["cons_tank_w"], "NULL", helicopter.consumTankFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (consTank->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(consTank);//Удаляем объект
+					}
+				}
+				//Пожарный кран
+				if (helicopter.fireCraneFactor)
+				{
+					if (localdata.p_kran_poj_l)//Условие создания объекта
+						if (!fire1)//Если объект не создан 
+							fire1 = new Sound;//Создаем объект
+					if (fire1)//Если объект создан - используем его
+					{
+						//fire1->position = PosLeft;
+						fire1->channel[0] = 1;
+						fire1->channel[1] = 0;
+						fire1->initializeSound(localdata.p_kran_poj_l, helicopter.fullName["kran_fire_l"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (fire1->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_poj_l)//Условие удаления объекта
+							Free(fire1);//Удаляем объект
+					}
+
+					if (localdata.p_kran_poj_r)//Условие создания объекта
+						if (!fire2)//Если объект не создан 
+							fire2 = new Sound;//Создаем объект
+					if (fire2)//Если объект создан - используем его
+					{
+						//fire2->position = PosRight;
+						fire2->channel[0] = 0;
+						fire2->channel[1] = 1;
+						fire2->initializeSound(localdata.p_kran_poj_r, helicopter.fullName["kran_fire_r"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (fire2->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_poj_r)//Условие удаления объекта
+							Free(fire2);//Удаляем объект
+					}
+				}
+				//Насосная станция
+				if (helicopter.pumpStationFactor)
+				{
+					if (localdata.p_nasos)//Условие создания объекта
+						if (!pstat)//Если объект не создан 
+							pstat = new Sound;//Создаем объект
+					if (pstat)//Если объект создан - используем его
+					{
+						pstat->initializeSound(localdata.p_nasos, helicopter.fullName["pstat_on"], helicopter.fullName["pstat_w"], helicopter.fullName["pstat_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
+						if (pstat->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(pstat);//Удаляем объект
+					}
+				}
+				//Движение по ВПП и РД
+				//Если звуки движения по ВПП включены в проект борта
+				if (helicopter.runwayFactor)
+				{
+					if (helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "mi_8_mtv5")
+					{
+						if (localdata.v != 0 && Sound::high <= 0)//Условие создания объекта
+							if (!runwayMi8)//Если объект не создан 
+								runwayMi8 = new Runway;//Создаем объект
+						if (runwayMi8)//Если объект создан - используем его
+						{
+							runwayMi8->Play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
+							if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
+								Free(runwayMi8);//Удаляем объект
 						}
 					}
-					if (counterNar8 == 20)
+					else
 					{
-						counterNar8 = 0;
+						if (localdata.v != 0 && Sound::high <= 0)//Условие создания объекта
+							if (!runway)//Если объект не создан 
+								runway = new Sound;//Создаем объект
+						if (runway)//Если объект создан - используем его
+						{
+							runway->initializeSound(localdata.p_na_vpp && localdata.v != 0, "NULL", helicopter.fullName["runway"], "NULL", helicopter.runwayFactor);//Воспроизводим звук - записываем состояние звука в play
+							if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
+								Free(runway);//Удаляем объект
+							else
+							{
+								runway->gain = Sound::masterGain * lineInterpolation(0, 0, 13.8, 1, localdata.v) * helicopter.runwayFactor;
+							}
+						}
+					}
+				}
+				//Аэродинамический шум
+				//Звуки аэродинамических шумов включены в проект
+				if (helicopter.airNoiseFactor)
+				{
+					if (localdata.v > 20)//Условие создания объекта
+						if (!airNoise)//Если объект не создан 
+							airNoise = new Sound;//Создаем объект
+					if (airNoise)//Если объект создан - используем его
+					{
+						airNoise->initializeSound(localdata.v > 20, "NULL", helicopter.fullName["air"], "NULL", helicopter.airNoiseFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (airNoise->sourceStatus[0] != AL_PLAYING && localdata.v <= 20)//Условие удаления объекта
+							Free(airNoise);//Удаляем объект
+						else
+						{
+							if (localdata.v > 20 && localdata.v < 70)
+								airNoise->gain = Sound::masterGain * helicopter.airNoiseFactor * ((localdata.v / 50.) - .4);
+							else
+								airNoise->gain = Sound::masterGain * helicopter.airNoiseFactor;
+						}
+					}
+				}
+				//Крушение
+				//Если звук столкновения с препятствием включен в проект
+				if (1)
+				{
+					if (localdata.p_crash)//Условие создания объекта
+						if (!crash)//Если объект не создан 
+							crash = new Sound;//Создаем объект
+					if (crash)//Если объект создан - используем его
+					{
+						crash->initializeSound(localdata.p_crash, helicopter.fullName["crash"], "NULL", "NULL", 1);//Воспроизводим звук - записываем состояние звука в play
+						if (crash->sourceStatus[0] != AL_PLAYING && !localdata.p_crash)//Условие удаления объекта
+							Free(crash);//Удаляем объект
+					}
+				}
+				//Винт
+				if (helicopter.vintSwishFactor)
+				{
+					if (localdata.reduktor_gl_obor >= helicopter.redTurnoverMg2)//Условие создания объекта
+						if (!vintSwish)//Если объект не создан 
+							vintSwish = new Sound;//Создаем объект
+					if (vintSwish)//Если объект создан - используем его
+					{
+						vintSwish->initializeSound(localdata.reduktor_gl_obor >= helicopter.redTurnoverMg2, "NULL", helicopter.fullName["vint_hi"], "NULL", helicopter.vintSwishFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (vintSwish->sourceStatus[0] != AL_PLAYING && localdata.reduktor_gl_obor < helicopter.redTurnoverMg2)//Условие удаления объекта
+							Free(vintSwish);//Удаляем объект
+						else
+						{
+							//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
+							vintSwish->pitch = localdata.reduktor_gl_obor / helicopter.redTurnoverAvt;
+							//Выключаем шелест винта на оборотах редуктора ниже оборотов малого газа редуктора
+							//Линейно гасим звук в течении 3х оборотов
+							if (localdata.reduktor_gl_obor <= helicopter.redTurnoverAvt)
+								vintSwish->gain = lineInterpolation(helicopter.redTurnoverAvt, 1, helicopter.redTurnoverMg2, 0, localdata.reduktor_gl_obor);
+						}
+					}
+				}
+				//Если звук тормоза винта включен в проект
+				if (helicopter.vintBrakeFactor)
+				{
+					if (localdata.tormoz_vint)//Условие создания объекта
+						if (!vintBrake)//Если объект не создан 
+							vintBrake = new Sound;//Создаем объект
+					if (vintBrake)//Если объект создан - используем его
+					{
+						vintBrake->initializeSound(localdata.tormoz_vint, "NULL", helicopter.fullName["vint_torm"], "NULL", helicopter.vintBrakeFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (vintBrake->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(vintBrake);//Удаляем объект
+						else
+						{
+							vintBrake->pitch = localdata.reduktor_gl_obor / 30.;
+						}
+					}
+				}
+				//Если звук хлопков винта включен в проект
+				if (helicopter.vintFlapFactor)
+				{
+					if (helicopter.modelName == "ka_27" || helicopter.modelName == "ka_29" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_8_amtsh")
+					{
+						if (localdata.v >= 8.3 && localdata.styk_hv > 0)//Условие создания объекта
+							if (!vintFlap)//Если объект не создан 
+								vintFlap = new VintFlap;//Создаем объект
+						if (vintFlap)//Если объект создан - используем его
+						{
+							vintFlap->Play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
+							if (localdata.v < 8.3 || localdata.styk_hv <= 0)//Условие удаления объекта
+								Free(vintFlap);//Удаляем объект
+						}
+					}
+					else
+					{
+						if (localdata.rez_10)//Условие создания объекта
+							if (!vintFlapUniversal)//Если объект не создан 
+								vintFlapUniversal = new Sound;//Создаем объект
+						if (vintFlapUniversal)//Если объект создан - используем его
+						{
+							vintFlapUniversal->initializeSound(localdata.rez_10, "NULL", helicopter.fullName["vint_flap"], "NULL", helicopter.vintFlapFactor);//Воспроизводим звук - записываем состояние звука в play
+							if (vintFlapUniversal->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+								Free(vintFlapUniversal);//Удаляем объект
+						}
+					}
+
+				}
+				//Если тормоза включены на борту
+				if (helicopter.chassisBrakePumpFactor)
+				{
+					if (localdata.p_tormoz)//Условие создания объекта
+						if (!brake)//Если объект не создан 
+							brake = new Sound;//Создаем объект
+					if (brake)//Если объект создан - используем его
+					{
+						if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
+						{
+							brake->initializeSound(localdata.p_tormoz, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor);//Воспроизводим звук - записываем состояние звука в play
+						}
+						else
+						{
+							brake->initializeSound(localdata.p_tormoz, helicopter.fullName["brake"], "NULL", helicopter.fullName["poff"], helicopter.chassisBrakePumpFactor);//Воспроизводим звук - записываем состояние звука в play
+						}
+						if (brake->sourceStatus[0] != AL_PLAYING && !localdata.p_tormoz)//Условие удаления объекта
+							Free(brake);//Удаляем объект
+					}
+				}
+				//Дождь
+				if (1)
+				{
+					if (localdata.p_rain)//Условие создания объекта
+						if (!rain)//Если объект не создан 
+							rain = new Sound;//Создаем объект
+					if (rain)//Если объект создан - используем его
+					{
+						rain->initializeSound(localdata.p_rain, "NULL", helicopter.fullName["rain"], "NULL", helicopter.rainFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (rain->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(rain);//Удаляем объект
+					}
+				}
+				//Если звук попадания ракеты включен в проект
+				if (helicopter.rocketHitFactor)
+				{
+					if (localdata.p_rocket_hit)//Условие создания объекта
+						if (!rocket)//Если объект не создан 
+							rocket = new Sound;//Создаем объект
+					if (rocket)//Если объект создан - используем его
+					{
+						rocket->initializeSound(localdata.p_rocket_hit, helicopter.fullName["rocket"], "NULL", "NULL", helicopter.rocketHitFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (rocket->sourceStatus[0] != AL_PLAYING && !localdata.p_rocket_hit)//Условие удаления объекта
+							Free(rocket);//Удаляем объект
+					}
+				}
+				//Если НАР8 имеется на борту
+				if (helicopter.rocketNar8Factor)
+				{
+					if (localdata.p_nar_s8)//Условие создания объекта
+					{
+						timerNar8 += Sound::deltaTime;
+						for (int i = 0; i < 20; i++)
+						{
+							//воспроизводим звук выстрела 1го НАР8 каждые 0.05с - 20 раз
+							//каждые 20 выпусков процесс можно повторить без потери заднего фронта
+							//количество необходимых каналов равно количеству пусков, которое в свою очередь
+							//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
+							if (timerNar8 >= 0.05*i & counterNar8 < 20 & i >= counterNar8)
+							{
+								if (!nar8[i])//Если объект не создан 
+									nar8[i] = new Sound;//Создаем объект
+								if (nar8[i])//Если объект создан - используем его
+								{
+									nar8[i]->initializeSound(localdata.p_nar_s8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);//Воспроизводим звук - записываем состояние звука в play
+									nar8[i]->soundOn = 0;
+								}
+								counterNar8++;
+							}
+						}
+						if (counterNar8 == 20)
+						{
+							counterNar8 = 0;
+							timerNar8 = 0;
+						}
+					}
+					else
+					{
+						for (int i = 0; i < 20; i++)
+						{
+							if (nar8[i])
+							{
+								alGetSourcei(nar8[i]->source[0], AL_SOURCE_STATE, &nar8[i]->sourceStatus[0]);
+								if (nar8[i]->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+									Free(nar8[i]);//Удаляем объект
+							}
+						}
 						timerNar8 = 0;
+						counterNar8 = 0;
 					}
 				}
-				else
+				//Если НАР13 имеется на борту
+				if (helicopter.rocketNar13Factor)
 				{
-					for (int i = 0; i < 20; i++)
+					if (localdata.p_nar_c13)//Условие создания объекта
 					{
-						if (nar8[i])
+						timerNar13 += Sound::deltaTime;
+						for (int i = 0; i < 5; i++)
 						{
-							alGetSourcei(nar8[i]->source[0], AL_SOURCE_STATE, &nar8[i]->sourceStatus[0]);
-							if (nar8[i]->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-								Free(nar8[i]);//Удаляем объект
-						}
-					}
-					timerNar8 = 0;
-					counterNar8 = 0;
-				}
-			}
-			//Если НАР13 имеется на борту
-			if (helicopter.rocketNar13Factor)
-			{
-				if (localdata.p_nar_c13)//Условие создания объекта
-				{
-					timerNar13 += Sound::deltaTime;
-					for (int i = 0; i < 5; i++)
-					{
-						//воспроизводим звук выстрела 1го НАР13 каждые 0.05с - 20 раз
-						//каждые 20 выпусков процесс можно повторить без потери заднего фронта
-						//количество необходимых каналов равно количеству пусков, которое в свою очередь
-						//зависит от промежуточного интервала и длинны записи звука выстрела НАР13
-						if (timerNar13 >= 0.12*i & counterNar13 < 5 & i >= counterNar13)
-						{
-							if (!nar13[i])//Если объект не создан 
-								nar13[i] = new Sound;//Создаем объект
-							if (nar13[i])//Если объект создан - используем его
+							//воспроизводим звук выстрела 1го НАР13 каждые 0.05с - 20 раз
+							//каждые 20 выпусков процесс можно повторить без потери заднего фронта
+							//количество необходимых каналов равно количеству пусков, которое в свою очередь
+							//зависит от промежуточного интервала и длинны записи звука выстрела НАР13
+							if (timerNar13 >= 0.12*i & counterNar13 < 5 & i >= counterNar13)
 							{
-								nar13[i]->initializeSound(localdata.p_nar_c13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);//Воспроизводим звук - записываем состояние звука в play
-								nar13[i]->soundOn = 0;
+								if (!nar13[i])//Если объект не создан 
+									nar13[i] = new Sound;//Создаем объект
+								if (nar13[i])//Если объект создан - используем его
+								{
+									nar13[i]->initializeSound(localdata.p_nar_c13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);//Воспроизводим звук - записываем состояние звука в play
+									nar13[i]->soundOn = 0;
+								}
+								counterNar13++;
 							}
-							counterNar13++;
 						}
-					}
-					if (counterNar13 == 5)
-					{
-						counterNar13 = 0;
-						timerNar13 = 0;
-					}
-				}
-				else
-				{
-					for (int i = 0; i < 5; i++)
-					{
-						if (nar13[i])
+						if (counterNar13 == 5)
 						{
-							alGetSourcei(nar13[i]->source[0], AL_SOURCE_STATE, &nar13[i]->sourceStatus[0]);
-							if (nar13[i]->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-								Free(nar13[i]);//Удаляем объект
+							counterNar13 = 0;
+							timerNar13 = 0;
 						}
 					}
-					timerNar13 = 0;
-					counterNar13 = 0;
-
-				}
-			}
-			//Если ППУ имеется на борту
-			if (helicopter.ppuFactor)
-			{
-				if (localdata.p_spo_ppu)//Условие создания объекта
-					if (!ppu)//Если объект не создан 
-						ppu = new Sound;//Создаем объект
-				if (ppu)//Если объект создан - используем его
-				{
-					ppu->initializeSound(localdata.p_spo_ppu, "NULL", helicopter.fullName["ppu"], "NULL", helicopter.ppuFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (ppu->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(ppu);//Удаляем объект
-				}
-			}
-			//Если УПК имеется на борту
-			if (helicopter.upkFactor)
-			{
-				if (localdata.p_spo_upk)//Условие создания объекта
-					if (!upk)//Если объект не создан 
-						upk = new Sound;//Создаем объект
-				if (upk)//Если объект создан - используем его
-				{
-					upk->initializeSound(localdata.p_spo_upk, "NULL", helicopter.fullName["upk"], "NULL", helicopter.upkFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (upk->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(upk);//Удаляем объект
-				}
-			}
-			//Если УР ШТУРМ имеется на борту
-			if (helicopter.rocketSturmFactor)
-			{
-				if (localdata.p_ur_ataka)//Условие создания объекта
-					if (!sturm)//Если объект не создан 
-						sturm = new Sound;//Создаем объект
-				if (sturm)//Если объект создан - используем его
-				{
-					sturm->initializeSound(localdata.p_ur_ataka, helicopter.fullName["sturm"], "NULL", "NULL", helicopter.rocketSturmFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (sturm->sourceStatus[0] != AL_PLAYING && !localdata.p_ur_ataka)//Условие удаления объекта
-						Free(sturm);//Удаляем объект
-				}
-			}
-			//Если УР ИГЛА имеется на борту
-			if (helicopter.rocketIglaFactor)
-			{
-				if (localdata.p_ur_igla)//Условие создания объекта
-					if (!igla)//Если объект не создан 
-						igla = new Sound;//Создаем объект
-				if (igla)//Если объект создан - используем его
-				{
-					igla->initializeSound(localdata.p_ur_igla, helicopter.fullName["igla"], "NULL", "NULL", helicopter.rocketIglaFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (igla->sourceStatus[0] != AL_PLAYING && !localdata.p_ur_igla)//Условие удаления объекта
-						Free(igla);//Удаляем объект
-				}
-			}
-			//Редуктор
-			if (helicopter.redFactor)
-			{
-				if (localdata.p_reduktor_gl_crash)//Условие создания объекта
-					if (!redCrash)//Если объект не создан 
-						redCrash = new Sound;//Создаем объект
-				if (redCrash)//Если объект создан - используем его
-				{
-					redCrash->initializeSound(localdata.p_reduktor_gl_crash, "NULL", helicopter.fullName["red_crash"], "NULL", helicopter.redFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (redCrash->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(redCrash);//Удаляем объект
-					else
-						redCrash->pitch = localdata.reduktor_gl_obor / helicopter.redTurnoverAvt / 2.;
-				}
-
-				if (localdata.p_eng1_zap | localdata.p_eng2_zap | localdata.reduktor_gl_obor > 0)//условие создания объекта редуктора
-					if (!red)//Если объект не создан 
-						red = new Reductor;//Создаем объект
-				if (red)//Если объект создан - используем его
-				{
-					red->channel[0] = 1;
-					red->channel[1] = 1;
-					red->Play(helicopter, localdata);//
-					if (red->sourceStatus[0] != AL_PLAYING && red->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.p_eng2_zap | localdata.reduktor_gl_obor > 0))//Условие удаления объекта
-						Free(red);//Удаляем объект
-				}
-
-			}
-			//Двигатель
-			if (helicopter.engFactor)
-			{
-				if (localdata.p_eng1_hp & localdata.eng1_obor != 0)//Условие создания объекта
-					if (!engHp[0])//Если объект не создан 
-						engHp[0] = new Sound;//Создаем объект
-				if (engHp[0])//Если объект создан - используем его
-				{
-					//eng_hp[0]->position = PosLeft;
-					engHp[0]->channel[0] = 1;
-					engHp[0]->channel[1] = 0;
-					if (localdata.p_eng1_zap | localdata.p_eng1_ostanov)
-					{
-						engHp[0]->initializeSound(localdata.p_eng1_hp & localdata.eng1_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
-					}
-					else
-						engHp[0]->initializeSound(localdata.p_eng1_hp & localdata.eng1_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (engHp[0]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng1_hp)//Условие удаления объекта
-						Free(engHp[0]);//Удаляем объект
-				}
-
-				if (localdata.p_eng2_hp & localdata.eng2_obor != 0)//Условие создания объекта
-					if (!engHp[1])//Если объект не создан 
-						engHp[1] = new Sound;//Создаем объект
-				if (engHp[1])//Если объект создан - используем его
-				{
-					//eng_hp[1]->position = PosRight;
-					engHp[1]->channel[0] = 0;
-					engHp[1]->channel[1] = 1;
-					if (localdata.p_eng2_zap | localdata.p_eng2_ostanov)
-					{
-						engHp[1]->initializeSound(localdata.p_eng2_hp & localdata.eng2_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
-					}
-					else
-						engHp[1]->initializeSound(localdata.p_eng2_hp & localdata.eng2_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (engHp[1]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng2_hp)//Условие удаления объекта
-						Free(engHp[1]);//Удаляем объект
-				}
-
-				if (localdata.p_eng1_pomp)//Условие создания объекта
-					if (!engPomp[0])//Если объект не создан 
-						engPomp[0] = new Sound;//Создаем объект
-				if (engPomp[0])//Если объект создан - используем его
-				{
-					//eng_pomp[0]->position = PosLeft;
-					engPomp[0]->channel[0] = 1;
-					engPomp[0]->channel[1] = 0;
-					engPomp[0]->initializeSound(localdata.p_eng1_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (engPomp[0]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng1_pomp)//Условие удаления объекта
-						Free(engPomp[0]);//Удаляем объект
-				}
-
-				if (localdata.p_eng2_pomp)//Условие создания объекта
-					if (!engPomp[1])//Если объект не создан 
-						engPomp[1] = new Sound;//Создаем объект
-				if (engPomp[1])//Если объект создан - используем его
-				{
-					//eng_pomp[1]->position = PosRight;
-					engPomp[1]->channel[0] = 0;
-					engPomp[1]->channel[1] = 1;
-					engPomp[1]->initializeSound(localdata.p_eng2_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (engPomp[1]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng2_pomp)//Условие удаления объекта
-						Free(engPomp[1]);//Удаляем объект
-				}
-
-				if (localdata.p_eng1_zap | localdata.eng1_obor > 0)
-					if (!eng[0])//Если объект не создан 
-						eng[0] = new Engine;//Создаем объект
-				if (eng[0])//Если объект создан - используем его
-				{
-					//eng[0]->position = PosLeft;
-					eng[0]->channel[0] = 1;//magic numbers
-					eng[0]->channel[1] = -1;//
-					eng[0]->Play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, localdata, helicopter);
-					if (eng[0]->sourceStatus[0] != AL_PLAYING && eng[0]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.eng1_obor > 0))//Условие удаления объекта
-						Free(eng[0]);//Удаляем объект
-				}
-
-				if (localdata.p_eng2_zap | localdata.eng2_obor > 0)
-					if (!eng[1])//Если объект не создан 
-						eng[1] = new Engine;//Создаем объект
-				if (eng[1])//Если объект создан - используем его
-				{
-					//eng[1]->position = PosRight;
-					eng[1]->channel[0] = 0;//magic numbers
-					eng[1]->channel[1] = 2;//
-					eng[1]->Play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.eng2_obor, localdata, helicopter);
-					if (eng[1]->sourceStatus[0] != AL_PLAYING && eng[1]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng2_zap | localdata.eng2_obor > 0))//Условие удаления объекта
-						Free(eng[1]);//Удаляем объект
-				}
-			}
-			//Перекрывной кран ВСУ
-			if (helicopter.vsuCraneFactor)
-			{
-				if (localdata.rez_1)//Условие создания объекта
-					if (!vsuKran)//Если объект не создан 
-						vsuKran = new Sound;//Создаем объект
-				if (vsuKran)//Если объект создан - используем его
-				{
-					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
-					{
-						vsuKran->initializeSound(localdata.rez_1, helicopter.fullName["vsu_kran_on"], "NULL", "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
-					}
 					else
 					{
-						vsuKran->initializeSound(localdata.rez_1, helicopter.fullName["vsu_kran_on"], helicopter.fullName["vsu_kran_w"], "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						for (int i = 0; i < 5; i++)
+						{
+							if (nar13[i])
+							{
+								alGetSourcei(nar13[i]->source[0], AL_SOURCE_STATE, &nar13[i]->sourceStatus[0]);
+								if (nar13[i]->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+									Free(nar13[i]);//Удаляем объект
+							}
+						}
+						timerNar13 = 0;
+						counterNar13 = 0;
+
 					}
-					if (vsuKran->sourceStatus[0] != AL_PLAYING && !localdata.rez_1)//Условие удаления объекта
-						Free(vsuKran);//Удаляем объект
 				}
-			}
-			//Зуммер
-			if (helicopter.buzzerFactor)
-			{
-				if (localdata.rez_7)//Условие создания объекта
-					if (!beep)//Если объект не создан 
-						beep = new Sound;//Создаем объект
-				if (beep)//Если объект создан - используем его
+				//Если ППУ имеется на борту
+				if (helicopter.ppuFactor)
 				{
-					beep->initializeSound(localdata.rez_7, "NULL", helicopter.fullName["beep"], "NULL", helicopter.buzzerFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (beep->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(beep);//Удаляем объект
-				}
-			}
-			//Вентилятор
-			if (helicopter.fenFactor)
-			{
-				if (localdata.rez_5)//Условие создания объекта
-					if (!undefined0)//Если объект не создан 
-						undefined0 = new Sound;//Создаем объект
-				if (undefined0)//Если объект создан - используем его
-				{
-					undefined0->initializeSound(localdata.rez_5, helicopter.fullName["undefined0_on"], helicopter.fullName["undefined0_w"], "NULL", helicopter.fenFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (undefined0->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(undefined0);//Удаляем объект
-				}
-			}
-			//Неопределенный 1
-			if (helicopter.undefinedFactor)
-			{
-				if (helicopter.modelName == "mi_28")
-				{
-					if (localdata.rez_6)//Условие создания объекта
-						if (!undefined1)//Если объект не создан 
-							undefined1 = new Sound;//Создаем объект
-					if (undefined1)//Если объект создан - используем его
+					if (localdata.p_spo_ppu)//Условие создания объекта
+						if (!ppu)//Если объект не создан 
+							ppu = new Sound;//Создаем объект
+					if (ppu)//Если объект создан - используем его
 					{
-						undefined1->initializeSound(localdata.rez_6, "NULL", helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (undefined1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-							Free(undefined1);//Удаляем объект
+						ppu->initializeSound(localdata.p_spo_ppu, "NULL", helicopter.fullName["ppu"], "NULL", helicopter.ppuFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (ppu->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(ppu);//Удаляем объект
 					}
 				}
-				else if (helicopter.modelName == "ka_29")
+				//Если УПК имеется на борту
+				if (helicopter.upkFactor)
 				{
-					if (localdata.rez_6)//Условие создания объекта
-						if (!undefined1)//Если объект не создан 
-							undefined1 = new Sound;//Создаем объект
-					if (undefined1)//Если объект создан - используем его
+					if (localdata.p_spo_upk)//Условие создания объекта
+						if (!upk)//Если объект не создан 
+							upk = new Sound;//Создаем объект
+					if (upk)//Если объект создан - используем его
 					{
-						undefined1->initializeSound(localdata.rez_6, helicopter.fullName["undefined1_on"], helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (undefined1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-							Free(undefined1);//Удаляем объект
+						upk->initializeSound(localdata.p_spo_upk, "NULL", helicopter.fullName["upk"], "NULL", helicopter.upkFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (upk->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(upk);//Удаляем объект
 					}
 				}
+				//Если УР ШТУРМ имеется на борту
+				if (helicopter.rocketSturmFactor)
+				{
+					if (localdata.p_ur_ataka)//Условие создания объекта
+						if (!sturm)//Если объект не создан 
+							sturm = new Sound;//Создаем объект
+					if (sturm)//Если объект создан - используем его
+					{
+						sturm->initializeSound(localdata.p_ur_ataka, helicopter.fullName["sturm"], "NULL", "NULL", helicopter.rocketSturmFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (sturm->sourceStatus[0] != AL_PLAYING && !localdata.p_ur_ataka)//Условие удаления объекта
+							Free(sturm);//Удаляем объект
+					}
+				}
+				//Если УР ИГЛА имеется на борту
+				if (helicopter.rocketIglaFactor)
+				{
+					if (localdata.p_ur_igla)//Условие создания объекта
+						if (!igla)//Если объект не создан 
+							igla = new Sound;//Создаем объект
+					if (igla)//Если объект создан - используем его
+					{
+						igla->initializeSound(localdata.p_ur_igla, helicopter.fullName["igla"], "NULL", "NULL", helicopter.rocketIglaFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (igla->sourceStatus[0] != AL_PLAYING && !localdata.p_ur_igla)//Условие удаления объекта
+							Free(igla);//Удаляем объект
+					}
+				}
+				//Редуктор
+				if (helicopter.redFactor)
+				{
+					if (localdata.p_reduktor_gl_crash)//Условие создания объекта
+						if (!redCrash)//Если объект не создан 
+							redCrash = new Sound;//Создаем объект
+					if (redCrash)//Если объект создан - используем его
+					{
+						redCrash->initializeSound(localdata.p_reduktor_gl_crash, "NULL", helicopter.fullName["red_crash"], "NULL", helicopter.redFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (redCrash->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(redCrash);//Удаляем объект
+						else
+							redCrash->pitch = localdata.reduktor_gl_obor / helicopter.redTurnoverAvt / 2.;
+					}
+
+					if (localdata.p_eng1_zap | localdata.p_eng2_zap | localdata.reduktor_gl_obor > 0)//условие создания объекта редуктора
+						if (!red)//Если объект не создан 
+							red = new Reductor;//Создаем объект
+					if (red)//Если объект создан - используем его
+					{
+						red->channel[0] = 1;
+						red->channel[1] = 1;
+						red->Play(helicopter, localdata);//
+						if (red->sourceStatus[0] != AL_PLAYING && red->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.p_eng2_zap | localdata.reduktor_gl_obor > 0))//Условие удаления объекта
+							Free(red);//Удаляем объект
+					}
+
+				}
+				//Двигатель
+				if (helicopter.engFactor)
+				{
+					if (localdata.p_eng1_hp & localdata.eng1_obor != 0)//Условие создания объекта
+						if (!engHp[0])//Если объект не создан 
+							engHp[0] = new Sound;//Создаем объект
+					if (engHp[0])//Если объект создан - используем его
+					{
+						//eng_hp[0]->position = PosLeft;
+						engHp[0]->channel[0] = 1;
+						engHp[0]->channel[1] = 0;
+						if (localdata.p_eng1_zap | localdata.p_eng1_ostanov)
+						{
+							engHp[0]->initializeSound(localdata.p_eng1_hp & localdata.eng1_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
+						}
+						else
+							engHp[0]->initializeSound(localdata.p_eng1_hp & localdata.eng1_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (engHp[0]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng1_hp)//Условие удаления объекта
+							Free(engHp[0]);//Удаляем объект
+					}
+
+					if (localdata.p_eng2_hp & localdata.eng2_obor != 0)//Условие создания объекта
+						if (!engHp[1])//Если объект не создан 
+							engHp[1] = new Sound;//Создаем объект
+					if (engHp[1])//Если объект создан - используем его
+					{
+						//eng_hp[1]->position = PosRight;
+						engHp[1]->channel[0] = 0;
+						engHp[1]->channel[1] = 1;
+						if (localdata.p_eng2_zap | localdata.p_eng2_ostanov)
+						{
+							engHp[1]->initializeSound(localdata.p_eng2_hp & localdata.eng2_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
+						}
+						else
+							engHp[1]->initializeSound(localdata.p_eng2_hp & localdata.eng2_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (engHp[1]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng2_hp)//Условие удаления объекта
+							Free(engHp[1]);//Удаляем объект
+					}
+
+					if (localdata.p_eng1_pomp)//Условие создания объекта
+						if (!engPomp[0])//Если объект не создан 
+							engPomp[0] = new Sound;//Создаем объект
+					if (engPomp[0])//Если объект создан - используем его
+					{
+						//eng_pomp[0]->position = PosLeft;
+						engPomp[0]->channel[0] = 1;
+						engPomp[0]->channel[1] = 0;
+						engPomp[0]->initializeSound(localdata.p_eng1_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (engPomp[0]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng1_pomp)//Условие удаления объекта
+							Free(engPomp[0]);//Удаляем объект
+					}
+
+					if (localdata.p_eng2_pomp)//Условие создания объекта
+						if (!engPomp[1])//Если объект не создан 
+							engPomp[1] = new Sound;//Создаем объект
+					if (engPomp[1])//Если объект создан - используем его
+					{
+						//eng_pomp[1]->position = PosRight;
+						engPomp[1]->channel[0] = 0;
+						engPomp[1]->channel[1] = 1;
+						engPomp[1]->initializeSound(localdata.p_eng2_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (engPomp[1]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng2_pomp)//Условие удаления объекта
+							Free(engPomp[1]);//Удаляем объект
+					}
+
+					if (localdata.p_eng1_zap | localdata.eng1_obor > 0)
+						if (!eng[0])//Если объект не создан 
+							eng[0] = new Engine;//Создаем объект
+					if (eng[0])//Если объект создан - используем его
+					{
+						//eng[0]->position = PosLeft;
+						eng[0]->channel[0] = 1;//magic numbers
+						eng[0]->channel[1] = -1;//
+						eng[0]->Play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, localdata, helicopter);
+						if (eng[0]->sourceStatus[0] != AL_PLAYING && eng[0]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.eng1_obor > 0))//Условие удаления объекта
+							Free(eng[0]);//Удаляем объект
+					}
+
+					if (localdata.p_eng2_zap | localdata.eng2_obor > 0)
+						if (!eng[1])//Если объект не создан 
+							eng[1] = new Engine;//Создаем объект
+					if (eng[1])//Если объект создан - используем его
+					{
+						//eng[1]->position = PosRight;
+						eng[1]->channel[0] = 0;//magic numbers
+						eng[1]->channel[1] = 2;//
+						eng[1]->Play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.eng2_obor, localdata, helicopter);
+						if (eng[1]->sourceStatus[0] != AL_PLAYING && eng[1]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng2_zap | localdata.eng2_obor > 0))//Условие удаления объекта
+							Free(eng[1]);//Удаляем объект
+					}
+				}
+				//Перекрывной кран ВСУ
+				if (helicopter.vsuCraneFactor)
+				{
+					if (localdata.rez_1)//Условие создания объекта
+						if (!vsuKran)//Если объект не создан 
+							vsuKran = new Sound;//Создаем объект
+					if (vsuKran)//Если объект создан - используем его
+					{
+						if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
+						{
+							vsuKran->initializeSound(localdata.rez_1, helicopter.fullName["vsu_kran_on"], "NULL", "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						}
+						else
+						{
+							vsuKran->initializeSound(localdata.rez_1, helicopter.fullName["vsu_kran_on"], helicopter.fullName["vsu_kran_w"], "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						}
+						if (vsuKran->sourceStatus[0] != AL_PLAYING && !localdata.rez_1)//Условие удаления объекта
+							Free(vsuKran);//Удаляем объект
+					}
+				}
+				//Зуммер
+				if (helicopter.buzzerFactor)
+				{
+					if (localdata.rez_7)//Условие создания объекта
+						if (!beep)//Если объект не создан 
+							beep = new Sound;//Создаем объект
+					if (beep)//Если объект создан - используем его
+					{
+						beep->initializeSound(localdata.rez_7, "NULL", helicopter.fullName["beep"], "NULL", helicopter.buzzerFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (beep->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(beep);//Удаляем объект
+					}
+				}
+				//Вентилятор
+				if (helicopter.fenFactor)
+				{
+					if (localdata.rez_5)//Условие создания объекта
+						if (!undefined0)//Если объект не создан 
+							undefined0 = new Sound;//Создаем объект
+					if (undefined0)//Если объект создан - используем его
+					{
+						undefined0->initializeSound(localdata.rez_5, helicopter.fullName["undefined0_on"], helicopter.fullName["undefined0_w"], "NULL", helicopter.fenFactor);//Воспроизводим звук - записываем состояние звука в play
+						if (undefined0->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+							Free(undefined0);//Удаляем объект
+					}
+				}
+				//Неопределенный 1
+				if (helicopter.undefinedFactor)
+				{
+					if (helicopter.modelName == "mi_28")
+					{
+						if (localdata.rez_6)//Условие создания объекта
+							if (!undefined1)//Если объект не создан 
+								undefined1 = new Sound;//Создаем объект
+						if (undefined1)//Если объект создан - используем его
+						{
+							undefined1->initializeSound(localdata.rez_6, "NULL", helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
+							if (undefined1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+								Free(undefined1);//Удаляем объект
+						}
+					}
+					else if (helicopter.modelName == "ka_29")
+					{
+						if (localdata.rez_6)//Условие создания объекта
+							if (!undefined1)//Если объект не создан 
+								undefined1 = new Sound;//Создаем объект
+						if (undefined1)//Если объект создан - используем его
+						{
+							undefined1->initializeSound(localdata.rez_6, helicopter.fullName["undefined1_on"], helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
+							if (undefined1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+								Free(undefined1);//Удаляем объект
+						}
+					}
+				}
+				printProgrammStatus(localdata);//Выводим состояние программы
 			}
-			printProgrammStatus(localdata);//Выводим состояние программы
 		}
 		else
 		{
