@@ -298,9 +298,8 @@ int main(int argc, char *argv[])
 			//Копируем данные из общей памяти во временное хранилище
 			localdata = soundread;
 			//Если пришел признак остановки модели или время установлено в 0 - предовращаем вычисление переменных
-			if (localdata.time == 0 || Sound::currentTime == 0 || localdata.p_model_stop)
+			if (localdata.p_model_stop)
 			{
-				Sound::currentTime = localdata.time;
 				vectorHigh.clear();
 				vectorVy.clear();
 				vectorVx.clear();
@@ -309,16 +308,15 @@ int main(int argc, char *argv[])
 				vectorTime.clear();
 				if (eng[0])
 				{
-					eng[0]->vector.clear();
+					Free(eng[0]);
 				}
 				if (eng[1])
 				{
-					eng[1]->vector.clear();
+					Free(eng[1]);
 				}
 				if (red)
 				{
-					red->vector.clear();
-					red->vectorStep.clear();
+					Free(red);
 				}
 				periodCalc = 0;
 			}
