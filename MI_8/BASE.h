@@ -114,6 +114,7 @@ public:
 	float accelerationGain = 0;
 	float turnGain = 0;
 	float highFreqTurnGain = 0;
+	float multiplierStep = 0.3;
 
 	float takeoffStep = 8;
 	string pinkNoise;
