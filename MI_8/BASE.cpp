@@ -17,6 +17,7 @@
 #include "map"
 #include "regex"
 #include "tlhelp32.h"
+#include "memory"
 
 #include "AL\al.h"
 #include "AL\alc.h"
@@ -57,101 +58,9 @@ float Sound::derivStep = 0;
 float Sound::calcA = 0;
 
 AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_2;//Конфигурация каналов звука
-
-/*!\brief Очищает объекты OpenAL*/
-void freeOpenAL();
-/*!
-\brief Возвращает Pitch
-\details Возвращает Pitch оценивая значения parameter из базы filename,которая хранит
-значения parameter при записи аудиофайла относительно начала записи offset, и входящего параметра parameter
-Например: при значении оборотов редуктора равного 60% на 32 секунде проигрывания файла, вернет значение pitch = 60/59
-т.к. в базе значений, при записи, на 32 секунде редуктор имел 59% оборотов
-если реальное и базовое значения отступа от начала в секундах, не совпадают - применяется квадратичная интерполяция
-\param[in] offset Время от начала проигрывания записи
-\param[in] filename Путь к файлу с переходной функцией
-\param[in] parameter Значение параметра
-\return Возвращает значение высоты звука
-*/
-float getPitch(float offset, string filename, float parameter);
-/*!
-\brief Возвращает Offset
-\details Возвращает время в секундах на которое необходимо сделать отступ от начала проигрывания звука учитывая переходную функцию параметра
-, его значение в данный момент, и отличие реальной кривой от эталонной.
-\param[in] pitch Отношение значения реального параметра и его значения при получении переходной функции
-\param[in] filename Путь к файлу с переходной функцией
-\param[in] parameter Значение параметра
-\return Время отступа в секундах
-*/
-float getOffset(float pitch, string filename, float parameter);
-/*!
-\brief Производит Crossfade
-\details Осуществляет плавный переход 1ой записи в другую путем уменьшения громкости 1ой записи и повышения громкости другой, по мере изменения параметра
-от значения limit1 к limit2.
-Если громкость звуков изменяется не в границах [0..1], то стоит указать множитель громкости - т.е. предельная громкость начастающей записи
-\param[in] source id Затухающего источника
-\param[in] source2 id Нарастающего источника
-\param[in] parameter Значение параметра
-\param[in] limit1 Значение параметра, при уровне громкости затухающей записи равном 1
-\param[in] limit2 Значение параметра, при уровне громкости Нарастающей записи равном 1
-\param[in] mult Множитель громкости записей
-\return 1 ,если громкость затухающей записи равняется 0, а нарастающей 1 
-*/
-int crossFade(float *gf, float *gr, float parameter, float limit1, float limit2,float mult);
-/*!\brief Определяет указатели на функции расширений EFX*/
-void setEFXPointers();
-/*!
-\brief Вычисляет квадратную интерполяцию
-\details Вычисляет интерполяцию для fx в точке x,на отрезке [x0,x2], при определенных неодинаковых x0,x1,x2 и известных fx0,fx1,fx2, если x0=x1 или x1=x2
-вычисляется линейная интерполяция
-
-Код вычисления интерполяции:
-\code
-a2 = ((fx2 - fx0) / ((x2 - x0)*(x2 - x1))) - ((fx1 - fx0) / ((x1 - x0)*(x2 - x1)));
-a1 = ((fx1 - fx0) / (x1 - x0)) - (a2*(x1 + x0));
-a0 = fx0 - a1 * x0 - a2 * x0*x0;
-return fx = a0 + a1 * x + a2*x*x;
-\endcode
-
-\param[in] x0 Абсцисса 1ой точки
-\param[in] fx0 Ордината 1ой точки
-\param[in] x1 Абсцисса 2ой точки
-\param[in] fx1 Ордината 2ой точки
-\param[in] x2 Абсцисса 3ой точки
-\param[in] fx2 Ордината 3ой точки
-\param[in] x Абсцисса искомой fx
-\return Значение fx в точке x
-*/
-float squareInterpolation(float x0, float fx0, float x1, float fx1, float x2, float fx2, float x);
-/*!
-\brief Вычисляет линейную интерполяцию
-\details В точках x>x1 и x<x0 - возвращает граничные значения
-
-Код вычисления интерполяции:
-\code
-fx = fx0 + ((fx1 - fx0) / (x1 - x0))*(x - x0);
-\endcode
-
-\param[in] x0 Абсцисса 1ой точки
-\param[in] fx0 Ордината 1ой точки
-\param[in] x1 Абсцисса 2ой точки
-\param[in] fx1 Ордината 2ой точки
-\param[in] x Абсцисса искомой fx
-\return Значение fx в точке x
-*/
-float lineInterpolation(float x0, float fx0, float x1, float fx1, float x);
-/*!\brief Функция отладки*/
-void printProgrammStatus(SOUNDREAD srd);
-/*!
-\brief Возвращает максимальное количество доступных источников
-
-\return максимальное количество доступных источников, 0 в случае ошибки
-*/
-int getMaxAvaliableSources();
-//Вычисляет атаку (Угол атаки несущего винта — угол между направлением воздушного потока (противоположным направлению полета) и плоскостью вращения втулки несущего винта. Этот угол может иметь любое значение (от —180° до +180°) в зависимости от направления полета.
-//Если воздушный поток подходит к плоскости вращения винта снизу(автожирный режим), то угол атаки несущего винта считается положительным.Если воздушный поток набегает на несущий винт сверху, то угол атаки принимается отрицательным.)
-float attack(float velocityX, float velocityXPrevious, float tangaz, float deltaHigh, float periodCalc);
-
-bool IsProcessPresent(wchar_t * szExe);
+vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime;
+float window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
+float periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
 
 /*!\brief Основная функция программы*/
 int main(int argc, char *argv[])
@@ -276,9 +185,8 @@ int main(int argc, char *argv[])
 	Sound *vpryam = nullptr;
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
-	float window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
-	float periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
-	vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime;
+	
+
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (1)
 	{
@@ -320,32 +228,33 @@ int main(int argc, char *argv[])
 					Free(vintFlap);
 				}
 				periodCalc = 0;
+				Sound::currentTime = localdata.time;
 			}
 			else
 			{
+				if (Sound::currentTime == 0)
+					Sound::currentTime = localdata.time;
 				//Вычисляем изменение времени с прошлого цикла работы программы
 				Sound::deltaTime = localdata.time - Sound::currentTime;
 				Sound::currentTime = localdata.time;
 				Sound::masterGain = localdata.master_gain;
 				Sound::tangaz = localdata.osadki;//тангаж (временно используем параметр инт осадков)
-				Sound::velocityX = abs(localdata.v);//приборная скорость
+				Sound::velocityX = localdata.v;//приборная скорость
 				Sound::high = localdata.styk_hv;
 				Sound::step = localdata.ny; //шаг (временно используем параметр перегрузки)
 				//Если не пришел признак остановки модели - вычисляем переменные
-				if (periodCalc >= window)
+				while (periodCalc >= window && vectorTime.size() > 2)
 				{
-					for (int i = 0; i < 2; i++)
+					if (!vectorTime.empty())
 					{
-						if (!vectorTime.empty())
-						{
-							vectorHigh.erase(vectorHigh.begin());
-							vectorVy.erase(vectorVy.begin());
-							vectorVx.erase(vectorVx.begin());
-							vectorAcc.erase(vectorAcc.begin());
-							vectorStep.erase(vectorStep.begin());
-							vectorTime.erase(vectorTime.begin());
-						}
+						vectorHigh.erase(vectorHigh.begin());
+						vectorVy.erase(vectorVy.begin());
+						vectorVx.erase(vectorVx.begin());
+						vectorAcc.erase(vectorAcc.begin());
+						vectorStep.erase(vectorStep.begin());
+						vectorTime.erase(vectorTime.begin());
 					}
+					periodCalc = Sound::currentTime - vectorTime.front();
 				}
 				vectorTime.push_back(Sound::currentTime);
 				vectorHigh.push_back(Sound::high);
@@ -840,7 +749,7 @@ int main(int argc, char *argv[])
 								Free(runway);//Удаляем объект
 							else
 							{
-								runway->gain = Sound::masterGain * lineInterpolation(0, 0, 13.8, 1, localdata.v) * helicopter.runwayFactor;
+								runway->gain = Sound::masterGain * lineInterpolation(0, 0, 13.8, 1, abs(localdata.v)) * helicopter.runwayFactor;
 							}
 						}
 					}
@@ -1248,8 +1157,8 @@ int main(int argc, char *argv[])
 					if (eng[0])//Если объект создан - используем его
 					{
 						//eng[0]->position = PosLeft;
-						eng[0]->channel[0] = 1;//magic numbers
-						eng[0]->channel[1] = -1;//
+						eng[0]->channel[0] = 1;//magic numbers//1
+						eng[0]->channel[1] = -1;//-1
 						eng[0]->Play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, localdata, helicopter);
 						if (eng[0]->sourceStatus[0] != AL_PLAYING && eng[0]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.eng1_obor > 0))//Условие удаления объекта
 							Free(eng[0]);//Удаляем объект
@@ -1345,7 +1254,17 @@ int main(int argc, char *argv[])
 				//printProgrammStatus(localdata);//Выводим состояние программы
 				if (eng[0] && eng[1] && red)
 				{
-					printf(" sz: %i e1p: %.3f e2p: %.3f rp: %.3f\t\t\t\t\t\t\r", vectorTime.size(), eng[0]->pitch, eng[1]->pitch,red->pitch);
+					//printf(" sz: %i e1p: %.3f e2p: %.3f rp: %.3f\t\t\t\t\t\t\r", vectorTime.size(), eng[0]->pitch, eng[1]->pitch,red->pitch);
+					if (!vintFlap)
+						printf(" Acc = %8.3f AccVy = %8.3f calcA = %8.3f vY = %8.3f vX = %8.3f tangaz = %8.3f Dash = %8.3f vectorTime.size() = %i avrcps = %i avrcp = %i front = %8.3f time = %8.3f \t\t\t\r", Sound::accelerationX, Sound::accelerationVy, Sound::calcA, Sound::velocityY, Sound::velocityX, Sound::tangaz, Sound::dash, vectorTime.size(), red->vectorStep.size(), red->vector.size(), vectorTime.front(), Sound::currentTime);
+					else
+					{
+						if (vintFlap->flapIndicator)
+							printf(" Acc = %8.3f AccVy = %8.3f calcA = %8.3f vY = %8.3f vX = %8.3f tangaz = %8.3f Dash = %8.3f vectorTime.size() = %i avrcps = %i avrcp = %i front = %8.3f time = %8.3f  FLAPPPS!!!\t\t\t\r", Sound::accelerationX, Sound::accelerationVy, Sound::calcA, Sound::velocityY, Sound::velocityX, Sound::tangaz, Sound::dash, vectorTime.size(), red->vectorStep.size(), red->vector.size(), vectorTime.front(), Sound::currentTime);
+						else
+							printf(" Acc = %8.3f AccVy = %8.3f calcA = %8.3f vY = %8.3f vX = %8.3f tangaz = %8.3f Dash = %8.3f vectorTime.size() = %i avrcps = %i avrcp = %i front = %8.3f time = %8.3f \t\t\t\r", Sound::accelerationX, Sound::accelerationVy, Sound::calcA, Sound::velocityY, Sound::velocityX, Sound::tangaz, Sound::dash, vectorTime.size(), red->vectorStep.size(), red->vector.size(), vectorTime.front(), Sound::currentTime);
+
+					}
 				}
 
 			}
@@ -2924,42 +2843,31 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			vectorElemSumm = 0;
 
 
-			
+			float velocityGain2 = 0;
 			//усиление от скорости выше 50км/ч
-			if (velocityX < 70)
+			if (abs(velocityX) < 70)
 			{
-				velocityGain = squareInterpolation(14, 0, 42, 4, 70, 8, velocityX);
+				velocityGain = squareInterpolation(14, 0, 42, 4, 70, 8, abs(velocityX));
 			}
 			else
 			{
-				velocityGain = 8 + (velocityX - 70) * 0.142;
+				velocityGain = 8 + (abs(velocityX) - 70) * 0.142;
 			}
 
 			//усиление от скорости выше 50км/ч
-			float velocityGain2 = 0;
-			if (velocityX < 70)
+			if (abs(velocityX) < 70)
 			{
-				velocityGain2 = squareInterpolation(14, 0, 42, 3, 70, 6, velocityX);
+				velocityGain2 = squareInterpolation(14, 0, 42, 3, 70, 6, abs(velocityX));
 			}
 			else
 			{
-				velocityGain2 = 6 + (velocityX - 70) * 0.107;
+				velocityGain2 = 6 + (abs(velocityX) - 70) * 0.107;
 			}
-			
-			////на посадке множитель ниже, но не на взлете
-			//if (velocityY <= 0 && high < 10)
-			//{
-			//	multiplierStep = lineInterpolation(10, 1, 5, 0.5, high);
-			//}
-			//else if (derivStep > 0)
-			//{
-			//	multiplierStep = 1;
-			//}
 
 			//усиление от шага
 			if (high > 0)
 			{
-				if (averangeCalcPeriodStep >= 20 && !vectorStep.empty())
+				if (averangeCalcPeriodStep >= 50 && !vectorStep.empty())// 20 -> 50
 					vectorStep.erase(vectorStep.begin());
 				vectorStep.push_back(step);
 				for (auto& x : vectorStep)
@@ -2967,24 +2875,31 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				averangeStep = vectorElemSummStep / vectorStep.size();
 				vectorElemSummStep = 0;
 			}
-			stepGain = (step - averangeStep) * lineInterpolation(0, 0, 1, 1, high)/* * multiplierStep*/;//
+			stepGain = (step - averangeStep) * lineInterpolation(0, 0, 1, 1, high);
 
 			//усиление по шагу в НЧ
-			mid2FreqStepGain = step * 0.3/* * multiplierStep */* lineInterpolation(0, 1, 5, 0, high);//~3дб
-			
+			mid2FreqStepGain = step * 0.2 * lineInterpolation(0, 1, 5, 0, high);//0.3 -> 0.2
+
 			//усиление по шагу в Средних чатотах
-			//float absStepGain = (step >= 12) ? (step - 12)/*взлетный шаг*/ : 0;
+			float absStepGain = step * squareInterpolation(0, 1, 10.5, 0.5, 21, 0, abs(velocityX));
 
 			//усиление от оборотов выше 10000
-			highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1.5;
+			highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1;
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 			//усиление от оборотов
 			turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+			//усиление НЧ когда нет хлопков на границе 2го условия
+			float flapCGain = squareInterpolation(-0.56,0 ,-1.23, 1 ,-2 , 2, accelerationX) * squareInterpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY);//переходит в усиление нч по vy
 
-			lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + mid2FreqStepGain + velocityGain)*0.05);
-			mid1FreqGain = pow(10, (turnGain + stepGain * 0.5 + mid2FreqStepGain  /*+ absStepGain * 0.2*/)*0.05);
-			mid2FreqGain = pow(10, (turnGain + stepGain * 0.5 + velocityGain2 /*+ absStepGain * 0.4*/)*0.05);
-			highFreqGain = pow(10, (turnGain + stepGain * 0.3 + highFreqTurnGain)*0.05);
+			lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain + flapCGain + velocityGain)*0.05); //0.15 -> 0.15
+			mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.15 + mid2FreqStepGain + flapCGain)*0.05);//0.3 -> 0.2
+			mid2FreqGain = pow(10, (turnGain + stepGain * 0.3 + absStepGain * 0.1 + velocityGain2)*0.05);//0.4 -> 0.3
+			highFreqGain = pow(10, (turnGain + stepGain * 0.5 + absStepGain * 0.3 + highFreqTurnGain)*0.05);//
+
+			lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
+			mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
+			mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
+			highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
 
 			lowCutoffFreq = 400;//НЧ 50-800
 			mid1CutoffFreq = 1000;//Куппол 1 200-3000
@@ -3014,7 +2929,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				fclose(fred);
 				outputPeriod = 0;
 			}
-			//printf("step = %10.3f multiplierStep = %10.3f stepGain = %10.3f mid2FreqStepGain = %10.3f pinkNoiseGain = %10.3f deltaTime = %10.3f\r", step, multiplierStep, stepGain, mid2FreqStepGain, pinkNoiseGain, deltaTime);
+			//printf("step = %10.3f averangeStep = %10.3f turnGain = %10.3f stepGain = %10.3f absStepGain = %10.3f mid2FreqStepGain = %10.3f\r", step, averangeStep, turnGain, stepGain, absStepGain, mid2FreqStepGain);
 		}
 	}
 	return 1;
@@ -3476,7 +3391,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 			lowCutoffFreq = AL_EQUALIZER_DEFAULT_LOW_CUTOFF;
 			mid1CutoffFreq = AL_EQUALIZER_DEFAULT_MID1_CENTER;
 			mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;
-			highCutoffFreq = 12000;
+			highCutoffFreq = 10000;
 
 			for (size_t i = 0; i < 2; i++)
 			{
@@ -3832,7 +3747,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		//
 		if (accelerationX > accelerationXBorder && velocityY > velocityYBorder)//4
 		{
-			if ((accelerationX > 0.56) & ((velocityY > 2) | ((velocityX > 50) & (step > 20))))
+			if ((accelerationX > 0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
 			{
 				flapIndicator = 4;
 			}
@@ -3891,7 +3806,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		accelerationGain = (accelerationGain > 5) ? (-1)*((3 * accelerationX) - 15) : (3 * accelerationX) - 15;//дб
 		accelerationGain = pow(10, accelerationGain * 0.05);//коэф
 
-		hiSpeedGain = lineInterpolation(50, 0, 66.66, 1, velocityX);/*Ниже 200кмч хлопки от ускорения, выше - в любом случае*/
+		hiSpeedGain = lineInterpolation(50, 0, 66.66, 1, abs(velocityX));/*Ниже 200кмч хлопки от ускорения, выше - в любом случае*/
 
 		resFlapCGain = (hiSpeedGain > accelerationGain) ? hiSpeedGain : accelerationGain;
 
@@ -3900,7 +3815,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			turnsGain = (91 - sr.reduktor_gl_obor) * (-3);//рассчитываем усиление от оборотов винта - 3дб на оборот
 		}
 		//Условия затухания хлопков
-		float off = (accelerationX < 0) ? lineInterpolation(14, 1, 0, 0, velocityX) : ((velocityX < 14) ? 0 : 1);
+		float off = (accelerationX < 0) ? lineInterpolation(14, 1, 0, 0, abs(velocityX)) : ((abs(velocityX < 14)) ? 0 : 1);
 
 		float flapA = (accelerationX <= accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
 		float flapB = (accelerationX > accelerationXBorder) ? 1 : 0;//условие неравномерных хлопков
@@ -3910,7 +3825,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		float flapCStep = 0;
 		crossFade(&flapCStep, &flapABStep, step, 8, 12, 1);
 		//убираем эффект шага на вид хлопков по скорости, так как этот параметр более приоритетный
-		if (velocityX < 14)
+		if (abs(velocityX) < 14)
 		{
 			flapABStep = 1;
 			flapCStep = 1;
@@ -3918,11 +3833,18 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		//Плавный переход между НЧ и ВЧ хлопками по скорости
 		float flapABVX = 0;
 		float flapCVX = 0;
-		crossFade(&flapCVX, &flapABVX, velocityX, 12.6, 14, 1);
+		crossFade(&flapCVX, &flapABVX, abs(velocityX), 12.6, 14, 1);
+		
+		//При втором условии используем ускорение в качестве переходной функции хлопков
+		float flapCGainAccX = 1;
+		if (flapIndicator == 2 && velocityX < 14)
+		{
+			flapCGainAccX = squareInterpolation(-0.56, 0, -1.03, 0.5, -1.5, 1, accelerationX) * squareInterpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY);//переходит в усиление нч по vy
+		}
 
 		float flapAGain = flapA * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
 		float flapBGain = flapB * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
-		float flapCGain = ((flapIndicator) ? (flapCStep * flapCVX * offsetOn * off * pow(10, turnsGain*0.05) * masterGain * h.vintFlapFactor) : (masterGain * h.vintFlapFactor * (1 - offsetOn) * resFlapCGain * off)) * 1.5/*усиливаем тупые хлопки*/;
+		float flapCGain = ((flapIndicator) ? (flapCGainAccX * flapCStep * flapCVX * offsetOn /** off */* pow(10, turnsGain*0.05) * masterGain * h.vintFlapFactor) : (masterGain * h.vintFlapFactor * (1 - offsetOn) * resFlapCGain * off)) * 1.5/*усиливаем тупые хлопки*/;
 
 		alSourcef(source[0], AL_GAIN, flapAGain);//равномерные
 		alSourcef(source[1], AL_GAIN, flapBGain);//неравномерные
@@ -3930,7 +3852,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 												 //Выводим данные в файлы раз в установленный период
 		outputPeriod += deltaTime;
-		if (outputPeriod >= 0.01)
+		if (outputPeriod >= 1)
 		{
 			fflaps = fopen("flap.txt", "at");
 			fprintf(fflaps, "%i\t%f\t%f\t%f\t%f\t%f\n", flapIndicator, flapAGain, flapBGain, flapCGain, calcA, soundread.time);
@@ -3938,6 +3860,9 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			fderiv = fopen("der.txt", "at");
 			fprintf(fderiv, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", accelerationX, dash, velocityY, accelerationVy, derivStep, calcA, soundread.time);
 			fclose(fderiv);
+			ffront = fopen("front.txt", "at");
+			fprintf(ffront, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", accelerationX, vectorVx.front(),velocityX,periodCalc,vectorTime.front(),currentTime,soundread.time);
+			fclose(ffront);
 			outputPeriod = 0;
 		}
 		//printf(" Acc = %8.3f AccVy = %8.3f calcA = %8.3f vY = %8.3f vX = %8.3f tangaz = %8.3f Dash = %8.3f flapI = %i flap_a = %1.3f flap_b= %1.3f flap_c = %1.3f offset = %1.3f \r", accelerationX, accelerationVy, calcA, velocityY, velocityX, tangaz, dash, flapIndicator, flapAGain, flapBGain, flapCGain, offsetOn);
@@ -3979,9 +3904,9 @@ int Runway::Play(Helicopter h, SOUNDREAD sr)
 	}
 
 	float fade, rise;
-	crossFade(&fade, &rise, velocityX, 8.33, 13.88, masterGain * h.runwayFactor);
-	alSourcef(source[1], AL_GAIN, fade * lineInterpolation(0, 0, 8.33, 1, velocityX));//
-	alSourcef(source[0], AL_GAIN, rise * lineInterpolation(0, 0, 8.33, 1, velocityX));//
+	crossFade(&fade, &rise, abs(velocityX), 8.33, 13.88, masterGain * h.runwayFactor);
+	alSourcef(source[1], AL_GAIN, fade * lineInterpolation(0, 0, 8.33, 1, abs(velocityX)));//
+	alSourcef(source[0], AL_GAIN, rise * lineInterpolation(0, 0, 8.33, 1, abs(velocityX)));//
 
 	return 1;
 }

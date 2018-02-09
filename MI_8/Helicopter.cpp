@@ -363,7 +363,7 @@ Helicopter::Helicopter(string model)
 		vsuCraneFactor = 0.354/*всу кран*/;//-9
 		engFactor = 0.794/*дв*/; //-2
 		engHpFactor = 0.237/*дв хп*/;//-12.5
-		redFactor = 0.794/*Редуктор*/; //-2
+		redFactor = 0.794/*Редуктор*/; //-2 0.794
 		vpryam = 0.199/*ВУ*/;//-14
 		cutoffCraneFactor = 0.354/*перекр*/;//-9
 		vintBrakeFactor = 0.2/*Винт тормоз*/;

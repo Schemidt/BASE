@@ -1,3 +1,4 @@
+#pragma once
 enum AL_SOUND_CHANNELS_FLAGS
 {
 	AL_CHANNEL_DEFAULT       = 0x0000,   // to all available channels
