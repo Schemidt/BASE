@@ -2889,7 +2889,16 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//усиление от оборотов
 			turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
 			//усиление НЧ когда нет хлопков на границе 2го условия
-			float flapCGain = squareInterpolation(-0.56,0 ,-1.23, 1 ,-2 , 2, accelerationX) * squareInterpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY);//переходит в усиление нч по vy
+			float flapCGain = 0;
+			if (velocityX < 0)
+			{
+				flapCGain = ((accelerationX > 0.56) ? ((abs(accelerationX) - 0.56) * 4) : 0) *squareInterpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY);//переходит в усиление нч по vy
+			}
+			else
+			{
+				flapCGain = ((accelerationX < -0.56) ? ((abs(accelerationX) - 0.56) * 4) : 0) *squareInterpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY);//переходит в усиление нч по vy
+			}
+			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
 
 			lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain + flapCGain + velocityGain)*0.05); //0.15 -> 0.15
 			mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.15 + mid2FreqStepGain + flapCGain)*0.05);//0.3 -> 0.2
@@ -2925,7 +2934,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			if (outputPeriod >= 1)
 			{
 				fred = fopen("red.txt", "at");
-				fprintf(fred, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", sr.reduktor_gl_obor, averangeTurn, turnGain, highFreqTurnGain, stepGain, velocityGain, accelerationX, pinkNoiseGain, mid2FreqStepGain, accelerationGain, lowFreqGain, mid1FreqGain, mid2FreqGain, highFreqGain, soundread.time);
+				fprintf(fred, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", sr.reduktor_gl_obor, averangeTurn, turnGain, highFreqTurnGain, stepGain, velocityGain, accelerationX, pinkNoiseGain, mid2FreqStepGain, accelerationGain, lowFreqGain, mid1FreqGain, mid2FreqGain, flapCGain, soundread.time);
 				fclose(fred);
 				outputPeriod = 0;
 			}
@@ -3719,39 +3728,81 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			flap_key[2] = '1';
 		}
 		flapIndicator = 0;
-		//dv<1 и vy<-2
-		if (accelerationX <= accelerationXBorder && velocityY <= velocityYBorder)//1
+		//Условия хлопков
+		//для отрицательной скорости условия обратные
+		if (velocityX < 0)
 		{
-			if ((calcA > 0) & (dash > dashBorder) & (accelerationVy < 3))
+			//dv>1 и vy<-2
+			if (accelerationX >= -accelerationXBorder && velocityY <= velocityYBorder)//1
 			{
-				flapIndicator = 1;
+				if ((calcA > 0) & (dash < -dashBorder) & (accelerationVy < 3))
+				{
+					flapIndicator = 1;
+				}
 			}
-		}
-		//dv<1 и vy>-2
-		if (accelerationX <= accelerationXBorder && velocityY > velocityYBorder)//2
-		{
+			//dv>1 и vy>-2
+			if (accelerationX >= -accelerationXBorder && velocityY > velocityYBorder)//2
+			{
 
-			if ((accelerationX < -0.56 & velocityY < 0) || ((velocityY > 4) & (dash < -0.5) & (accelerationVy > 3)))
+				if ((accelerationX > 0.56 & velocityY < 0) || ((velocityY > 4) & (dash > 0.5) & (accelerationVy > 3)))
+				{
+					flapIndicator = 2;
+				}
+			}
+			//
+			if (accelerationX < -accelerationXBorder && velocityY <= velocityYBorder)//3
 			{
-				flapIndicator = 2;
+				if ((accelerationX < -1.4) & (abs(derivStep) > 2))
+				{
+					flapIndicator = 3;
+				}
+			}
+			//
+			if (accelerationX < -accelerationXBorder && velocityY > velocityYBorder)//4
+			{
+				if ((accelerationX < -0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
+				{
+					flapIndicator = 4;
+				}
 			}
 		}
-		//
-		if (accelerationX > accelerationXBorder && velocityY <= velocityYBorder)//3
+		else
 		{
-			if ((accelerationX > 1.4) & (abs(derivStep) > 2))
+			//dv<1 и vy<-2
+			if (accelerationX <= accelerationXBorder && velocityY <= velocityYBorder)//1
 			{
-				flapIndicator = 3;
+				if ((calcA > 0) & (dash > dashBorder) & (accelerationVy < 3))
+				{
+					flapIndicator = 1;
+				}
+			}
+			//dv<1 и vy>-2
+			if (accelerationX <= accelerationXBorder && velocityY > velocityYBorder)//2
+			{
+
+				if ((accelerationX < -0.56 & velocityY < 0) || ((velocityY > 4) & (dash < -0.5) & (accelerationVy > 3)))
+				{
+					flapIndicator = 2;
+				}
+			}
+			//
+			if (accelerationX > accelerationXBorder && velocityY <= velocityYBorder)//3
+			{
+				if ((accelerationX > 1.4) & (abs(derivStep) > 2))
+				{
+					flapIndicator = 3;
+				}
+			}
+			//
+			if (accelerationX > accelerationXBorder && velocityY > velocityYBorder)//4
+			{
+				if ((accelerationX > 0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
+				{
+					flapIndicator = 4;
+				}
 			}
 		}
-		//
-		if (accelerationX > accelerationXBorder && velocityY > velocityYBorder)//4
-		{
-			if ((accelerationX > 0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
-			{
-				flapIndicator = 4;
-			}
-		}
+		
 		//Управляем частотой среза хлопков от оборотов редуктора
 		lowerFreqLimit = log10(1000);//переходим в линейную шкалу
 		highterFreqLimit = log10(6000);
@@ -3802,9 +3853,11 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 		alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
-																			   //усиление от ускорения
-		accelerationGain = (accelerationGain > 5) ? (-1)*((3 * accelerationX) - 15) : (3 * accelerationX) - 15;//дб
+		//усиление от ускорения
+		accelerationGain = (3 * abs(accelerationX)) - 15;
+		accelerationGain = (accelerationGain > 5) ? (-1)*accelerationGain : accelerationGain;//дб
 		accelerationGain = pow(10, accelerationGain * 0.05);//коэф
+		
 
 		hiSpeedGain = lineInterpolation(50, 0, 66.66, 1, abs(velocityX));/*Ниже 200кмч хлопки от ускорения, выше - в любом случае*/
 
@@ -3815,10 +3868,20 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			turnsGain = (91 - sr.reduktor_gl_obor) * (-3);//рассчитываем усиление от оборотов винта - 3дб на оборот
 		}
 		//Условия затухания хлопков
-		float off = (accelerationX < 0) ? lineInterpolation(14, 1, 0, 0, abs(velocityX)) : ((abs(velocityX < 14)) ? 0 : 1);
-
-		float flapA = (accelerationX <= accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
-		float flapB = (accelerationX > accelerationXBorder) ? 1 : 0;//условие неравномерных хлопков
+		
+		float off = lineInterpolation(14, 1, 0, 0, abs(velocityX));;
+		float flapA = 0;
+		float flapB = 0;
+		if (velocityX < 0)
+		{
+			flapA = (accelerationX >= -accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
+			flapB = (accelerationX < -accelerationXBorder) ? 1 : 0;//условие неравномерных хлопков
+		}
+		else
+		{
+			flapA = (accelerationX <= accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
+			flapB = (accelerationX > accelerationXBorder) ? 1 : 0;//условие неравномерных хлопков
+		}
 															
 		//Плавный переход между НЧ и ВЧ хлопками по шагу
 		float flapABStep = 0;
@@ -3837,9 +3900,9 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		
 		//При втором условии используем ускорение в качестве переходной функции хлопков
 		float flapCGainAccX = 1;
-		if (flapIndicator == 2 && velocityX < 14)
+		if (flapIndicator == 2 && abs(velocityX) < 14)
 		{
-			flapCGainAccX = squareInterpolation(-0.56, 0, -1.03, 0.5, -1.5, 1, accelerationX) * squareInterpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY);//переходит в усиление нч по vy
+			flapCGainAccX = lineInterpolation(0.56, 0, 1, 1, abs(accelerationX)) * squareInterpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY);//переходит в усиление нч по vy
 		}
 
 		float flapAGain = flapA * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
