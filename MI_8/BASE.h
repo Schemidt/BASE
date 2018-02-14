@@ -128,6 +128,8 @@ public:
 	double vectorElemSummStep = 0;
 	double averangeStep = 0;
 
+	double tay = 0;
+
 	vector<double> vector, vectorStep;
 
 	char eq_key[2] = { ' ',' ' };

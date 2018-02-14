@@ -152,11 +152,10 @@ void Helicopter::setPath(string pathToFile)
 	}
 }
 
-Helicopter::Helicopter(string model)
+void Helicopter::setParam(string model)
 {
 	modelName = model;
-
-	if (modelName == "mi_8_mtv5")
+	if (model == "mi_8_mtv5")
 	{
 		//Константы		
 		engTurnoverHp = 20;
@@ -193,7 +192,7 @@ Helicopter::Helicopter(string model)
 		consumTankFactor = 0.25/*Расходный бак*/;
 		rainFactor = 0.5/*Дождь*/;
 	}
-	else if (modelName == "mi_8_amtsh")
+	else if (model == "mi_8_amtsh")
 	{
 		//Константы		
 		engTurnoverHp = 20;
@@ -230,7 +229,7 @@ Helicopter::Helicopter(string model)
 		consumTankFactor = 0.25/*Расходный бак*/;
 		rainFactor = 0.5/*Дождь*/;
 	}
-	else if (modelName == "mi_26")
+	else if (model == "mi_26")
 	{
 		//Константы		
 		engTurnoverHp = 20;
@@ -262,7 +261,7 @@ Helicopter::Helicopter(string model)
 		consumTankFactor = 0.25/*Расходный бак*/;
 		rainFactor = 0.5/*Дождь*/;
 	}
-	else if (modelName == "mi_28")
+	else if (model == "mi_28")
 	{
 		//Константы		
 		engTurnoverHp = 20;
@@ -301,7 +300,7 @@ Helicopter::Helicopter(string model)
 		undefinedFactor = 0.2 /*undefined1*/;
 		rocketIglaFactor = 1 /*ИГЛА*/;
 	}
-	else if (modelName == "ka_226")
+	else if (model == "ka_226")
 	{
 		//Константы		
 		engTurnoverHp = 20;
@@ -327,7 +326,7 @@ Helicopter::Helicopter(string model)
 		rainFactor = 1/*Дождь*/;
 		circlingCraneFactor = 0.126 /*Кран кольцевания*/;
 	}
-	else if (modelName == "ansat")
+	else if (model == "ansat")
 	{
 		//Константы		
 		engTurnoverHp = 20;
@@ -348,7 +347,7 @@ Helicopter::Helicopter(string model)
 		chassisBrakeReleaseFactor = 0.178/*Сброс давления*/;
 		rainFactor = 1/*Дождь*/;
 	}
-	else if (modelName == "ka_27")
+	else if (model == "ka_27")
 	{
 		//Константы		
 		engTurnoverHp = 20;
@@ -371,7 +370,7 @@ Helicopter::Helicopter(string model)
 		chassisBrakePumpFactor = 0.1/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.1/*Сброс давления*/;
 		undefinedFactor = 0.25; /*хз1*///-12
-		runwayFactor = 0.398/*ВПП*/;
+		runwayFactor = 0.63/*ВПП*/;
 		//airNoiseFactor = 1/*шум*/;
 
 		rainFactor = 0.5/*Дождь*/;
@@ -380,7 +379,7 @@ Helicopter::Helicopter(string model)
 		//vintSwishFactor = 0.5/*ВИНТ Верх*/;
 		fireCraneFactor = 0.354/*Пожарный кран*/;
 	}
-	else if (modelName == "ka_29")
+	else if (model == "ka_29")
 	{
 		//Константы		
 		engTurnoverHp = 20;
@@ -403,7 +402,7 @@ Helicopter::Helicopter(string model)
 		chassisBrakePumpFactor = 0.1/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.1/*Сброс давления*/;
 		undefinedFactor = 0.25; /*хз1*///-12
-		runwayFactor = 0.5/*ВПП*/;
+		runwayFactor = 0.63/*ВПП*/;
 		//airNoiseFactor = 1/*шум*/;
 
 		rocketSturmFactor = 1/*ШТУРМ*/;
@@ -424,6 +423,11 @@ Helicopter::Helicopter(string model)
 		cout << " Unknown argument" << endl;
 		throw 0;
 	}
+}
+
+Helicopter::Helicopter()
+{
+
 }
 
 Helicopter::~Helicopter()

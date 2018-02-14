@@ -75,7 +75,8 @@ public:
 	map<string, string> fullName;
 
 	void setPath(string pathToFile);
-	Helicopter(string model);
+	void setParam(string model);
+	Helicopter();
 	~Helicopter();
 };
 
