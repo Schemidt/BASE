@@ -58,6 +58,8 @@ public:
 	static float derivStep;//Скорость изменения шага
 	static float calcA;//Атака винта
 
+	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime;
+
 	std::unique_ptr<int[]> sourceStatus;
 	std::unique_ptr<ALuint[]> source;
 	std::unique_ptr<ALuint[]> buffer;
@@ -129,6 +131,7 @@ public:
 	double averangeStep = 0;
 
 	double tay = 0;
+	bool hovering = 0;
 
 	vector<double> vector, vectorStep;
 
