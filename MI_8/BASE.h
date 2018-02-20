@@ -57,8 +57,9 @@ public:
 	static float accelerationVy;//Вертикальное ускорение
 	static float derivStep;//Скорость изменения шага
 	static float calcA;//Атака винта
+	static float RedTurnAcc;//Ускорение оборотов редуктора
 
-	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime;
+	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime, vectorRedTurn;
 
 	std::unique_ptr<int[]> sourceStatus;
 	std::unique_ptr<ALuint[]> source;
@@ -254,6 +255,46 @@ public:
 	}
 	//Выводит звук
 	int Play(Helicopter h, SOUNDREAD sr);
+};
+
+class VintSwish : public Sound
+{
+public:
+
+	char red_key[2];//!<переменная для единоразовой загрузки буферов в редукторе
+
+	VintSwish() : Sound(2, 0)
+	{
+		
+	}
+
+	~VintSwish()
+	{
+
+	}
+	//Выводит звук
+	int Play(Helicopter h, SOUNDREAD sr);
+
+};
+
+class SKV : public Sound
+{
+public:
+
+	char SKV_key[2];//!<переменная для единоразовой загрузки буферов в редукторе
+
+	SKV() : Sound(2, 0)
+	{
+
+	}
+
+	~SKV()
+	{
+
+	}
+	//Выводит звук
+	int Play(Helicopter h, SOUNDREAD sr);
+
 };
 
 #endif

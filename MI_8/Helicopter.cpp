@@ -42,6 +42,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["red_avt_mg_w"] = "red_avt_mg.wav"; //!<имя файла звука замедления редуктора до режима мг
 	shortName["red_off_w"] = "red_off.wav"; //!<имя файла звука остановки редуктора ниже режима мг
 	shortName["red_crash"] = "red_crash.wav"; //!<имя файла звука поломки редуктора
+	shortName["red_w_avt_fly"] = "red_w_avt_fly.wav"; //!<имя файла звука работы редуктора на режиме автомат
 	//ВСУ
 	shortName["vsu_on"] = "vsu_on.wav";//!<имя файла звука запуска ВСУ
 	shortName["vsu_w"] = "vsu_w.wav";//!<имя файла звука работы ВСУ
@@ -110,6 +111,10 @@ void Helicopter::setPath(string pathToFile)
 	shortName["vint_flap_A"] = "flap_A.wav";//!<имя файла звука равномерных хлопков винта
 	shortName["vint_flap_B"] = "flap_B.wav";//!<имя файла звука неравномерных хлопков винта
 	shortName["vint_flap_C"] = "flap_C.wav";//!<имя файла звука неравномерных хлопков винта
+	shortName["vint_swish_on"] = "vint_hi_on.wav";//!<имя файла звука свиста винта
+	shortName["vint_swish_w"] = "vint_hi_1eng.wav";//!<имя файла звука свиста винта
+	shortName["vint_swish_w_mg"] = "vint_hi_mg.wav";//!<имя файла звука свиста винта
+	shortName["vint_swish_w_avt"] = "vint_hi_avt.wav";//!<имя файла звука свиста винта
 											//Тормоз шасси
 	shortName["brake"] = "brake_on.wav";//!<имя файла звука тормоза шасси
 	shortName["poff"] = "check_brake.wav";//!<имя файла звука сброса давления
@@ -271,18 +276,18 @@ void Helicopter::setParam(string model)
 		redTurnoverMg2 = 60;
 		redTurnoverAvt = 93;
 		//Множители громкости
-		vsuFactor = 1/*всу*/;
+		vsuFactor = 0.08/*всу*/;
 		vsuHpFactor = 0.6/*всу хп*/;
 		vsuCraneFactor = 0.8/*всу кран*/;
-		engFactor = 1/*дв*/;
+		engFactor = 0.446/*дв*/;
 		engHpFactor = 0.35/*дв хп*/;
-		redFactor = 1/*Редуктор*/;
+		redFactor = 0.446/*Редуктор*/;
 		accumFactor = 0.1/*аккум*/;
 		ptsToneFactor = 0.25/*птс тон*/;
 		tr115Factor = 0.15/*тр115*/;
 		skvFactor = 0.5/*СКВ*/;
 		runwayFactor = 1/*ВПП*/;
-		airNoiseFactor = 1/*шум*/;
+		//airNoiseFactor = 1/*шум*/;
 		rocketSturmFactor = 1/*ШТУРМ*/;
 		rocketNar8Factor = 1/*НАР8*/;
 		rocketNar13Factor = 1/*НАР13*/;
@@ -290,6 +295,7 @@ void Helicopter::setParam(string model)
 		ppuFactor = 1/*ППУ*/;
 		vintBrakeFactor = 0.6/*Винт тормоз*/;
 		vintFlapFactor = 0.5/*Винт хлопки*/;
+		vintSwishFactor = 0.63;
 		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
 		fireCraneFactor = 0.9/*Пожарный кран*/;
