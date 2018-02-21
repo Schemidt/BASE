@@ -283,6 +283,16 @@ public:
 
 	char SKV_key[2];//!<переменная для единоразовой загрузки буферов в редукторе
 
+	double averangeCalcPeriod = 0;
+	double vectorElemSumm = 0;
+	double averangeTurn = 0;
+
+	double averangeCalcPeriodStep = 0;
+	double vectorElemSummStep = 0;
+	double averangeStep = 0;
+
+	vector<double> vector, vectorStep;
+
 	SKV() : Sound(2, 0)
 	{
 
@@ -314,7 +324,7 @@ void freeOpenAL();
 \param[in] parameter Значение параметра
 \return Возвращает значение высоты звука
 */
-float getPitch(float offset, string filename, float parameter);
+double getPitch(double offset, string filename, double parameter);
 /*!
 \brief Возвращает Offset
 \details Возвращает время в секундах на которое необходимо сделать отступ от начала проигрывания звука учитывая переходную функцию параметра
@@ -324,7 +334,7 @@ float getPitch(float offset, string filename, float parameter);
 \param[in] parameter Значение параметра
 \return Время отступа в секундах
 */
-float getOffset(float pitch, string filename, float parameter);
+double getOffset(double pitch, string filename, double parameter);
 /*!
 \brief Производит Crossfade
 \details Осуществляет плавный переход 1ой записи в другую путем уменьшения громкости 1ой записи и повышения громкости другой, по мере изменения параметра
@@ -338,7 +348,7 @@ float getOffset(float pitch, string filename, float parameter);
 \param[in] mult Множитель громкости записей
 \return 1 ,если громкость затухающей записи равняется 0, а нарастающей 1
 */
-int crossFade(float *gf, float *gr, float parameter, float limit1, float limit2, float mult);
+int crossFade(double *gf, double *gr, double parameter, double limit1, double limit2, double mult);
 /*!\brief Определяет указатели на функции расширений EFX*/
 void setEFXPointers();
 /*!
@@ -363,7 +373,7 @@ return fx = a0 + a1 * x + a2*x*x;
 \param[in] x Абсцисса искомой fx
 \return Значение fx в точке x
 */
-float squareInterpolation(float x0, float fx0, float x1, float fx1, float x2, float fx2, float x);
+double squareInterpolation(double x0, double fx0, double x1, double fx1, double x2, double fx2, double x);
 /*!
 \brief Вычисляет линейную интерполяцию
 \details В точках x>x1 и x<x0 - возвращает граничные значения
@@ -380,7 +390,7 @@ fx = fx0 + ((fx1 - fx0) / (x1 - x0))*(x - x0);
 \param[in] x Абсцисса искомой fx
 \return Значение fx в точке x
 */
-float lineInterpolation(float x0, float fx0, float x1, float fx1, float x);
+double lineInterpolation(double x0, double fx0, double x1, double fx1, double x);
 /*!\brief Функция отладки*/
 void printProgrammStatus(SOUNDREAD srd);
 /*!
@@ -391,7 +401,7 @@ void printProgrammStatus(SOUNDREAD srd);
 int getMaxAvaliableSources();
 //Вычисляет атаку (Угол атаки несущего винта — угол между направлением воздушного потока (противоположным направлению полета) и плоскостью вращения втулки несущего винта. Этот угол может иметь любое значение (от —180° до +180°) в зависимости от направления полета.
 //Если воздушный поток подходит к плоскости вращения винта снизу(автожирный режим), то угол атаки несущего винта считается положительным.Если воздушный поток набегает на несущий винт сверху, то угол атаки принимается отрицательным.)
-float attack(float velocityX, float velocityXPrevious, float tangaz, float deltaHigh, float periodCalc);
+double attack(double velocityX, double velocityXPrevious, double tangaz, double deltaHigh, double periodCalc);
 
 bool IsProcessPresent(wchar_t * szExe);
 

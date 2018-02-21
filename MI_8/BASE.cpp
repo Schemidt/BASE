@@ -1368,7 +1368,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-float lineInterpolation(float x0, float fx0, float x1, float fx1, float x)
+double lineInterpolation(double x0, double fx0, double x1, double fx1, double x)
 {
 	double fx, a0, a1, a2;
 	if (x0<x1 && x>x1)
@@ -1391,7 +1391,7 @@ float lineInterpolation(float x0, float fx0, float x1, float fx1, float x)
 	return	fx = fx0 + ((fx1 - fx0) / (x1 - x0))*(x - x0);
 }
 
-float squareInterpolation(float x0, float fx0, float x1, float fx1, float x2, float fx2, float x)
+double squareInterpolation(double x0, double fx0, double x1, double fx1, double x2, double fx2, double x)
 {
 	double fx, a0, a1, a2;
 	if (x0<x2 && x>x2)
@@ -1427,14 +1427,14 @@ float squareInterpolation(float x0, float fx0, float x1, float fx1, float x2, fl
 
 }
 
-float getPitch(float offset, string filename, float parameter)
+double getPitch(double offset, string filename, double parameter)
 {
-	float new_pitch;
-	float turn = 0;
-	float t = 0;
-	float v = 0;
+	double new_pitch;
+	double turn = 0;
+	double t = 0;
+	double v = 0;
 	int i = 0;
-	vector <float> time, value;
+	vector <double> time, value;
 
 	//данные в базе должны храниться в строках парами, по паре в каждой строке (не больше)
 	string str;
@@ -1442,13 +1442,13 @@ float getPitch(float offset, string filename, float parameter)
 	while (!base.eof())
 	{
 		getline(base, str);
-		sscanf(str.c_str(), "%f %f", &t, &v);
+		sscanf(str.c_str(), "%lf %lf", &t, &v);
 		time.push_back(t);
 		value.push_back(v);
 	}
 	base.close();
 
-	float x, x0, x1, x2, fx, fx0, fx1, fx2, a0, a1, a2;
+	double x, x0, x1, x2, fx, fx0, fx1, fx2, a0, a1, a2;
 	int n = time.size();
 
 	for (i = 0; i < n; i++)
@@ -1506,15 +1506,15 @@ float getPitch(float offset, string filename, float parameter)
 	return new_pitch;
 }
 
-float getOffset(float pitch, string filename, float parameter)
+double getOffset(double pitch, string filename, double parameter)
 {
-	float new_offset = 0;
-	float turn = 0;
+	double new_offset = 0;
+	double turn = 0;
 	int i = 0;
 
-	float t = 0;
-	float v = 0;
-	vector <float> time, value;
+	double t = 0;
+	double v = 0;
+	vector <double> time, value;
 
 	//данные в базе должны храниться в строках парами, по паре в каждой строке (не больше)
 	string str;
@@ -1522,7 +1522,7 @@ float getOffset(float pitch, string filename, float parameter)
 	while (!base.eof())
 	{
 		getline(base, str);
-		sscanf(str.c_str(), "%f %f", &t, &v);
+		sscanf(str.c_str(), "%lf %lf", &t, &v);
 		time.push_back(t);
 		value.push_back(v);
 	}
@@ -1534,7 +1534,7 @@ float getOffset(float pitch, string filename, float parameter)
 	else
 		turn = parameter / pitch;
 
-	float x, x0, x1, x2, fx, fx0, fx1, fx2, a0, a1, a2;
+	double x, x0, x1, x2, fx, fx0, fx1, fx2, a0, a1, a2;
 
 	if (value[0] <= value[n - 1])
 	{
@@ -1634,14 +1634,14 @@ float getOffset(float pitch, string filename, float parameter)
 
 }
 
-int crossFade(float *gf, float *gr, float parameter, float limit1,float limit2,float mult)//source - fade , source2 - rise
+int crossFade(double *gf, double *gr, double parameter, double limit1,double limit2,double mult)//source - fade , source2 - rise
 {
 	//limit1 - значение параметра в начале кросс-фэйда
 	//limit2 - значение параметра в конце
 	//parameter - итератор кроссфейда - должен стремится от limit1 к limit2
 	//source - источник, громкость которого убывает
 	//source2 - источник, громкость которого нарастает
-	//float gf, gr;
+	//double gf, gr;
 	
 	if ((limit2 > limit1 && parameter < limit1) || (limit2 < limit1 && parameter > limit1))
 	{	
@@ -1655,10 +1655,19 @@ int crossFade(float *gf, float *gr, float parameter, float limit1,float limit2,f
 	}
 	if ((limit2 > limit1 && parameter <= limit2 && parameter >= limit1) || (limit2 < limit1 && parameter >= limit2 && parameter <= limit1))
 	{
-		*gf = squareInterpolation(limit1, mult, abs(limit2 - limit1) / 2, 0.5*mult, limit2, 0, parameter);
+		*gf = squareInterpolation(limit1, mult, abs(limit2 - limit1) / 2, 0.5*mult, limit2, 0, parameter);//TYPE A
 		*gr = squareInterpolation(limit1, 0, abs(limit2 - limit1) / 2, 0.5*mult, limit2, mult, parameter);
-		*gf = (*gf < 0 )? 0 : *gf;
+		//double x = squareInterpolation(limit1, 0, abs(limit2 - limit1) / 2, 0.5, limit2, 1, parameter);//TYPE B
+		//*gf = cos(x * 0.5 * M_PI);
+		//*gr = cos((1.0 - x) * 0.5 * M_PI);
+		//*gf = squareInterpolation(limit1, 0, abs(limit2 - limit1) / 2, -6, limit2, -40, parameter);//TYPE C
+		//*gr = squareInterpolation(limit1, -40, abs(limit2 - limit1) / 2, -6, limit2, 0, parameter);
+		//*gf = pow(10, *gf*0.05) * mult;
+		//*gr = pow(10, *gr*0.05) * mult;
+		*gf = (*gf < 0) ? 0 : *gf;
 		*gr = (*gf < 0) ? 0 : *gr;
+		*gf = (*gf > 1) ? 1 : *gf;
+		*gr = (*gf > 1) ? 1 : *gr;
 	}
 
 	//alSourcef(source, AL_GAIN, gf);
@@ -2058,6 +2067,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 	//РЕДУКТОР АНСАТА
 	if (h.modelName == "ansat")
 	{
+		/*
 		//0 -> мг
 		if ((sr.p_eng1_zap | sr.p_eng2_zap) && sr.reduktor_gl_obor < h.redTurnoverMg1)
 		{
@@ -2122,8 +2132,9 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			}
 
 		}
+		*/
 		//0 -> мг
-		if (sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) && sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
+		if (/*sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) &&*/ sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
 		{
 			if (red_key[0] != '1')
 			{
@@ -2159,7 +2170,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				red_key[1] = '2';
 			}
 
-			float fade, rise;
+			double fade = 0, rise = 0;
 			if (sourceStatus[0] == AL_PLAYING)
 			{
 				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.redFactor);
@@ -2211,7 +2222,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
 				red_key[0] = '4';
 			}
-			float fade, rise;
+			double fade, rise;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
 			alSourcef(source[1], AL_GAIN, fade);//
 			alSourcef(source[0], AL_GAIN, rise);//
@@ -2254,7 +2265,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
 				red_key[0] = '5';
 			}
-			float fade, rise;
+			double fade, rise;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 7., masterGain*h.redFactor);
 			alSourcef(source[1], AL_GAIN, fade);//
 			alSourcef(source[0], AL_GAIN, rise);//
@@ -2274,6 +2285,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 	}
 	else
 	{
+		/*
 		//0 -> мг 1дв
 		if ((sr.p_eng1_zap | sr.p_eng2_zap) && sr.reduktor_gl_obor < h.redTurnoverMg1)
 		{
@@ -2340,8 +2352,9 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			}
 
 		}
+		*/
 		//0 -> мг 1дв
-		if (sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) && sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
+		if (/*sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) &&*/ sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
 		{
 			if (red_key[0] != '1')
 			{
@@ -2395,7 +2408,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				red_key[1] = '2';
 			}
 
-			float fade, rise;
+			double fade, rise;
 			if (sourceStatus[0] == AL_PLAYING)
 			{
 				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.redFactor);
@@ -2468,7 +2481,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				red_key[0] = '3';
 			}
 
-			float fade, rise;
+			double fade, rise;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg2, masterGain*h.redFactor);
 			alSourcef(source[1], AL_GAIN, fade);//0
 			alSourcef(source[0], AL_GAIN, rise);//1
@@ -2476,53 +2489,162 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
 			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
 		}
+		
 		//мг2дв <-> авт
-		if (sr.reduktor_gl_obor > h.redTurnoverMg2)
+		if (h.modelName == "mi_28")
 		{
-			if (red_key[1] != '4')
+			if (sr.reduktor_gl_obor > h.redTurnoverMg2 && sr.reduktor_gl_obor <= h.redTurnoverAvt - 2)
 			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
+				if (red_key[1] != '4')
+				{
+					alSourceStop(source[1]);
+					alSourcei(source[1], AL_BUFFER, NULL);
+					alDeleteBuffers(1, &buffer[1]);
+					alGenBuffers(1, &buffer[1]);
 
-				if (!setBuffer(buffer[1], h.fullName["red_w_avt_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-																					 //alSourcefv(Source[1], AL_POSITION, position);
-																					 //alSourcefv(Source[1], AL_VELOCITY, velocity);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				red_key[1] = '4';
+					if (!setBuffer(buffer[1], h.fullName["red_w_avt_w"], channelsSetup, channel))
+						return 0;
+					alSourcei(source[1], AL_BUFFER, buffer[1]);
+					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
+																						 //alSourcefv(Source[1], AL_POSITION, position);
+																						 //alSourcefv(Source[1], AL_VELOCITY, velocity);
+					alSourcei(source[1], AL_LOOPING, AL_TRUE);
+					alSourcePlay(source[1]);
+					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
+					red_key[1] = '4';
+				}
+				if (red_key[0] != '3')
+				{
+					alSourceStop(source[0]);
+					alSourcei(source[0], AL_BUFFER, NULL);
+					alDeleteBuffers(1, &buffer[0]);
+					alGenBuffers(1, &buffer[0]);
+
+					if (!setBuffer(buffer[0], h.fullName["red_w_mg_w"], channelsSetup, channel))
+						return 0;
+					alSourcei(source[0], AL_BUFFER, buffer[0]);
+					alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
+																						 //alSourcefv(Source[0], AL_POSITION, position);
+																						 //alSourcefv(Source[0], AL_VELOCITY, velocity);
+					alSourcei(source[0], AL_LOOPING, AL_TRUE);
+					alSourcePlay(source[0]);
+					alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
+					red_key[0] = '3';
+				}
+
+				double fade, rise;
+				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
+				alSourcef(source[0], AL_GAIN, fade);//
+				alSourcef(source[1], AL_GAIN, rise);//
+
+				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);
+				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
 			}
-			if (red_key[0] != '3')
+			//авт <-> авт полет
+			if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
+					if (red_key[1] != '4')
+					{
+						alSourceStop(source[1]);
+						alSourcei(source[1], AL_BUFFER, NULL);
+						alDeleteBuffers(1, &buffer[1]);
+						alGenBuffers(1, &buffer[1]);
 
-				if (!setBuffer(buffer[0], h.fullName["red_w_mg_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
-																					 //alSourcefv(Source[0], AL_POSITION, position);
-																					 //alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '3';
+						if (!setBuffer(buffer[1], h.fullName["red_w_avt_w"], channelsSetup, channel))
+							return 0;
+						alSourcei(source[1], AL_BUFFER, buffer[1]);
+						alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
+						alSourcei(source[1], AL_LOOPING, AL_TRUE);
+						alSourcePlay(source[1]);
+						alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
+						red_key[1] = '4';
+					}
+					if (red_key[0] != '3')
+					{
+						alSourceStop(source[0]);
+						alSourcei(source[0], AL_BUFFER, NULL);
+						alDeleteBuffers(1, &buffer[0]);
+						alGenBuffers(1, &buffer[0]);
+
+						if (!setBuffer(buffer[0], h.fullName["red_w_avt_fly"], channelsSetup, channel))
+							return 0;
+						alSourcei(source[0], AL_BUFFER, buffer[0]);
+						alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
+						alSourcei(source[0], AL_LOOPING, AL_TRUE);
+						alSourcePlay(source[0]);
+						alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
+						red_key[0] = '3';
+					}
+					double fade = 0, rise = 0;
+					crossFade(&fade, &rise, step, 5.00,5.01 , masterGain*h.redFactor);
+					alSourcef(source[1], AL_GAIN, fade);//
+					alSourcef(source[0], AL_GAIN, rise);//
+
+					alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
+					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+
+
+					//if (step > 5)
+					//{
+					//	alSourcef(source[1], AL_GAIN, 0);//
+					//	alSourcef(source[0], AL_GAIN, 1);//
+					//}
+					//else
+					//{
+					//	alSourcef(source[1], AL_GAIN, 1);//
+					//	alSourcef(source[0], AL_GAIN, 0);//
+					//}
 			}
+		}
+		else
+		{
+			if (sr.reduktor_gl_obor > h.redTurnoverMg2)
+			{
+				if (red_key[1] != '4')
+				{
+					alSourceStop(source[1]);
+					alSourcei(source[1], AL_BUFFER, NULL);
+					alDeleteBuffers(1, &buffer[1]);
+					alGenBuffers(1, &buffer[1]);
 
-			float fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
-			alSourcef(source[0], AL_GAIN, fade);//
-			alSourcef(source[1], AL_GAIN, rise);//
+					if (!setBuffer(buffer[1], h.fullName["red_w_avt_w"], channelsSetup, channel))
+						return 0;
+					alSourcei(source[1], AL_BUFFER, buffer[1]);
+					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
+																						   //alSourcefv(Source[1], AL_POSITION, position);
+																						   //alSourcefv(Source[1], AL_VELOCITY, velocity);
+					alSourcei(source[1], AL_LOOPING, AL_TRUE);
+					alSourcePlay(source[1]);
+					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
+					red_key[1] = '4';
+				}
+				if (red_key[0] != '3')
+				{
+					alSourceStop(source[0]);
+					alSourcei(source[0], AL_BUFFER, NULL);
+					alDeleteBuffers(1, &buffer[0]);
+					alGenBuffers(1, &buffer[0]);
 
-			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+					if (!setBuffer(buffer[0], h.fullName["red_w_mg_w"], channelsSetup, channel))
+						return 0;
+					alSourcei(source[0], AL_BUFFER, buffer[0]);
+					alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
+																						   //alSourcefv(Source[0], AL_POSITION, position);
+																						   //alSourcefv(Source[0], AL_VELOCITY, velocity);
+					alSourcei(source[0], AL_LOOPING, AL_TRUE);
+					alSourcePlay(source[0]);
+					alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
+					red_key[0] = '3';
+				}
+
+				double fade, rise;
+				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
+				alSourcef(source[0], AL_GAIN, fade);//
+				alSourcef(source[1], AL_GAIN, rise);//
+
+				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);
+				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+			}
 		}
 		//мг1дв -> 0
 		if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1 - 1)
@@ -2583,7 +2705,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//alSourcefv(Source[1], AL_POSITION, position);
 			//alSourcefv(Source[1], AL_VELOCITY, velocity);
 
-			float fade, rise;
+			double fade, rise;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 7., masterGain*h.redFactor);
 			alSourcef(source[1], AL_GAIN, fade);//
 			alSourcef(source[0], AL_GAIN, rise);//
@@ -2613,52 +2735,157 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 		red_key[1] = ' ';
 	}
 
-	//Полеты 8 мтв5, 8 амтш
-	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28")
+	//Полеты ми 28
+	if (h.modelName == "mi_28")
 	{
 		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 		{
-
-			if(h.modelName == "mi_28" && step>=8)
+			//добавляем шум для усиления средних частот
+			if (pinkNoise != "set")
 			{
-				if (red_key[1] != '4')
-				{
-					alSourceStop(source[1]);
-					alSourcei(source[1], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[1]);
-					alGenBuffers(1, &buffer[1]);
+				alSourceStop(source[2]);
+				alSourcei(source[2], AL_BUFFER, NULL);
+				alDeleteBuffers(1, &buffer[2]);
+				alGenBuffers(1, &buffer[2]);
 
-					if (!setBuffer(buffer[1], h.fullName["red_w_avt_w"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[1], AL_BUFFER, buffer[1]);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-					alSourcei(source[1], AL_LOOPING, AL_TRUE);
-					alSourcePlay(source[1]);
-					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-					red_key[1] = '4';
-				}
-				if (red_key[0] != '3')
-				{
-					alSourceStop(source[0]);
-					alSourcei(source[0], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[0]);
-					alGenBuffers(1, &buffer[0]);
-
-					if (!setBuffer(buffer[0], h.fullName["red_w_avt_fly"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[0], AL_BUFFER, buffer[0]);
-					alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-					alSourcei(source[0], AL_LOOPING, AL_TRUE);
-					alSourcePlay(source[0]);
-					alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-					red_key[0] = '3';
-				}
-
-				float fade, rise;
-				crossFade(&fade, &rise, step, 8, 13, masterGain*h.redFactor);
-				alSourcef(source[1], AL_GAIN, fade);//
-				alSourcef(source[0], AL_GAIN, rise);//
+				if (!setBuffer(buffer[2], h.fullName["pinkNoise"], channelsSetup, channel))
+					return 0;
+				alSourcef(source[2], AL_GAIN, pinkNoiseGain);
+				alSourcei(source[2], AL_BUFFER, buffer[2]);
+				alSourcei(source[2], AL_LOOPING, AL_TRUE);
+				alSourcePlay(source[2]);
+				pinkNoise = "set";
 			}
+
+			/*
+			averangeCalcPeriod += deltaTime;
+			if (high > 0)
+			{
+				averangeCalcPeriodStep += deltaTime;
+			}
+			else
+			{
+				averangeCalcPeriodStep = 0;
+				vectorStep.clear();
+			}
+			*/
+
+			//регулируем громкость шума
+			if (abs(velocityX) < 60)
+			{
+				pinkNoiseGain = squareInterpolation(0, -60, 50, -3, 60, -6, abs(velocityX));
+			}
+			else
+			{
+				pinkNoiseGain = squareInterpolation(60, -6, 70, -3, 80, 0, abs(velocityX));
+			}
+			alSourcef(source[2], AL_GAIN, pow(10,pinkNoiseGain*0.05));//230км.ч
+			
+			if (averangeCalcPeriod >= 30 && !vector.empty())
+				vector.erase(vector.begin());
+			vector.push_back(sr.reduktor_gl_obor);
+			for (auto& x : vector)
+				vectorElemSumm += x;
+			averangeTurn = vectorElemSumm / vector.size();
+			vectorElemSumm = 0;
+
+			//Общее усиление от скорости 
+			if (velocityX < 70)
+			{
+				velocityGain = squareInterpolation(20, 0, 50, 2, 70, 5, velocityX) / 5;
+			}
+			else
+			{
+				velocityGain = (velocityX  * 0.15 - 5.5) / 5;
+			}
+
+			//Общее усиление от шага
+			if (step < 16)
+			{
+				stepGain = squareInterpolation(0, 0, 11, 3, 16, 5, step) / 3;
+			}
+			else
+			{
+				stepGain = (step * 0.4 - 1.4) / 3;
+			}
+
+			////Ослабление НЧ до 400гц от ускорения
+			//accelerationGain = averangeAcc * (-3.75);
+			//if (accelerationGain < -3)
+			//	accelerationGain = -3;
+			//else if (accelerationGain > 0)
+			//	accelerationGain = 0;
+			//усиление от шага
+			//if (high > 0)
+			//{
+			//	if (averangeCalcPeriodStep >= 35 && !vectorStep.empty())
+			//		vectorStep.erase(vectorStep.begin());
+			//	vectorStep.push_back(step);
+			//	for (auto& x : vectorStep)
+			//		vectorElemSummStep += x;
+			//	averangeStep = vectorElemSummStep / vectorStep.size();
+			//	vectorElemSummStep = 0;
+			//}
+			//stepGain = 0.75 * (step - averangeStep) * lineInterpolation(0, 0, 1, 1, high);//
+
+			//усиление по шагу в НЧ
+			//mid2FreqStepGain = step * 0.6 * lineInterpolation(0, 1, 10, 0, high);//~3дб
+
+			//Усиление при отрыве
+			//highGain = squareInterpolation(0, 0, 5, 3, 10, 0, high);//3дб
+
+			//усиление от оборотов выше 10000
+			highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
+
+			//усиление от оборотов
+			turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+
+			lowFreqGain = pow(10, (turnGain /*+ stepGain * 1 */ + velocityGain * 3 /*+ lowFreqVelocityGain + highGain + mid2FreqStepGain*/ /*+ accelerationGain*/)*0.05);
+			mid1FreqGain = pow(10, (turnGain + stepGain * 2 + velocityGain * 5 /*+ mid2FreqStepGain*//*+ lowFreqVelocityGain*/)*0.05);
+			mid2FreqGain = pow(10, (turnGain + stepGain * 3 /*+ velocityGain*/ /*+ lowFreqVelocityGain*/)*0.05);
+			highFreqGain = pow(10, (turnGain + stepGain * 3 /*+ velocityGain *//*+ highFreqTurnGain*/)*0.05);
+
+			lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
+			mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
+			mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
+			highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
+
+			lowCutoffFreq = 200;//НЧ 50-800
+			mid1CutoffFreq = 1000;//купол 1 200-3000
+			mid2CutoffFreq = 3000;//купол 2 1000-8000
+			highCutoffFreq = 10000;//ВЧ 4000-16000
+
+			for (size_t i = 0; i < 2; i++)
+			{
+				alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
+				alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
+				alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
+				alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
+
+				alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
+				alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
+				alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
+				alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
+
+				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+			}
+			printf("turnGain = %10.3f stepGain = %10.3f velocityGain = %10.3f\r", turnGain, stepGain, velocityGain);
+			outputPeriod += deltaTime;
+			if (outputPeriod >= 1)
+			{
+				fred = fopen("red.txt", "at");
+				fprintf(fred, "%f\t%f\t%f\t%f\n", turnGain, stepGain, velocityGain, soundread.time);
+				fclose(fred);
+				outputPeriod = 0;
+			}
+		}
+		}
+	//Полеты 8 мтв5, 8 амтш
+	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" )
+	{
+		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
+		{
 
 			//добавляем шум для усиления средних частот
 			if (pinkNoise != "set")
@@ -3145,6 +3372,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 	//ДВИГАТЕЛЬ АНСАТА
 	if (h.modelName == "ansat")
 	{
+		/*
 		//0 -> мг
 		if (status_on && parameter < h.engTurnoverMg)
 		{
@@ -3209,8 +3437,9 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 			}
 
 		}
+		*/
 		//0 -> мг
-		if (parameter > (h.engTurnoverMg - 10) && parameter <= h.engTurnoverMg && status_on)
+		if (/*parameter > (h.engTurnoverMg - 10) &&*/ parameter <= h.engTurnoverMg && status_on)
 		{
 			if (eng_key[0] != '1')
 			{
@@ -3248,7 +3477,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 				eng_key[1] = '2';
 			}
 
-			float fade, rise;
+			double fade, rise;
 			if (sourceStatus[0] == AL_PLAYING)
 			{
 				crossFade(&fade, &rise, parameter, h.engTurnoverMg - 10, h.engTurnoverMg, masterGain*h.engFactor);
@@ -3307,7 +3536,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 				eng_key[0] = '5';
 			}
 
-			float fade, rise;
+			double fade, rise;
 			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverMg - 7., masterGain*h.engFactor);
 			alSourcef(source[1], AL_GAIN, fade);
 			alSourcef(source[0], AL_GAIN, rise);
@@ -3325,6 +3554,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 	}
 	else
 	{
+		/*
 		//0 -> мг
 		if (status_on && parameter < h.engTurnoverMg)
 		{
@@ -3383,9 +3613,9 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 					alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
 				}
 			}
-		}
+		}*/
 		//0 -> мг
-		if (parameter > (h.engTurnoverMg - 10) && parameter <= h.engTurnoverMg && status_on)
+		if (/*parameter > (h.engTurnoverMg - 10) &&*/ parameter <= h.engTurnoverMg && status_on)
 		{
 			if (eng_key[0] != '1')
 			{
@@ -3422,7 +3652,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 				eng_key[1] = '2';
 			}
 
-			float fade, rise;
+			double fade, rise;
 			if (sourceStatus[0] == AL_PLAYING)
 			{
 				crossFade(&fade, &rise, parameter, h.engTurnoverMg - 10, h.engTurnoverMg, masterGain*h.engFactor);
@@ -3480,7 +3710,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 				//alSource3i(Source[0], AL_AUXILIARY_SEND_FILTER, NULL, 0, NULL);
 			}
 
-			float fade, rise;
+			double fade, rise;
 			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverAvt, masterGain*h.engFactor);
 			alSourcef(source[1], AL_GAIN, fade);
 			alSourcef(source[0], AL_GAIN, rise);
@@ -3527,7 +3757,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 				eng_key[0] = '5';
 			}
 
-			float fade, rise;
+			double fade, rise;
 			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverMg - 7., masterGain*h.engFactor);
 			alSourcef(source[1], AL_GAIN, fade);
 			alSourcef(source[0], AL_GAIN, rise);
@@ -3569,7 +3799,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 			vectorElemSumm = 0;
 
 			//усиление от оборотов выше 10000
-			highFreqTurnGain = (parameter - averangeTurn) * 1.5;
+			highFreqTurnGain = (parameter - averangeTurn) * 0.5;
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 			//усиление от оборотов
 			turnGain = (parameter - averangeTurn) * 0.35;
@@ -3582,7 +3812,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 			lowCutoffFreq = AL_EQUALIZER_DEFAULT_LOW_CUTOFF;
 			mid1CutoffFreq = AL_EQUALIZER_DEFAULT_MID1_CENTER;
 			mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;
-			highCutoffFreq = 10000;
+			highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;
 
 			for (size_t i = 0; i < 2; i++)
 			{
@@ -3884,8 +4114,8 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		}
 															
 		//Плавный переход между НЧ и ВЧ хлопками по шагу
-		float flapABStep = 0;
-		float flapCStep = 0;
+		double flapABStep = 0;
+		double flapCStep = 0;
 		crossFade(&flapCStep, &flapABStep, step, 8, 12, 1);
 		//убираем эффект шага на вид хлопков,определяем по скорости, так как этот параметр более приоритетный
 		if (abs(velocityX) < 16.67)
@@ -3894,8 +4124,8 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			flapCStep = 1;
 		}
 		//Плавный переход между НЧ и ВЧ хлопками по скорости
-		float flapABVX = 0;
-		float flapCVX = 0;
+		double flapABVX = 0;
+		double flapCVX = 0;
 		crossFade(&flapCVX, &flapABVX, abs(velocityX), 15.28, 16.67, 1);
 		
 		//При втором условии используем ускорение в качестве переходной функции хлопков
@@ -3935,7 +4165,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 {
-	/*
+		/*
 	//РЕДУКТОР АНСАТА
 	if (h.modelName == "ansat")
 	{
@@ -4155,6 +4385,7 @@ int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 	}
 	else
 	{*/
+		/*
 		//0 -> мг 1дв
 		if ((sr.p_eng1_zap | sr.p_eng2_zap) && sr.reduktor_gl_obor < h.redTurnoverMg1)
 		{
@@ -4216,8 +4447,9 @@ int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 			}
 
 		}
+		*/
 		//0 -> мг 1дв
-		if (sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) && sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
+		if (/*sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) && */sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
 		{
 			if (red_key[0] != '1')
 			{
@@ -4271,7 +4503,7 @@ int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 				red_key[1] = '2';
 			}
 
-			float fade, rise;
+			double fade, rise;
 			if (sourceStatus[0] == AL_PLAYING)
 			{
 				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.vintSwishFactor);
@@ -4332,7 +4564,7 @@ int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 				red_key[0] = '3';
 			}
 
-			float fade=0, rise=0;
+			double fade=0, rise=0;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg2, masterGain*h.vintSwishFactor);
 			alSourcef(source[1], AL_GAIN, fade);//0
 			alSourcef(source[0], AL_GAIN, rise);//1
@@ -4380,7 +4612,7 @@ int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 				red_key[0] = '3';
 			}
 
-			float fade, rise;
+			double fade, rise;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.vintSwishFactor);
 			alSourcef(source[0], AL_GAIN, fade);//
 			alSourcef(source[1], AL_GAIN, rise);//
@@ -4450,7 +4682,7 @@ int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 				alSourcef(source[0], AL_PITCH, 1);*/
 
 			alSourcef(source[0], AL_GAIN, 0);
-			alSourcef(source[1], AL_GAIN, lineInterpolation(h.redTurnoverMg1*0.69, 0, 1, h.redTurnoverMg1, sr.reduktor_gl_obor));//
+			alSourcef(source[1], AL_GAIN, lineInterpolation(h.redTurnoverMg1*0.69, 0, h.redTurnoverMg1, 1 , sr.reduktor_gl_obor));//
 			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
 
 		}
@@ -4473,22 +4705,11 @@ int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 
 int SKV::Play(Helicopter h, SOUNDREAD sr)
 {
-	if (SKV_key[0] != '1')
-	{
-		alSourceStop(source[0]);
-		alSourcei(source[0], AL_BUFFER, NULL);
-		alDeleteBuffers(1, &buffer[0]);
-		alGenBuffers(1, &buffer[0]);
-		if (!setBuffer(buffer[0], h.fullName["skv_w"], channelsSetup, channel))//равномерные
-			return 0;
-		alSourcei(source[0], AL_BUFFER, buffer[0]);
-		alSourcef(source[0], AL_GAIN, 1 * h.skvFactor);
-		alSourcei(source[0], AL_LOOPING, AL_TRUE);
-		alSourcePlay(source[0]);
-		alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак
-		SKV_key[0] = '1';
+	
+	Sound *skvUni = nullptr;
 
-	}
+	skvUni->initializeSound(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
+
 	if (SKV_key[1] != '2')
 	{
 		alSourceStop(source[1]);
@@ -4503,19 +4724,34 @@ int SKV::Play(Helicopter h, SOUNDREAD sr)
 		alSourcePlay(source[1]);
 		alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
 		SKV_key[1] = '2';
-
 	}
 
 	alSourcef(source[1], AL_GAIN, squareInterpolation(0,0,0.5,0.5,1,1,RedTurnAcc));//какойто страшный шум, когда обороты быстро меняются
 
-	//управляем высотой тона скв по оборотам редуктора
-	if (sr.reduktor_gl_obor > h.redTurnoverAvt)
-		pitch = sr.reduktor_gl_obor / h.redTurnoverAvt;
-	alSourcef(source[0], AL_PITCH, pitch);
+	averangeCalcPeriodStep += deltaTime;
+	if (averangeCalcPeriodStep >= 35 && !vectorStep.empty())
+		vectorStep.erase(vectorStep.begin());
+	vectorStep.push_back(step);
+	for (auto& x : vectorStep)
+		vectorElemSummStep += x;
+	averangeStep = vectorElemSummStep / vectorStep.size();
+	vectorElemSummStep = 0;
 
-	//alGetSourcef(source[0], AL_PITCH, &pitch);//
+	averangeCalcPeriod += deltaTime;
+	//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
+	if (averangeCalcPeriod >= 30 && !vector.empty())
+		vector.erase(vector.begin());
+	vector.push_back(sr.reduktor_gl_obor);
+	for (auto& x : vector)
+		vectorElemSumm += x;
+	averangeTurn = vectorElemSumm / vector.size();
+	vectorElemSumm = 0;
+
+	float stepPPitch = averangeStep * 0.03;
+
+	alSourcef(source[0], AL_PITCH, (1 + stepPPitch) + (sr.reduktor_gl_obor - averangeTurn)*0.1);
+
 	alGetSourcef(source[0], AL_GAIN, &gain);//
-
 }
 
 int Runway::Play(Helicopter h, SOUNDREAD sr)
@@ -4551,7 +4787,7 @@ int Runway::Play(Helicopter h, SOUNDREAD sr)
 		load[0] = "loaded";
 	}
 
-	float fade, rise;
+	double fade, rise;
 	crossFade(&fade, &rise, abs(velocityX), 8.33, 13.88, masterGain * h.runwayFactor);
 	alSourcef(source[1], AL_GAIN, fade * lineInterpolation(0, 0, 8.33, 1, abs(velocityX)));//
 	alSourcef(source[0], AL_GAIN, rise * lineInterpolation(0, 0, 8.33, 1, abs(velocityX)));//
@@ -4559,9 +4795,9 @@ int Runway::Play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
-float attack(float velocityX, float velocityXPrevious, float tangaz, float deltaHigh, float periodCalc)
+double attack(double velocityX, double velocityXPrevious, double tangaz, double deltaHigh, double periodCalc)
 {
-	float calcA = 0;
+	double calcA = 0;
 	if ((velocityX + velocityXPrevious) == 0)
 	{
 		if (deltaHigh < 0)
