@@ -3033,25 +3033,8 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 	{
 		if (flap_key[1] != '2')
 		{
-			alSourceStop(source[1]);
-			alSourcei(source[1], AL_BUFFER, NULL);
-			alDeleteBuffers(1, &buffer[1]);
-			alGenBuffers(1, &buffer[1]);
-			if (!setBuffer(buffer[1], h.fullName["vint_flap"], channelsSetup, channel))//равномерные
-				return 0;
-			alSourcei(source[1], AL_BUFFER, buffer[1]);
-			alSourcef(source[1], AL_GAIN, 1 * h.vintFlapFactor);
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-			alEffecti(effect[1], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
-			alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[1]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-			alFilteri(filter[1], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-			alFilterf(filter[1], AL_LOWPASS_GAIN, 0);
-			alSource3i(source[1], AL_AUXILIARY_SEND_FILTER, effectSlot[1], 0, NULL);
-			alSourcei(source[1], AL_DIRECT_FILTER, filter[1]);
-
-			alSourcePlay(source[1]);
-			alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
+			setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap"]);
+			alSourcei(source[2], AL_LOOPING, AL_TRUE);
 			flap_key[1] = '2';
 		}
 
@@ -3083,7 +3066,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		}
 		float m = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
 
-		alSourcef(source[1], AL_GAIN, m);
+		alSourcef(source[1], AL_GAIN, m * h.vintFlapFactor);
 	}
 	//Полеты ка 27 - 29
 	if (h.modelName == "ka_27" || h.modelName == "ka_29")
@@ -3091,25 +3074,12 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		if (flap_key[2] != '1' || flap_key[1] != '2' || flap_key[0] != '3')
 		{
 			//загружаем НЧ хлопки
-			alSourceStop(source[2]);
-			alSourcei(source[2], AL_BUFFER, NULL);
-			alDeleteBuffers(1, &buffer[2]);
-			alGenBuffers(1, &buffer[2]);
-			if (!setBuffer(buffer[2], h.fullName["vint_flap_C"], channelsSetup, channel))//равномерные
-				return 0;
-			alSourcei(source[2], AL_BUFFER, buffer[2]);
-			alSourcef(source[2], AL_GAIN, 0);
+			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["vint_flap_C"]);
 			alSourcei(source[2], AL_LOOPING, AL_TRUE);
 			//загружаем неравномерные ВЧ хлопки
-			alSourceStop(source[1]);
-			alSourcei(source[1], AL_BUFFER, NULL);
-			alDeleteBuffers(1, &buffer[1]);
-			alGenBuffers(1, &buffer[1]);
-			if (!setBuffer(buffer[1], h.fullName["vint_flap_B"], channelsSetup, channel))//равномерные
-				return 0;
-			alSourcei(source[1], AL_BUFFER, buffer[1]);
-			alSourcef(source[1], AL_GAIN, 0);
+			setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_B"]);
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+
 			alEffecti(effect[1], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
 			alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[1]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			alFilteri(filter[1], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
@@ -3117,15 +3087,9 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			alSource3i(source[1], AL_AUXILIARY_SEND_FILTER, effectSlot[1], 0, NULL);
 			alSourcei(source[1], AL_DIRECT_FILTER, filter[1]);
 			//загружаем равномерные ВЧ хлопки
-			alSourceStop(source[0]);
-			alSourcei(source[0], AL_BUFFER, NULL);
-			alDeleteBuffers(1, &buffer[0]);
-			alGenBuffers(1, &buffer[0]);
-			if (!setBuffer(buffer[0], h.fullName["vint_flap_A"], channelsSetup, channel))//неравномерные
-				return 0;
-			alSourcei(source[0], AL_BUFFER, buffer[0]);
-			alSourcef(source[0], AL_GAIN, 0);
+			setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap_A"]);
 			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+
 			alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
 			alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
