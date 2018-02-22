@@ -87,6 +87,7 @@ public:
 	float getLengthWAV(string filename);
 	int initializeSound(bool status, string path_on, string path_w, string path_off, float gain_mult);
 	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, double *channels);
+	int setAndDeploySound(ALuint *Buffer, ALuint *Source, float offset, string file_path);
 	
 };
 
@@ -126,6 +127,10 @@ public:
 	double averangeCalcPeriod = 0;
 	double vectorElemSumm = 0;
 	double averangeTurn = 0;
+
+	double averangeCalcPeriodAtk = 0;
+	double vectorElemSummAtk = 0;
+	double averangeAtk = 0;
 	
 	double averangeCalcPeriodStep = 0;
 	double vectorElemSummStep = 0;
@@ -134,10 +139,13 @@ public:
 	double tay = 0;
 	bool hovering = 0;
 
-	vector<double> vector, vectorStep;
+	vector<double> vector, vectorStep, vectorAtk;
 
 	char eq_key[2] = { ' ',' ' };
-	char red_key[2];//!<переменная для единоразовой загрузки буферов в редукторе
+
+	string filetoBuffer[2];
+	string fileBuffered[2];
+	float offset[2] = {0};
 
 	Reductor() : Sound(3, 2)
 	{
@@ -178,7 +186,10 @@ public:
 
 	vector<double> vector;
 
-	char eng_key[2];
+	string filetoBuffer[2];
+	string fileBuffered[2];
+	float offset[2] = { 0 };
+
 	char eq_key[2] = { ' ',' ' };
 
 	Engine() : Sound(2, 2)
@@ -193,7 +204,9 @@ class Runway : public Sound
 {
 public:
 
-	string load[2];
+	string filetoBuffer[2];
+	string fileBuffered[2];
+	float offset[2] = { 0 };
 
 	Runway() : Sound(2, 0)
 	{
@@ -261,7 +274,9 @@ class VintSwish : public Sound
 {
 public:
 
-	char red_key[2];//!<переменная для единоразовой загрузки буферов в редукторе
+	string filetoBuffer[2];
+	string fileBuffered[2];
+	float offset[2] = { 0 };
 
 	VintSwish() : Sound(2, 0)
 	{

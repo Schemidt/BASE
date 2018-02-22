@@ -1344,15 +1344,21 @@ int main(int argc, char *argv[])
 			if (eng[0])
 			{
 				eng[0]->vector.clear();
+				eng[0]->averangeCalcPeriod = 0;
 			}
 			if (eng[1])
 			{
 				eng[1]->vector.clear();
+				eng[1]->averangeCalcPeriod = 0;
 			}
 			if (red)
 			{
 				red->vector.clear();
+				red->averangeCalcPeriod = 0;
 				red->vectorStep.clear();
+				red->averangeCalcPeriodStep = 0;
+				red->vectorAtk.clear();
+				red->averangeCalcPeriodAtk = 0;
 			}
 			periodCalc = 0;
 			printf(" Waiting for USPO to initializate.\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\r");
@@ -1834,7 +1840,6 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 		lengthOn = getLengthWAV(path_on);
 	if (path_off != "NULL")
 		lengthOff = getLengthWAV(path_off);
-
 	alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);
 	//условие запуска когда все звуки присутствуют
 	if (path_on != "NULL" & path_w != "NULL" & path_off != "NULL")
@@ -1907,19 +1912,8 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 		soundWork = 0;
 		soundOff = 0;
 
-		alSourceStop(source[0]);
-		alSourcei(source[0], AL_BUFFER, NULL);
-		alDeleteBuffers(1, &buffer[0]);
-		alGenBuffers(1, &buffer[0]);
-		if (!setBuffer(buffer[0], path_on, channelsSetup, channel))
-			return 0;
-		alSourcei(source[0], AL_BUFFER, buffer[0]);
-		alSourcef(source[0], AL_PITCH, pitch);
-		alSourcef(source[0], AL_GAIN, gain*gain_mult*masterGain);
+		setAndDeploySound(&buffer[0], &source[0], offsetOn, path_on);
 		alSourcei(source[0], AL_LOOPING, AL_FALSE);
-		alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-		alSourcePlay(source[0]);
-		alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);
 	}
 	//Работа (если path_w указывает на пустую область -> у агрегата отсутствует звук режима работы)
 	if (work)
@@ -1928,18 +1922,8 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 		soundWork = 1;
 		soundOff = 0;
 
-		alSourceStop(source[0]);
-		alSourcei(source[0], AL_BUFFER, NULL);
-		alDeleteBuffers(1, &buffer[0]);
-		alGenBuffers(1, &buffer[0]);
-		if (!setBuffer(buffer[0], path_w, channelsSetup, channel))
-			return 0;
-		alSourcei(source[0], AL_BUFFER, buffer[0]);
-		alSourcef(source[0], AL_PITCH, pitch);
-		alSourcef(source[0], AL_GAIN, gain*gain_mult*masterGain);
+		setAndDeploySound(&buffer[0], &source[0], 0, path_w);
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
-		alSourcePlay(source[0]);
-		alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);
 	}
 	//Выключение (если path_off указывает на пустую область -> у агрегата отсутствует звук выключения)
 	if (end)
@@ -1948,19 +1932,8 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 		soundWork = 0;
 		soundOff = 1;
 
-		alSourceStop(source[0]);
-		alSourcei(source[0], AL_BUFFER, NULL);
-		alDeleteBuffers(1, &buffer[0]);
-		alGenBuffers(1, &buffer[0]);
-		if (!setBuffer(buffer[0], path_off, channelsSetup, channel))
-			return 0;
-		alSourcei(source[0], AL_BUFFER, buffer[0]);
-		alSourcef(source[0], AL_PITCH, pitch);
-		alSourcef(source[0], AL_GAIN, gain*gain_mult*masterGain);
+		setAndDeploySound(&buffer[0], &source[0], offsetOff, path_off);
 		alSourcei(source[0], AL_LOOPING, AL_FALSE);
-		alSourcef(source[0], AL_SEC_OFFSET, offsetOff);
-		alSourcePlay(source[0]);
-		alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);
 	}
 	//Освобождение памяти
 	if (free)
@@ -1969,8 +1942,10 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 		soundWork = 0;
 		soundOff = 0;
 		alSourceStop(source[0]);
-		alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);
 	}
+
+	alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);
+
 	//Обновляем параметры по ходу воспроизведения
 	if (sourceStatus[0] == AL_PLAYING)
 	{
@@ -1986,7 +1961,6 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOff);
 			offsetOn = lengthOn * (1 - (offsetOff / lengthOff));
 		}
-			
 	}
 	return sourceStatus[0];
 }
@@ -2049,10 +2023,33 @@ int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount
 	return 1;
 }
 
-int Reductor::Play(Helicopter h, SOUNDREAD sr) 
+int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, float offset, string file_path)
+{
+	alSourceStop(*Source);
+	alSourcei(*Source, AL_BUFFER, NULL);
+	alDeleteBuffers(1, &*Buffer);
+	alGenBuffers(1, &*Buffer);
+	if (!setBuffer(*Buffer, file_path, channelsSetup, channel))
+		return 0;
+	alSourcei(*Source, AL_BUFFER, *Buffer);
+	alSourcef(*Source, AL_SEC_OFFSET, offset);
+	alSourcePlay(*Source);
+	return 0;
+}
+
+int Reductor::Play(Helicopter h, SOUNDREAD sr)
 {
 	for (size_t i = 0; i < 2; i++)
 	{
+		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+		//При оборотах редуктора = 0 и незапущенных двигателях, останавиваем источники
+		if (sr.reduktor_gl_obor == 0 && !sr.p_eng1_zap && !sr.p_eng2_zap)
+		{
+			alSourceStop(source[i]);
+			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);		// перезабили признак 
+			fileBuffered[i] = filetoBuffer[i] = "NULL";
+		}
+		//Подключаем эквалайзер
 		if (eq_key[i] != 'q')
 		{
 			alEffecti(effect[i], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
@@ -2063,122 +2060,32 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			alSourcei(source[i], AL_DIRECT_FILTER, filter[i]);
 			eq_key[i] = 'q';
 		}
+		//Загружаем буферы и запускам источники
+		if (fileBuffered[i] != filetoBuffer[i])
+		{
+			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
+			fileBuffered[i] = filetoBuffer[i];
+		}
 	}
 	//РЕДУКТОР АНСАТА
 	if (h.modelName == "ansat")
 	{
-		/*
 		//0 -> мг
-		if ((sr.p_eng1_zap | sr.p_eng2_zap) && sr.reduktor_gl_obor < h.redTurnoverMg1)
+		if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
 		{
-			if (red_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["red_on_w"], channelsSetup, channel))
-					return 0;
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_GAIN, masterGain*h.redFactor);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '1';
-			}
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-				if (sr.reduktor_gl_obor >= 5)
-					alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
-				else
-					alSourcef(source[0], AL_PITCH, 1);
-
-				if (sr.reduktor_gl_obor < (h.redTurnoverMg1 - 10))
-				{
-					alSourcef(source[0], AL_GAIN, masterGain*h.redFactor);
-				}
-			}
-			if (sourceStatus[0] != AL_PLAYING && red_key[0] == '1')
-			{
-				if (red_key[1] != '2')//подключаем - настраиваем - запускаем запись
-				{
-					alSourceStop(source[1]);
-					alSourcei(source[1], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[1]);
-					alGenBuffers(1, &buffer[1]);
-
-					if (!setBuffer(buffer[1], h.fullName["red_w_w"], channelsSetup, channel))
-						return 0;
-
-					alSourcei(source[1], AL_BUFFER, buffer[1]);
-					alSourcei(source[1], AL_LOOPING, AL_TRUE);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-
-		
-					alSourcePlay(source[1]);
-					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-					red_key[1] = '2';
-				}
-				if (sourceStatus[1] == AL_PLAYING && red_key[1] == '2')//пока запись проигрывается - следим за ее параметрами
-				{
-					alSourcef(source[1], AL_GAIN, masterGain*h.redFactor);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				}
-			}
-
-		}
-		*/
-		//0 -> мг
-		if (/*sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) &&*/ sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
-		{
-			if (red_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["red_on_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '1';
-			}
-			if (red_key[1] != '2')//подключаем - настраиваем - запускаем запись
-			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["red_w_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.redFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				red_key[1] = '2';
-			}
+			filetoBuffer[0] = h.fullName["red_on_w"];
+			filetoBuffer[1] = h.fullName["red_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_FALSE);
+			offset[0] = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
+			offset[1] = 0;
 
 			double fade = 0, rise = 0;
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.redFactor);
-				alSourcef(source[0], AL_GAIN, fade);//0
-				alSourcef(source[1], AL_GAIN, rise);//1
-			}
-			else
-				alSourcef(source[1], AL_GAIN, masterGain*h.redFactor);
+
+			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.redFactor);
+			alSourcef(source[0], AL_GAIN, fade);//0
+			alSourcef(source[1], AL_GAIN, rise);//1
+
 
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
 			if (sr.reduktor_gl_obor >= 5)
@@ -2190,38 +2097,13 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 		//мг <-> авт
 		if (sr.reduktor_gl_obor > h.redTurnoverMg2)
 		{
-			if (red_key[1] != '3')
-			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["red_w_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				red_key[1] = '3';
-			}
-			if (red_key[0] != '4')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["red_w_avt_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-																					 //alSourcefv(Source[0], AL_POSITION, position);
-																					 //alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '4';
-			}
+			filetoBuffer[1] = h.fullName["red_w_w"];
+			filetoBuffer[0] = h.fullName["red_w_avt_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			offset[0] = 0;
+			offset[1] = 0;
+
 			double fade, rise;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
 			alSourcef(source[1], AL_GAIN, fade);//
@@ -2232,39 +2114,13 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 		//мг -> 0
 		if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1 - 1)
 		{
-			if (red_key[1] != '2')
-			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["red_w_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.redFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-				red_key[1] = '2';
-			}
-			if (red_key[0] != '5')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["red_off_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOff = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOff);
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["red_off"], sr.reduktor_gl_obor));
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '5';
-			}
+			filetoBuffer[0] = h.fullName["red_off_w"];
+			filetoBuffer[1] = h.fullName["red_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_FALSE);
+			offset[0] = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
+			offset[1] = 0;
+
 			double fade, rise;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 7., masterGain*h.redFactor);
 			alSourcef(source[1], AL_GAIN, fade);//
@@ -2279,144 +2135,25 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			else
 				alSourcef(source[0], AL_PITCH, 1);
 		}
-
-		alGetSourcef(source[0], AL_PITCH, &pitch);//
-		alGetSourcef(source[0], AL_GAIN, &pitch);//
 	}
 	else
 	{
-		/*
 		//0 -> мг 1дв
-		if ((sr.p_eng1_zap | sr.p_eng2_zap) && sr.reduktor_gl_obor < h.redTurnoverMg1)
+		if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
 		{
-			if (red_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["red_on_w"], channelsSetup, channel))
-					return 0;
-
-				//alutLoadWAVFile(h.path["red_on_w"], &format, &data, &size, &freq, &loop);				// Редуктор 0-45
-				//alBufferData(Buffer[0], format, data, size, freq);
-				//alutUnloadWAV(format, data, size, freq);
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_GAIN, masterGain*h.redFactor);
-				//alSourcefv(Source[0], AL_POSITION, position);
-				//alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '1';
-			}
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-				if (sr.reduktor_gl_obor >= 5)
-					alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
-				else
-					alSourcef(source[0], AL_PITCH, 1);
-
-				if (sr.reduktor_gl_obor < (h.redTurnoverMg1 - 10))
-				{
-					alSourcef(source[0], AL_GAIN, masterGain*h.redFactor);
-				}
-			}
-			if (sourceStatus[0] != AL_PLAYING && red_key[0] == '1')
-			{
-				if (red_key[1] != '2')//подключаем - настраиваем - запускаем запись
-				{
-					alSourceStop(source[1]);
-					alSourcei(source[1], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[1]);
-					alGenBuffers(1, &buffer[1]);
-					if (!setBuffer(buffer[1], h.fullName["red_w_w"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[1], AL_BUFFER, buffer[1]);
-					alSourcei(source[1], AL_LOOPING, AL_TRUE);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-					alSourcePlay(source[1]);
-					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-					red_key[1] = '2';
-				}
-				if (sourceStatus[1] == AL_PLAYING && red_key[1] == '2')//пока запись проигрывается - следим за ее параметрами
-				{
-					alSourcef(source[1], AL_GAIN, masterGain*h.redFactor);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				}
-			}
-
-		}
-		*/
-		//0 -> мг 1дв
-		if (/*sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) &&*/ sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
-		{
-			if (red_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["red_on_w"], channelsSetup, channel))
-					return 0;
-
-				//alutLoadWAVFile(h.path["red_on_w"], &format, &data, &size, &freq, &loop);				// Редуктор 0-45
-				//alBufferData(Buffer[0], format, data, size, freq);
-				//alutUnloadWAV(format, data, size, freq);
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				//alSourcefv(Source[0], AL_POSITION, position);
-				//alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '1';
-			}
-			if (red_key[1] != '2')//подключаем - настраиваем - запускаем запись
-			{
-
-
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-
-				if (!setBuffer(buffer[1], h.fullName["red_w_w"], channelsSetup, channel))
-					return 0;
-
-				//alutLoadWAVFile(h.path["red_w_w"], &format, &data, &size, &freq, &loop);				// Редуктор 0-45
-				//alBufferData(Buffer[1], format, data, size, freq);
-				//alutUnloadWAV(format, data, size, freq);
-
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				//alSourcefv(Source[1], AL_POSITION, position);
-				//alSourcefv(Source[1], AL_VELOCITY, velocity);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.redFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				red_key[1] = '2';
-			}
+			filetoBuffer[0] = h.fullName["red_on_w"];
+			filetoBuffer[1] = h.fullName["red_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_FALSE);
+			offset[0] = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
+			offset[1] = 0;
 
 			double fade, rise;
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.redFactor);
-				alSourcef(source[0], AL_GAIN, fade);//0
-				alSourcef(source[1], AL_GAIN, rise);//1
-			}
-			else
-				alSourcef(source[1], AL_GAIN, masterGain*h.redFactor);
+
+			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.redFactor);
+			alSourcef(source[0], AL_GAIN, fade);//0
+			alSourcef(source[1], AL_GAIN, rise);//1
+
 
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
 			if (sr.reduktor_gl_obor >= 5)
@@ -2424,62 +2161,16 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			else
 				alSourcef(source[0], AL_PITCH, 1);
 			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-
-
 		}
 		//мг1дв <-> мг2дв
 		if (sr.reduktor_gl_obor > h.redTurnoverMg1 && sr.reduktor_gl_obor <= h.redTurnoverMg2)
 		{
-			if (red_key[1] != '2')
-			{
-
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-
-				if (!setBuffer(buffer[1], h.fullName["red_w_w"], channelsSetup, channel))
-					return 0;
-
-				//alutLoadWAVFile(h.path["red_w_w"], &format, &data, &size, &freq, &loop);				// Редуктор 0-45
-				//alBufferData(Buffer[1], format, data, size, freq);
-				//alutUnloadWAV(format, data, size, freq);
-
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				//alSourcefv(Source[1], AL_POSITION, position);
-				//alSourcefv(Source[1], AL_VELOCITY, velocity);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.redFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-				red_key[1] = '2';
-
-			}
-			if (red_key[0] != '3')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["red_w_mg_w"], channelsSetup, channel))
-					return 0;
-
-				//alutLoadWAVFile(h.path["red_w_mg_w"], &format, &data, &size, &freq, &loop);				// Редуктор 0-45
-				//alBufferData(Buffer[0], format, data, size, freq);
-				//alutUnloadWAV(format, data, size, freq);
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
-																					 //alSourcefv(Source[0], AL_POSITION, position);
-																					 //alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '3';
-			}
+			filetoBuffer[1] = h.fullName["red_w_w"];
+			filetoBuffer[0] = h.fullName["red_w_mg_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			offset[0] = 0;
+			offset[1] = 0;
 
 			double fade, rise;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg2, masterGain*h.redFactor);
@@ -2489,48 +2180,17 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
 			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
 		}
-		
 		//мг2дв <-> авт
 		if (h.modelName == "mi_28")
 		{
 			if (sr.reduktor_gl_obor > h.redTurnoverMg2 && sr.reduktor_gl_obor <= h.redTurnoverAvt - 2)
 			{
-				if (red_key[1] != '4')
-				{
-					alSourceStop(source[1]);
-					alSourcei(source[1], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[1]);
-					alGenBuffers(1, &buffer[1]);
-
-					if (!setBuffer(buffer[1], h.fullName["red_w_avt_w"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[1], AL_BUFFER, buffer[1]);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-																						 //alSourcefv(Source[1], AL_POSITION, position);
-																						 //alSourcefv(Source[1], AL_VELOCITY, velocity);
-					alSourcei(source[1], AL_LOOPING, AL_TRUE);
-					alSourcePlay(source[1]);
-					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-					red_key[1] = '4';
-				}
-				if (red_key[0] != '3')
-				{
-					alSourceStop(source[0]);
-					alSourcei(source[0], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[0]);
-					alGenBuffers(1, &buffer[0]);
-
-					if (!setBuffer(buffer[0], h.fullName["red_w_mg_w"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[0], AL_BUFFER, buffer[0]);
-					alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
-																						 //alSourcefv(Source[0], AL_POSITION, position);
-																						 //alSourcefv(Source[0], AL_VELOCITY, velocity);
-					alSourcei(source[0], AL_LOOPING, AL_TRUE);
-					alSourcePlay(source[0]);
-					alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-					red_key[0] = '3';
-				}
+				filetoBuffer[1] = h.fullName["red_w_avt_w"];
+				filetoBuffer[0] = h.fullName["red_w_mg_w"];
+				alSourcei(source[1], AL_LOOPING, AL_TRUE);
+				alSourcei(source[0], AL_LOOPING, AL_TRUE);
+				offset[0] = 0;
+				offset[1] = 0;
 
 				double fade, rise;
 				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
@@ -2543,99 +2203,33 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//авт <-> авт полет
 			if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 			{
-					if (red_key[1] != '4')
-					{
-						alSourceStop(source[1]);
-						alSourcei(source[1], AL_BUFFER, NULL);
-						alDeleteBuffers(1, &buffer[1]);
-						alGenBuffers(1, &buffer[1]);
+				filetoBuffer[1] = h.fullName["red_w_avt_w"];
+				filetoBuffer[0] = h.fullName["red_w_avt_fly"];
+				alSourcei(source[1], AL_LOOPING, AL_TRUE);
+				alSourcei(source[0], AL_LOOPING, AL_TRUE);
+				offset[0] = 0;
+				offset[1] = 0;
 
-						if (!setBuffer(buffer[1], h.fullName["red_w_avt_w"], channelsSetup, channel))
-							return 0;
-						alSourcei(source[1], AL_BUFFER, buffer[1]);
-						alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-						alSourcei(source[1], AL_LOOPING, AL_TRUE);
-						alSourcePlay(source[1]);
-						alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-						red_key[1] = '4';
-					}
-					if (red_key[0] != '3')
-					{
-						alSourceStop(source[0]);
-						alSourcei(source[0], AL_BUFFER, NULL);
-						alDeleteBuffers(1, &buffer[0]);
-						alGenBuffers(1, &buffer[0]);
+				double fade = 0, rise = 0;
+				crossFade(&fade, &rise, step, 5.00, 5.01, masterGain*h.redFactor);
+				alSourcef(source[1], AL_GAIN, fade);//
+				alSourcef(source[0], AL_GAIN, rise);//
 
-						if (!setBuffer(buffer[0], h.fullName["red_w_avt_fly"], channelsSetup, channel))
-							return 0;
-						alSourcei(source[0], AL_BUFFER, buffer[0]);
-						alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-						alSourcei(source[0], AL_LOOPING, AL_TRUE);
-						alSourcePlay(source[0]);
-						alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-						red_key[0] = '3';
-					}
-					double fade = 0, rise = 0;
-					crossFade(&fade, &rise, step, 5.00,5.01 , masterGain*h.redFactor);
-					alSourcef(source[1], AL_GAIN, fade);//
-					alSourcef(source[0], AL_GAIN, rise);//
+				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
+				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
 
-					alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-
-
-					//if (step > 5)
-					//{
-					//	alSourcef(source[1], AL_GAIN, 0);//
-					//	alSourcef(source[0], AL_GAIN, 1);//
-					//}
-					//else
-					//{
-					//	alSourcef(source[1], AL_GAIN, 1);//
-					//	alSourcef(source[0], AL_GAIN, 0);//
-					//}
 			}
 		}
 		else
 		{
 			if (sr.reduktor_gl_obor > h.redTurnoverMg2)
 			{
-				if (red_key[1] != '4')
-				{
-					alSourceStop(source[1]);
-					alSourcei(source[1], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[1]);
-					alGenBuffers(1, &buffer[1]);
-
-					if (!setBuffer(buffer[1], h.fullName["red_w_avt_w"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[1], AL_BUFFER, buffer[1]);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-																						   //alSourcefv(Source[1], AL_POSITION, position);
-																						   //alSourcefv(Source[1], AL_VELOCITY, velocity);
-					alSourcei(source[1], AL_LOOPING, AL_TRUE);
-					alSourcePlay(source[1]);
-					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-					red_key[1] = '4';
-				}
-				if (red_key[0] != '3')
-				{
-					alSourceStop(source[0]);
-					alSourcei(source[0], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[0]);
-					alGenBuffers(1, &buffer[0]);
-
-					if (!setBuffer(buffer[0], h.fullName["red_w_mg_w"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[0], AL_BUFFER, buffer[0]);
-					alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
-																						   //alSourcefv(Source[0], AL_POSITION, position);
-																						   //alSourcefv(Source[0], AL_VELOCITY, velocity);
-					alSourcei(source[0], AL_LOOPING, AL_TRUE);
-					alSourcePlay(source[0]);
-					alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-					red_key[0] = '3';
-				}
+				filetoBuffer[1] = h.fullName["red_w_avt_w"];
+				filetoBuffer[0] = h.fullName["red_w_mg_w"];
+				alSourcei(source[1], AL_LOOPING, AL_TRUE);
+				alSourcei(source[0], AL_LOOPING, AL_TRUE);
+				offset[0] = 0;
+				offset[1] = 0;
 
 				double fade, rise;
 				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
@@ -2649,61 +2243,12 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 		//мг1дв -> 0
 		if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1 - 1)
 		{
-			if (red_key[1] != '2')
-			{
-
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-
-				if (!setBuffer(buffer[1], h.fullName["red_w_w"], channelsSetup, channel))
-					return 0;
-
-				//alutLoadWAVFile(h.path["red_w_w"], &format, &data, &size, &freq, &loop);				// Редуктор 0-45
-				//alBufferData(Buffer[1], format, data, size, freq);
-				//alutUnloadWAV(format, data, size, freq);
-
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				//alSourcefv(Source[1], AL_POSITION, position);
-				//alSourcefv(Source[1], AL_VELOCITY, velocity);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.redFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-				red_key[1] = '2';
-
-			}
-			if (red_key[0] != '5')
-			{
-
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["red_off_w"], channelsSetup, channel))
-					return 0;
-
-				//alutLoadWAVFile(h.path["red_off_w"], &format, &data, &size, &freq, &loop);				// Редуктор 0-45
-				//alBufferData(Buffer[0], format, data, size, freq);
-				//alutUnloadWAV(format, data, size, freq);
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				//alSourcefv(Source[0], AL_POSITION, position);
-				//alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOff = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOff);
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["red_off"], sr.reduktor_gl_obor));
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '5';
-			}
-			//alSourcefv(Source[1], AL_POSITION, position);
-			//alSourcefv(Source[1], AL_VELOCITY, velocity);
+			filetoBuffer[0] = h.fullName["red_off_w"];
+			filetoBuffer[1] = h.fullName["red_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_FALSE);
+			offset[0] = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
+			offset[1] = 0;
 
 			double fade, rise;
 			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 7., masterGain*h.redFactor);
@@ -2719,20 +2264,6 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			else
 				alSourcef(source[0], AL_PITCH, 1);
 		}
-
-		alGetSourcef(source[1], AL_PITCH, &pitch);//
-		alGetSourcef(source[1], AL_GAIN, &gain);//
-	}
-
-	//При оборотах редуктора = 0 и незапущенных двигателях, останавиваем источники
-	if (sr.reduktor_gl_obor == 0 && !sr.p_eng1_zap && !sr.p_eng2_zap)
-	{
-		alSourceStop(source[0]);
-		alSourceStop(source[1]);
-		alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-		alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-		red_key[0] = ' ';
-		red_key[1] = ' ';
 	}
 
 	//Полеты ми 28
@@ -2743,44 +2274,22 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//добавляем шум для усиления средних частот
 			if (pinkNoise != "set")
 			{
-				alSourceStop(source[2]);
-				alSourcei(source[2], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[2]);
-				alGenBuffers(1, &buffer[2]);
-
-				if (!setBuffer(buffer[2], h.fullName["pinkNoise"], channelsSetup, channel))
-					return 0;
-				alSourcef(source[2], AL_GAIN, pinkNoiseGain);
-				alSourcei(source[2], AL_BUFFER, buffer[2]);
+				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["pinkNoise"]);
 				alSourcei(source[2], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[2]);
 				pinkNoise = "set";
 			}
-
-			/*
-			averangeCalcPeriod += deltaTime;
-			if (high > 0)
-			{
-				averangeCalcPeriodStep += deltaTime;
-			}
-			else
-			{
-				averangeCalcPeriodStep = 0;
-				vectorStep.clear();
-			}
-			*/
-
 			//регулируем громкость шума
 			if (abs(velocityX) < 60)
 			{
-				pinkNoiseGain = squareInterpolation(0, -60, 50, -3, 60, -6, abs(velocityX));
+				pinkNoiseGain = squareInterpolation(0, -60, 50, -14, 60, -6, abs(velocityX));
 			}
 			else
 			{
 				pinkNoiseGain = squareInterpolation(60, -6, 70, -3, 80, 0, abs(velocityX));
 			}
-			alSourcef(source[2], AL_GAIN, pow(10,pinkNoiseGain*0.05));//230км.ч
-			
+			alSourcef(source[2], AL_GAIN, pow(10, pinkNoiseGain*0.05)*h.redFactor);//230км.ч
+
+			averangeCalcPeriod += deltaTime;
 			if (averangeCalcPeriod >= 30 && !vector.empty())
 				vector.erase(vector.begin());
 			vector.push_back(sr.reduktor_gl_obor);
@@ -2788,6 +2297,21 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				vectorElemSumm += x;
 			averangeTurn = vectorElemSumm / vector.size();
 			vectorElemSumm = 0;
+
+			//Усиление по атаке
+			float atkXvel = calcA * lineInterpolation(0, 0, 16.67, 1, abs(velocityX));
+			averangeCalcPeriodAtk += deltaTime;
+			if (averangeCalcPeriodAtk >= 20 && !vectorAtk.empty())
+				vectorAtk.erase(vectorAtk.begin());
+			vectorAtk.push_back(atkXvel);
+			for (auto& x : vectorAtk)
+				vectorElemSummAtk += x;
+			averangeAtk = vectorElemSummAtk / vectorAtk.size();
+			vectorElemSummAtk = 0;
+
+			float atkGain = (atkXvel - averangeAtk) * -0.4;
+			atkGain = (atkGain < -2) ? -2 : atkGain;
+			atkGain = (atkGain > 3) ? 3 : atkGain;
 
 			//Общее усиление от скорости 
 			if (velocityX < 70)
@@ -2809,31 +2333,6 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				stepGain = (step * 0.4 - 1.4) / 3;
 			}
 
-			////Ослабление НЧ до 400гц от ускорения
-			//accelerationGain = averangeAcc * (-3.75);
-			//if (accelerationGain < -3)
-			//	accelerationGain = -3;
-			//else if (accelerationGain > 0)
-			//	accelerationGain = 0;
-			//усиление от шага
-			//if (high > 0)
-			//{
-			//	if (averangeCalcPeriodStep >= 35 && !vectorStep.empty())
-			//		vectorStep.erase(vectorStep.begin());
-			//	vectorStep.push_back(step);
-			//	for (auto& x : vectorStep)
-			//		vectorElemSummStep += x;
-			//	averangeStep = vectorElemSummStep / vectorStep.size();
-			//	vectorElemSummStep = 0;
-			//}
-			//stepGain = 0.75 * (step - averangeStep) * lineInterpolation(0, 0, 1, 1, high);//
-
-			//усиление по шагу в НЧ
-			//mid2FreqStepGain = step * 0.6 * lineInterpolation(0, 1, 10, 0, high);//~3дб
-
-			//Усиление при отрыве
-			//highGain = squareInterpolation(0, 0, 5, 3, 10, 0, high);//3дб
-
 			//усиление от оборотов выше 10000
 			highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
@@ -2841,10 +2340,10 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//усиление от оборотов
 			turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
 
-			lowFreqGain = pow(10, (turnGain /*+ stepGain * 1 */ + velocityGain * 3 /*+ lowFreqVelocityGain + highGain + mid2FreqStepGain*/ /*+ accelerationGain*/)*0.05);
+			lowFreqGain = pow(10, (turnGain /*+ stepGain * 1 */ + velocityGain * 3 + atkGain/*+ lowFreqVelocityGain + highGain + mid2FreqStepGain*/ /*+ accelerationGain*/)*0.05);
 			mid1FreqGain = pow(10, (turnGain + stepGain * 2 + velocityGain * 5 /*+ mid2FreqStepGain*//*+ lowFreqVelocityGain*/)*0.05);
-			mid2FreqGain = pow(10, (turnGain + stepGain * 3 /*+ velocityGain*/ /*+ lowFreqVelocityGain*/)*0.05);
-			highFreqGain = pow(10, (turnGain + stepGain * 3 /*+ velocityGain *//*+ highFreqTurnGain*/)*0.05);
+			mid2FreqGain = pow(10, (turnGain + stepGain * 4 /*+ velocityGain*/ /*+ lowFreqVelocityGain*/)*0.05);
+			highFreqGain = pow(10, (turnGain + stepGain * 4 /*+ velocityGain *//*+ highFreqTurnGain*/)*0.05);
 
 			lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
 			mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
@@ -2870,19 +2369,19 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 
 				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			}
-			printf("turnGain = %10.3f stepGain = %10.3f velocityGain = %10.3f\r", turnGain, stepGain, velocityGain);
+			printf("turnGain = %10.3f stepGain = %10.3f velocityGain = %10.3f atkGain = %10.3f\r", turnGain, stepGain, velocityGain, atkGain);
 			outputPeriod += deltaTime;
 			if (outputPeriod >= 1)
 			{
 				fred = fopen("red.txt", "at");
-				fprintf(fred, "%f\t%f\t%f\t%f\n", turnGain, stepGain, velocityGain, soundread.time);
+				fprintf(fred, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", turnGain, stepGain, velocityGain, atkGain, atkXvel, averangeAtk, soundread.time);
 				fclose(fred);
 				outputPeriod = 0;
 			}
 		}
-		}
+	}
 	//Полеты 8 мтв5, 8 амтш
-	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" )
+	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
 		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 		{
@@ -2890,17 +2389,8 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//добавляем шум для усиления средних частот
 			if (pinkNoise != "set")
 			{
-				alSourceStop(source[2]);
-				alSourcei(source[2], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[2]);
-				alGenBuffers(1, &buffer[2]);
-
-				if (!setBuffer(buffer[2], h.fullName["pinkNoise"], channelsSetup, channel))
-					return 0;
-				alSourcef(source[2], AL_GAIN, pinkNoiseGain);
-				alSourcei(source[2], AL_BUFFER, buffer[2]);
+				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["pinkNoise"]);
 				alSourcei(source[2], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[2]);
 				pinkNoise = "set";
 			}
 
@@ -3005,17 +2495,8 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//добавляем шум для усиления средних частот
 			if (pinkNoise != "set")
 			{
-				alSourceStop(source[2]);
-				alSourcei(source[2], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[2]);
-				alGenBuffers(1, &buffer[2]);
-
-				if (!setBuffer(buffer[2], h.fullName["pinkNoise"], channelsSetup, channel))
-					return 0;
-				alSourcef(source[2], AL_GAIN, pinkNoiseGain);
-				alSourcei(source[2], AL_BUFFER, buffer[2]);
+				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["pinkNoise"]);
 				alSourcei(source[2], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[2]);
 				pinkNoise = "set";
 			}
 
@@ -3034,7 +2515,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//регулируем громкость шума
 			pinkNoiseGain = pow(10, ((69.4 - abs(velocityX)) * (-0.86)) * 0.05);
 			alSourcef(source[2], AL_GAIN, pinkNoiseGain);//230км.ч
-														 
+
 			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 			if (averangeCalcPeriod >= 30 && !vector.empty())
 				vector.erase(vector.begin());
@@ -3078,7 +2559,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 			//усиление от оборотов
 			turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
-		
+
 			bool boost = 0;
 			//усиление НЧ когда нет хлопков на границе 2го условия
 			float flapCGain = 0;
@@ -3114,7 +2595,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				}
 				else
 				{*/
-					flapCGain = (flapCGain > 4) ? 4 : flapCGain;
+				flapCGain = (flapCGain > 4) ? 4 : flapCGain;
 				//}
 				tay += deltaTime;
 				tay = (tay > 1) ? 1 : tay;
@@ -3127,7 +2608,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				tay -= deltaTime;
 				tay = (tay < 0) ? 0 : tay;
 			}
-			
+
 
 			lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain * 0.3 + flapCGain + velocityGain)*0.05); //0.15 -> 0.15
 			mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.1 + mid2FreqStepGain * 0.2 + flapCGain)*0.05);//0.3 -> 0.2
@@ -3178,17 +2659,8 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//добавляем шум для усиления средних частот
 			if (pinkNoise != "set")
 			{
-				alSourceStop(source[2]);
-				alSourcei(source[2], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[2]);
-				alGenBuffers(1, &buffer[2]);
-
-				if (!setBuffer(buffer[2], h.fullName["pinkNoise"], channelsSetup, channel))
-					return 0;
-				alSourcef(source[2], AL_GAIN, pinkNoiseGain);
-				alSourcei(source[2], AL_BUFFER, buffer[2]);
+				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["pinkNoise"]);
 				alSourcei(source[2], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[2]);
 				pinkNoise = "set";
 			}
 
@@ -3225,7 +2697,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			{
 				velocityGain = lineInterpolation(42, 3, 56, 7, abs(velocityX));
 			}
-			else 
+			else
 			{
 				velocityGain = 7 + (abs(velocityX) - 56) * 0.071;
 				velocityGain = (velocityGain > 9) ? 9 : velocityGain;
@@ -3258,7 +2730,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
 
 
-			
+
 			bool boost = 0;
 			//усиление НЧ когда нет хлопков на границе 2го условия
 			float flapCGain = 0;
@@ -3350,6 +2822,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//printf("step = %10.3f averangeStep = %10.3f turnGain = %10.3f stepGain = %10.3f absStepGain = %10.3f mid2FreqStepGain = %10.3f\r", step, averangeStep, turnGain, stepGain, absStepGain, mid2FreqStepGain);
 		}
 	}
+
 	return 1;
 }
 
@@ -3357,6 +2830,8 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 {
 	for (size_t i = 0; i < 2; i++)
 	{
+		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+		//Подключаем эквалайзер
 		if (eq_key[i] != 'q')
 		{
 			alEffecti(effect[i], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
@@ -3367,125 +2842,38 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 			alSourcei(source[i], AL_DIRECT_FILTER, filter[i]);//подключаем фильтр к источнику
 			eq_key[i] = 'q';
 		}
+		//Загружаем буферы и запускам источники
+		if (fileBuffered[i] != filetoBuffer[i])
+		{
+			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
+			fileBuffered[i] = filetoBuffer[i];
+		}
+		//Выключаем источники если обороты равны 0 и двигатель не запускается
+		if (!status_on && parameter == 0)
+		{
+			alSourceStop(source[i]);
+			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);		// перезабили признак 
+			fileBuffered[i] = filetoBuffer[i] = "NULL";
+		}
 	}
 
 	//ДВИГАТЕЛЬ АНСАТА
 	if (h.modelName == "ansat")
 	{
-		/*
 		//0 -> мг
-		if (status_on && parameter < h.engTurnoverMg)
+		if (parameter <= h.engTurnoverMg && status_on)
 		{
-			if (eng_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["eng_on_w"], channelsSetup, channel))
-					return 0;
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_GAIN, masterGain*h.engFactor);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["eng_on"], parameter);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);// перезабили признак 
-				eng_key[0] = '1';
-			}
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-				if (parameter >= 5)
-					alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["eng_on"], parameter));
-				else
-					alSourcef(source[0], AL_PITCH, 1);
-
-				if (parameter < (h.engTurnoverMg - 10))
-				{
-					alSourcef(source[0], AL_GAIN, masterGain*h.engFactor);
-				}
-
-				//alSourcefv(Source[0], AL_POSITION, position);
-				//alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alGetSourcef(source[0], AL_PITCH, &pitch);//питч для отладки
-			}
-			if (sourceStatus[0] != AL_PLAYING && eng_key[0] == '1')
-			{
-				if (eng_key[1] != '2')//подключаем - настраиваем - запускаем запись
-				{
-					alSourceStop(source[1]);
-					alSourcei(source[1], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[1]);
-					alGenBuffers(1, &buffer[1]);
-					if (!setBuffer(buffer[1], h.fullName["eng_w_w"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[1], AL_BUFFER, buffer[1]);
-					alSourcei(source[1], AL_LOOPING, AL_TRUE);
-					alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-					alSourcePlay(source[1]);
-					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-					eng_key[1] = '2';
-				}
-				if (sourceStatus[1] == AL_PLAYING && eng_key[1] == '2')//пока запись проигрывается - следим за ее параметрами
-				{
-					alSourcef(source[1], AL_GAIN, masterGain*h.engFactor);
-					alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				}
-			}
-
-		}
-		*/
-		//0 -> мг
-		if (/*parameter > (h.engTurnoverMg - 10) &&*/ parameter <= h.engTurnoverMg && status_on)
-		{
-			if (eng_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["eng_on_w"], channelsSetup, channel))
-					return 0;
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-
-				offsetOn = getOffset(1, h.fullName["eng_on"], parameter);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				eng_key[0] = '1';
-			}
-			if (eng_key[1] != '2')//подключаем - настраиваем - запускаем запись
-			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["eng_w_w"], channelsSetup, channel))
-					return 0;
-
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.engFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				eng_key[1] = '2';
-			}
+			filetoBuffer[0] = h.fullName["eng_on_w"];
+			filetoBuffer[1] = h.fullName["eng_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_FALSE);
+			offset[0] = getOffset(1, h.fullName["eng_on"], parameter);
+			offset[1] = 0;
 
 			double fade, rise;
-			if (sourceStatus[0] == AL_PLAYING)
-			{
 				crossFade(&fade, &rise, parameter, h.engTurnoverMg - 10, h.engTurnoverMg, masterGain*h.engFactor);
 				alSourcef(source[0], AL_GAIN, fade);
 				alSourcef(source[1], AL_GAIN, rise);
-			}
-			else
-				alSourcef(source[1], AL_GAIN, masterGain*h.engFactor);
 
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
 			if (parameter > 5)
@@ -3500,41 +2888,12 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 		//мг -> 0
 		if (status_off && parameter > 0 && parameter < h.engTurnoverMg - 2)
 		{
-			if (eng_key[1] != '2')
-			{
-
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["eng_w_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.engFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-				eng_key[1] = '2';
-			}
-			if (eng_key[0] != '5')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["eng_off_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOff = getOffset(1, h.fullName["eng_off"], parameter);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOff);
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["eng_off"], parameter));
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				eng_key[0] = '5';
-			}
+			filetoBuffer[0] = h.fullName["eng_off_w"];
+			filetoBuffer[1] = h.fullName["eng_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_FALSE);
+			offset[0] = getOffset(1, h.fullName["eng_off"], parameter);
+			offset[1] = 0;
 
 			double fade, rise;
 			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverMg - 7., masterGain*h.engFactor);
@@ -3548,119 +2907,23 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 			else
 				alSourcef(source[0], AL_PITCH, 1);
 		}
-
-		alGetSourcef(source[1], AL_PITCH, &pitch);//
-		alGetSourcef(source[1], AL_GAIN, &pitch);//
 	}
 	else
 	{
-		/*
 		//0 -> мг
-		if (status_on && parameter < h.engTurnoverMg)
+		if (parameter <= h.engTurnoverMg && status_on)
 		{
-			if (eng_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["eng_on_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_GAIN, masterGain*h.engFactor);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["eng_on"], parameter);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);// перезабили признак 
-				eng_key[0] = '1';
-			}
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-				if (parameter >= 5)
-					alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["eng_on"], parameter));
-				else
-					alSourcef(source[0], AL_PITCH, 1);
-
-				if (parameter < (h.engTurnoverMg - 10))
-				{
-					alSourcef(source[0], AL_GAIN, masterGain*h.engFactor);
-				}
-				alGetSourcef(source[0], AL_PITCH, &pitch);//питч для отладки
-			}
-			if (sourceStatus[0] != AL_PLAYING && eng_key[0] == '1')
-			{
-				if (eng_key[1] != '2')//подключаем - настраиваем - запускаем запись
-				{
-					alSourceStop(source[1]);
-					alSourcei(source[1], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[1]);
-					alGenBuffers(1, &buffer[1]);
-					if (!setBuffer(buffer[1], h.fullName["eng_w_w"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[1], AL_BUFFER, buffer[1]);
-					alSourcei(source[1], AL_LOOPING, AL_TRUE);
-					alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-					alSourcePlay(source[1]);
-					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-					eng_key[1] = '2';
-				}
-				if (sourceStatus[1] == AL_PLAYING && eng_key[1] == '2')//пока запись проигрывается - следим за ее параметрами
-				{
-					alSourcef(source[1], AL_GAIN, masterGain*h.engFactor);
-					alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				}
-			}
-		}*/
-		//0 -> мг
-		if (/*parameter > (h.engTurnoverMg - 10) &&*/ parameter <= h.engTurnoverMg && status_on)
-		{
-			if (eng_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["eng_on_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-
-				offsetOn = getOffset(1, h.fullName["eng_on"], parameter);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				eng_key[0] = '1';
-			}
-			if (eng_key[1] != '2')//подключаем - настраиваем - запускаем запись
-			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["eng_w_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.engFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				eng_key[1] = '2';
-			}
+			filetoBuffer[0] = h.fullName["eng_on_w"];
+			filetoBuffer[1] = h.fullName["eng_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_FALSE);
+			offset[0] = getOffset(1, h.fullName["eng_on"], parameter);
+			offset[1] = 0;
 
 			double fade, rise;
-			if (sourceStatus[0] == AL_PLAYING)
-			{
 				crossFade(&fade, &rise, parameter, h.engTurnoverMg - 10, h.engTurnoverMg, masterGain*h.engFactor);
 				alSourcef(source[0], AL_GAIN, fade);
 				alSourcef(source[1], AL_GAIN, rise);
-			}
-			else
-				alSourcef(source[1], AL_GAIN, masterGain*h.engFactor);
 
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
 
@@ -3673,42 +2936,12 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 		//мг <-> авт
 		if (parameter > h.engTurnoverMg)
 		{
-			if (eng_key[1] != '2')
-			{
-
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["eng_w_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.engFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-				eng_key[1] = '2';
-			}
-			if (eng_key[0] != '3')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["eng_w_avt_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_PITCH, parameter / h.engTurnoverAvt);//
-				alSourcef(source[0], AL_GAIN, masterGain*h.engFactor);
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				eng_key[0] = '3';
-				//alSource3i(Source[0], AL_AUXILIARY_SEND_FILTER, NULL, 0, NULL);
-			}
+			filetoBuffer[0] = h.fullName["eng_w_avt_w"];
+			filetoBuffer[1] = h.fullName["eng_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			offset[0] = 0;
+			offset[1] = 0;
 
 			double fade, rise;
 			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverAvt, masterGain*h.engFactor);
@@ -3721,41 +2954,12 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 		//мг -> 0
 		if (status_off && parameter > 0 && parameter < h.engTurnoverMg - 2)
 		{
-			if (eng_key[1] != '2')
-			{
-
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["eng_w_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.engFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-				eng_key[1] = '2';
-			}
-			if (eng_key[0] != '5')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["eng_off_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOff = getOffset(1, h.fullName["eng_off"], parameter);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOff);
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["eng_off"], parameter));
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				eng_key[0] = '5';
-			}
+			filetoBuffer[0] = h.fullName["eng_off_w"];
+			filetoBuffer[1] = h.fullName["eng_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_FALSE);
+			offset[0] = getOffset(1, h.fullName["eng_off"], parameter);
+			offset[1] = 0;
 
 			double fade, rise;
 			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverMg - 7., masterGain*h.engFactor);
@@ -3769,21 +2973,9 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 			else
 				alSourcef(source[0], AL_PITCH, 1);
 		}
-
-		alGetSourcef(source[0], AL_PITCH, &pitch);//
-		alGetSourcef(source[0], AL_GAIN, &gain);//
 	}
 
-	//Выключаем источники если обороты равны 0 и двигатель не запускается
-	if (!status_on && parameter == 0)
-	{
-		alSourceStop(source[0]);
-		alSourceStop(source[1]);
-		alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-		alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-		eng_key[0] = ' ';
-		eng_key[1] = ' ';
-	}
+	
 	//Полеты 8 мтв5, 8 амтш, ка 27м, ка 29
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "ka_27" || h.modelName == "ka_29")
 	{
@@ -4165,551 +3357,104 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 {
-		/*
-	//РЕДУКТОР АНСАТА
-	if (h.modelName == "ansat")
+
+	for (size_t i = 0; i < 2; i++)
 	{
-		//0 -> мг
-		if ((sr.p_eng1_zap | sr.p_eng2_zap) && sr.reduktor_gl_obor < h.redTurnoverMg1)
+		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+
+		//Загружаем буферы и запускам источники
+		if (fileBuffered[i] != filetoBuffer[i])
 		{
-			if (red_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["vint_swish_on"], channelsSetup, channel))
-					return 0;
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_GAIN, masterGain*h.vintSwishFactor);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '1';
-			}
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-				if (sr.reduktor_gl_obor >= 5)
-					alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
-				else
-					alSourcef(source[0], AL_PITCH, 1);
-
-				if (sr.reduktor_gl_obor < (h.redTurnoverMg1 - 10))
-				{
-					alSourcef(source[0], AL_GAIN, masterGain*h.vintSwishFactor);
-				}
-			}
-			if (sourceStatus[0] != AL_PLAYING && red_key[0] == '1')
-			{
-				if (red_key[1] != '2')//подключаем - настраиваем - запускаем запись
-				{
-					alSourceStop(source[1]);
-					alSourcei(source[1], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[1]);
-					alGenBuffers(1, &buffer[1]);
-
-					if (!setBuffer(buffer[1], h.fullName["vint_swish_w"], channelsSetup, channel))
-						return 0;
-
-					alSourcei(source[1], AL_BUFFER, buffer[1]);
-					alSourcei(source[1], AL_LOOPING, AL_TRUE);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-
-
-					alSourcePlay(source[1]);
-					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-					red_key[1] = '2';
-				}
-				if (sourceStatus[1] == AL_PLAYING && red_key[1] == '2')//пока запись проигрывается - следим за ее параметрами
-				{
-					alSourcef(source[1], AL_GAIN, masterGain*h.vintSwishFactor);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				}
-			}
-
+			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
+			fileBuffered[i] = filetoBuffer[i];
 		}
-		//0 -> мг
-		if (sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) && sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
+		//Выключаем источники если обороты равны 0 и двигатель не запускается
+		if (sr.reduktor_gl_obor == 0 && !sr.p_eng1_zap && !sr.p_eng2_zap)
 		{
-			if (red_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["vint_swish_on"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '1';
-			}
-			if (red_key[1] != '2')//подключаем - настраиваем - запускаем запись
-			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["vint_swish_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.vintSwishFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				red_key[1] = '2';
-			}
-
-			float fade, rise;
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.vintSwishFactor);
-				alSourcef(source[0], AL_GAIN, fade);//0
-				alSourcef(source[1], AL_GAIN, rise);//1
-			}
-			else
-				alSourcef(source[1], AL_GAIN, masterGain*h.vintSwishFactor);
-
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-			if (sr.reduktor_gl_obor >= 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+			alSourceStop(source[i]);
+			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);		// перезабили признак 
+			fileBuffered[i] = filetoBuffer[i] = "NULL";
 		}
-		//мг <-> авт
-		if (sr.reduktor_gl_obor > h.redTurnoverMg2)
-		{
-			if (red_key[1] != '3')
-			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["vint_swish_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				red_key[1] = '3';
-			}
-			if (red_key[0] != '4')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["vint_swish_w_avt"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-																					   //alSourcefv(Source[0], AL_POSITION, position);
-																					   //alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '4';
-			}
-			float fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.vintSwishFactor);
-			alSourcef(source[1], AL_GAIN, fade);//
-			alSourcef(source[0], AL_GAIN, rise);//
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-		}
-		//мг -> 0
-		if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1 - 1)
-		{
-			if (red_key[1] != '2')
-			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-				if (!setBuffer(buffer[1], h.fullName["vint_swish_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.vintSwishFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-				red_key[1] = '2';
-			}
-			if (red_key[0] != '5')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-				if (!setBuffer(buffer[0], h.fullName["red_off_w"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOff = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOff);
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["red_off"], sr.reduktor_gl_obor));
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '5';
-			}
-			float fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 7., masterGain*h.vintSwishFactor);
-			alSourcef(source[1], AL_GAIN, fade);//
-			alSourcef(source[0], AL_GAIN, rise);//
-
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOff);
-
-			if (sr.reduktor_gl_obor > 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["red_off"], sr.reduktor_gl_obor));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-		}
-
-		alGetSourcef(source[0], AL_PITCH, &pitch);//
-		alGetSourcef(source[0], AL_GAIN, &pitch);//
 	}
-	else
-	{*/
-		/*
-		//0 -> мг 1дв
-		if ((sr.p_eng1_zap | sr.p_eng2_zap) && sr.reduktor_gl_obor < h.redTurnoverMg1)
-		{
-			if (red_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
 
-				if (!setBuffer(buffer[0], h.fullName["vint_swish_on"], channelsSetup, channel))
-					return 0;
-
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_GAIN, masterGain*h.vintSwishFactor);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '1';
-			}
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-				if (sr.reduktor_gl_obor >= 5)
-					alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
-				else
-					alSourcef(source[0], AL_PITCH, 1);
-
-				if (sr.reduktor_gl_obor < (h.redTurnoverMg1 - 10))
-				{
-					alSourcef(source[0], AL_GAIN, masterGain*h.vintSwishFactor);
-				}
-			}
-			if (sourceStatus[0] != AL_PLAYING && red_key[0] == '1')
-			{
-				if (red_key[1] != '2')//подключаем - настраиваем - запускаем запись
-				{
-					alSourceStop(source[1]);
-					alSourcei(source[1], AL_BUFFER, NULL);
-					alDeleteBuffers(1, &buffer[1]);
-					alGenBuffers(1, &buffer[1]);
-					if (!setBuffer(buffer[1], h.fullName["vint_swish_w"], channelsSetup, channel))
-						return 0;
-					alSourcei(source[1], AL_BUFFER, buffer[1]);
-					alSourcei(source[1], AL_LOOPING, AL_TRUE);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-					alSourcePlay(source[1]);
-					alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-					red_key[1] = '2';
-				}
-				if (sourceStatus[1] == AL_PLAYING && red_key[1] == '2')//пока запись проигрывается - следим за ее параметрами
-				{
-					alSourcef(source[1], AL_GAIN, masterGain*h.vintSwishFactor);
-					alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				}
-			}
-
-		}
-		*/
-		//0 -> мг 1дв
-		if (/*sr.reduktor_gl_obor > (h.redTurnoverMg1 - 10) && */sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
-		{
-			if (red_key[0] != '1')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["vint_swish_on"], channelsSetup, channel))
-					return 0;
-
-				//alutLoadWAVFile(h.path["vint_swish_on"], &format, &data, &size, &freq, &loop);				// Редуктор 0-45
-				//alBufferData(Buffer[0], format, data, size, freq);
-				//alutUnloadWAV(format, data, size, freq);
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				//alSourcefv(Source[0], AL_POSITION, position);
-				//alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOn = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOn);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '1';
-			}
-			if (red_key[1] != '2')//подключаем - настраиваем - запускаем запись
-			{
-
-
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-
-				if (!setBuffer(buffer[1], h.fullName["vint_swish_w"], channelsSetup, channel))
-					return 0;
-
-				//alutLoadWAVFile(h.path["vint_swish_w"], &format, &data, &size, &freq, &loop);				// Редуктор 0-45
-				//alBufferData(Buffer[1], format, data, size, freq);
-				//alutUnloadWAV(format, data, size, freq);
-
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				//alSourcefv(Source[1], AL_POSITION, position);
-				//alSourcefv(Source[1], AL_VELOCITY, velocity);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.vintSwishFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				red_key[1] = '2';
-			}
-
-			double fade, rise;
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.vintSwishFactor);
-				alSourcef(source[0], AL_GAIN, fade);//0
-				alSourcef(source[1], AL_GAIN, rise);//1
-			}
-			else
-				alSourcef(source[1], AL_GAIN, masterGain*h.vintSwishFactor);
-
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-			if (sr.reduktor_gl_obor >= 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-
-
-		}
-		//мг1дв <-> мг2дв
-		if (sr.reduktor_gl_obor > h.redTurnoverMg1 && sr.reduktor_gl_obor <= h.redTurnoverMg2)
-		{
-			if (red_key[1] != '2')
-			{
-
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-
-				if (!setBuffer(buffer[1], h.fullName["vint_swish_w"], channelsSetup, channel))
-					return 0;
-
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.vintSwishFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-				red_key[1] = '2';
-
-			}
-			if (red_key[0] != '3')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["vint_swish_w_mg"], channelsSetup, channel))
-					return 0;
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '3';
-			}
-
-			double fade=0, rise=0;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg2, masterGain*h.vintSwishFactor);
-			alSourcef(source[1], AL_GAIN, fade);//0
-			alSourcef(source[0], AL_GAIN, rise);//1
-
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
-			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-		}
-		//мг2дв <-> авт
-		if (sr.reduktor_gl_obor > h.redTurnoverMg2)
-		{
-			if (red_key[1] != '4')
-			{
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-
-				if (!setBuffer(buffer[1], h.fullName["vint_swish_w_avt"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//
-																					   //alSourcefv(Source[1], AL_POSITION, position);
-																					   //alSourcefv(Source[1], AL_VELOCITY, velocity);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-				red_key[1] = '4';
-			}
-			if (red_key[0] != '3')
-			{
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["vint_swish_w_mg"], channelsSetup, channel))
-					return 0;
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//
-																					   //alSourcefv(Source[0], AL_POSITION, position);
-																					   //alSourcefv(Source[0], AL_VELOCITY, velocity);
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-				red_key[0] = '3';
-			}
-
-			double fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.vintSwishFactor);
-			alSourcef(source[0], AL_GAIN, fade);//
-			alSourcef(source[1], AL_GAIN, rise);//
-
-			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-		}
-		//мг1дв -> 0
-		if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1 - 1)
-		{
-			if (red_key[1] != '2')
-			{
-
-				alSourceStop(source[1]);
-				alSourcei(source[1], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[1]);
-				alGenBuffers(1, &buffer[1]);
-
-				if (!setBuffer(buffer[1], h.fullName["vint_swish_w"], channelsSetup, channel))
-					return 0;
-
-				alSourcei(source[1], AL_BUFFER, buffer[1]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-				alSourcef(source[1], AL_GAIN, masterGain*h.vintSwishFactor);
-				alSourcePlay(source[1]);
-				alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-				red_key[1] = '2';
-
-			}
-			/*
-			if (red_key[0] != '5')
-			{
-
-				alSourceStop(source[0]);
-				alSourcei(source[0], AL_BUFFER, NULL);
-				alDeleteBuffers(1, &buffer[0]);
-				alGenBuffers(1, &buffer[0]);
-
-				if (!setBuffer(buffer[0], h.fullName["vint_swish_off"], channelsSetup, channel))
-					return 0;
-
-				alSourcei(source[0], AL_BUFFER, buffer[0]);
-
-				alSourcei(source[0], AL_LOOPING, AL_FALSE);
-				offsetOff = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
-				alSourcef(source[0], AL_SEC_OFFSET, offsetOff);
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["red_off"], sr.reduktor_gl_obor));
-				alSourcePlay(source[0]);
-				alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак
-				red_key[0] = '5';
-			}
-
-			float fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 7., masterGain*h.vintSwishFactor);
-			alSourcef(source[1], AL_GAIN, fade);//
-			alSourcef(source[0], AL_GAIN, rise);//
-
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOff);
-
-			if (sr.reduktor_gl_obor > 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["red_off"], sr.reduktor_gl_obor));
-			else
-				alSourcef(source[0], AL_PITCH, 1);*/
-
-			alSourcef(source[0], AL_GAIN, 0);
-			alSourcef(source[1], AL_GAIN, lineInterpolation(h.redTurnoverMg1*0.69, 0, h.redTurnoverMg1, 1 , sr.reduktor_gl_obor));//
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
-
-		}
-
-		alGetSourcef(source[1], AL_PITCH, &pitch);//
-		alGetSourcef(source[1], AL_GAIN, &gain);//
-	//}
-
-	//При оборотах редуктора = 0 и незапущенных двигателях, останавиваем источники
-	if (sr.reduktor_gl_obor == 0 && !sr.p_eng1_zap && !sr.p_eng2_zap)
+	//0 -> мг 1дв
+	if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
 	{
-		alSourceStop(source[0]);
-		alSourceStop(source[1]);
-		alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак 
-		alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак 
-		red_key[0] = ' ';
-		red_key[1] = ' ';
+		filetoBuffer[0] = h.fullName["vint_swish_on"];
+		filetoBuffer[1] = h.fullName["vint_swish_w"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		alSourcei(source[0], AL_LOOPING, AL_FALSE);
+		offset[0] = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
+		offset[1] = 0;
+
+		double fade, rise;
+		crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.vintSwishFactor);
+		alSourcef(source[0], AL_GAIN, fade);//0
+		alSourcef(source[1], AL_GAIN, rise);//1
+
+		alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
+		if (sr.reduktor_gl_obor >= 5)
+			alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
+		else
+			alSourcef(source[0], AL_PITCH, 1);
+		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+
+
 	}
+	//мг1дв <-> мг2дв
+	if (sr.reduktor_gl_obor > h.redTurnoverMg1 && sr.reduktor_gl_obor <= h.redTurnoverMg2)
+	{
+		filetoBuffer[1] = h.fullName["vint_swish_w"];
+		filetoBuffer[0] = h.fullName["vint_swish_w_mg"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		alSourcei(source[0], AL_LOOPING, AL_TRUE);
+		offset[0] = 0;
+		offset[1] = 0;
+
+		double fade = 0, rise = 0;
+		crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg2, masterGain*h.vintSwishFactor);
+		alSourcef(source[1], AL_GAIN, fade);//0
+		alSourcef(source[0], AL_GAIN, rise);//1
+
+		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
+		alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+	}
+	//мг2дв <-> авт
+	if (sr.reduktor_gl_obor > h.redTurnoverMg2)
+	{
+		filetoBuffer[1] = h.fullName["vint_swish_w_avt"];
+		filetoBuffer[0] = h.fullName["vint_swish_w_mg"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		alSourcei(source[0], AL_LOOPING, AL_TRUE);
+		offset[0] = 0;
+		offset[1] = 0;
+
+		double fade, rise;
+		crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.vintSwishFactor);
+		alSourcef(source[0], AL_GAIN, fade);//
+		alSourcef(source[1], AL_GAIN, rise);//
+
+		alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);
+		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+	}
+	//мг1дв -> 0
+	if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1 - 1)
+	{
+		filetoBuffer[1] = h.fullName["vint_swish_w"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		offset[1] = 0;
+
+		alSourcef(source[0], AL_GAIN, 0);
+		alSourcef(source[1], AL_GAIN, lineInterpolation(h.redTurnoverMg1*0.69, 0, h.redTurnoverMg1, 1, sr.reduktor_gl_obor));//
+		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
+	}
+	return 1;
 }
 
 int SKV::Play(Helicopter h, SOUNDREAD sr)
 {
-	
-	Sound *skvUni = nullptr;
-
-	skvUni->initializeSound(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
-
+	initializeSound(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
+	/*
 	if (SKV_key[1] != '2')
 	{
 		alSourceStop(source[1]);
@@ -4749,43 +3494,31 @@ int SKV::Play(Helicopter h, SOUNDREAD sr)
 
 	float stepPPitch = averangeStep * 0.03;
 
-	alSourcef(source[0], AL_PITCH, (1 + stepPPitch) + (sr.reduktor_gl_obor - averangeTurn)*0.1);
+	skvUni->pitch = (1 + stepPPitch) + (sr.reduktor_gl_obor - averangeTurn)*0.1;
 
 	alGetSourcef(source[0], AL_GAIN, &gain);//
+	*/
+	return 1;
 }
 
 int Runway::Play(Helicopter h, SOUNDREAD sr)
 {
-	//загружаем равномерные хлопки
-	if (load[1] != "loaded")
+	for (size_t i = 0; i < 2; i++)
 	{
-		alSourceStop(source[1]);
-		alSourcei(source[1], AL_BUFFER, NULL);
-		alDeleteBuffers(1, &buffer[1]);
-		alGenBuffers(1, &buffer[1]);
-		if (!setBuffer(buffer[1], h.fullName["runway"], channelsSetup, channel))//равномерные
-			return 0;
-		alSourcei(source[1], AL_BUFFER, buffer[1]);
-		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcePlay(source[1]);
-		alGetSourcei(source[1], AL_SOURCE_STATE, &sourceStatus[1]);		// перезабили признак
-		load[1] = "loaded";
+		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+
+		//Загружаем буферы и запускам источники
+		if (fileBuffered[i] != filetoBuffer[i])
+		{
+			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
+			fileBuffered[i] = filetoBuffer[i];
+		}
 	}
-	//загружаем равномерные хлопки
-	if (load[0] != "loaded")
-	{
-		alSourceStop(source[0]);
-		alSourcei(source[0], AL_BUFFER, NULL);
-		alDeleteBuffers(1, &buffer[0]);
-		alGenBuffers(1, &buffer[0]);
-		if (!setBuffer(buffer[0], h.fullName["runway"] /*h.fullName["planeLikeTakeoffMi8"]*/, channelsSetup, channel))//равномерные //ПОКА ЗВУК ОТСУТСТВУЕТ
-			return 0;
-		alSourcei(source[0], AL_BUFFER, buffer[0]);
-		alSourcei(source[0], AL_LOOPING, AL_TRUE);
-		alSourcePlay(source[0]);
-		alGetSourcei(source[0], AL_SOURCE_STATE, &sourceStatus[0]);		// перезабили признак
-		load[0] = "loaded";
-	}
+
+	filetoBuffer[0] = h.fullName["runway"];
+	filetoBuffer[1] = h.fullName["runway"];
+	alSourcei(source[1], AL_LOOPING, AL_TRUE);
+	alSourcei(source[0], AL_LOOPING, AL_TRUE);
 
 	double fade, rise;
 	crossFade(&fade, &rise, abs(velocityX), 8.33, 13.88, masterGain * h.runwayFactor);
