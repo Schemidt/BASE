@@ -3029,12 +3029,12 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 {
 	//Полеты 8 мтв5, 8 амтш
-	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28")
+	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
 		if (flap_key[1] != '2')
 		{
 			setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap"]);
-			alSourcei(source[2], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
 			flap_key[1] = '2';
 		}
 
@@ -3067,6 +3067,61 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		float m = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
 
 		alSourcef(source[1], AL_GAIN, m * h.vintFlapFactor);
+	}
+	//Полеты 28
+	if (h.modelName == "mi_28")
+	{
+		if (flap_key[0] != '2')
+		{
+			setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap"]);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			flap_key[0] = '2';
+		}
+		if (flap_key[1] != '3')
+		{
+			setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_low"]);
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			flap_key[1] = '3';
+		}
+
+		averangeCalcPeriod += deltaTime;
+		if (averangeCalcPeriod >= 30 && !vector.empty())
+			vector.erase(vector.begin());
+		vector.push_back(sr.reduktor_gl_obor);
+		for (auto& x : vector)
+			vectorElemSumm += x;
+		averangeTurn = vectorElemSumm / vector.size();
+		vectorElemSumm = 0;
+
+		double gain_a = 0;
+		double h_g = 0;
+		double v_g = 0;
+		double floor = 5;//сдвигаем передаточную функцию атаки на floor вправо
+		//
+		double atkXvel = calcA * lineInterpolation(0, 0, 16.67, 1, abs(velocityX));
+
+		h_g = squareInterpolation(0, 0, 0.5, 0.5, 1, 1, high);
+		v_g = squareInterpolation(14, 0, 17, 0.5, 20, 1, abs(velocityX));//72(1) - 50(0)
+		gain_a = squareInterpolation(-1 + floor, -18, 1 + floor, -12, 3 + floor, -6, atkXvel);
+
+		//усиление от оборотов
+		if (atkXvel >= 2)
+		{
+			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 3;
+		}
+		else
+		{
+			turnsGain = 0;
+		}
+		double m = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
+
+		double flap_h = 0;
+		double flap_lo = 0;
+		crossFade(&flap_lo, &flap_h, step, 5, 6, 1);
+		alSourcef(source[0], AL_GAIN, m * h.vintFlapFactor * flap_h);
+		alSourcef(source[1], AL_GAIN, m * h.vintFlapFactor * flap_lo);
+		
+
 	}
 	//Полеты ка 27 - 29
 	if (h.modelName == "ka_27" || h.modelName == "ka_29")
@@ -3254,10 +3309,10 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//Условие затухания хлопков
-		float off = lineInterpolation(14, 1, 0, 0, abs(velocityX));
+		double off = lineInterpolation(14, 1, 0, 0, abs(velocityX));
 		//Условие выбора равномерных-неравномерных хлопков
-		float flapA = 0;
-		float flapB = 0;
+		double flapA = 0;
+		double flapB = 0;
 		if (velocityX < 0)
 		{
 			flapA = (accelerationX >= -accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
@@ -3291,9 +3346,9 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			flapCGainAccX = lineInterpolation(0.56, 0, 1, 1, abs(accelerationX)) * squareInterpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY);//переходит в усиление нч по vy
 		}
 		//рассчитываем результирующую громкость хлопков в каждый момент времени
-		float flapAGain = flapA * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
-		float flapBGain = flapB * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
-		float flapCGain = ((flapIndicator) ? (flapCGainAccX * flapCStep * flapCVX * offsetOn * off * pow(10, turnsGain*0.05) * masterGain * (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5)) : (masterGain * (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5) * (1 - offsetOn) * resFlapCGain * off));
+		double flapAGain = flapA * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
+		double flapBGain = flapB * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
+		double flapCGain = ((flapIndicator) ? (flapCGainAccX * flapCStep * flapCVX * offsetOn * off * pow(10, turnsGain*0.05) * masterGain * (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5)) : (masterGain * (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5) * (1 - offsetOn) * resFlapCGain * off));
 
 		alSourcef(source[0], AL_GAIN, flapAGain);//равномерные
 		alSourcef(source[1], AL_GAIN, flapBGain);//неравномерные

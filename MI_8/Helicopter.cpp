@@ -105,7 +105,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["igla"] = "sturm.wav";//!<имя файла звука ракеты штурм
 									//Винт
 	shortName["vint_hi"] = "vint_hi.wav";//!<имя файла звука винта на высоких обортах
-	shortName["vint_low"] = "vint_lo.wav";//!<имя файла звука винта на низких оборотах
+	shortName["vint_flap_low"] = "vint_flap_lo.wav";//!<имя файла звука винта на низких оборотах
 	shortName["vint_torm"] = "tormoz.wav";//!<имя файла звука тормоза винта
 	shortName["vint_flap"] = "vint_flap.wav";//!<имя файла звука равномерных хлопков винта
 	shortName["vint_flap_A"] = "flap_A.wav";//!<имя файла звука равномерных хлопков винта
@@ -294,7 +294,7 @@ void Helicopter::setParam(string model)
 		rocketHitFactor = 0.8/*Попадание ракеты*/;
 		ppuFactor = 1/*ППУ*/;
 		vintBrakeFactor = 0.6/*Винт тормоз*/;
-		//vintFlapFactor = 0.5/*Винт хлопки*/;
+		vintFlapFactor = 0.5/*Винт хлопки*/;
 		vintSwishFactor = 0.63;
 		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
