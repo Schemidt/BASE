@@ -13,6 +13,7 @@ void Free(T &x)
 }
 
 #pragma pack ( push, 1 )
+//Структура для хранения загруженных wave файлов
 typedef struct
 {
 	char			szRIFF[4];
@@ -38,55 +39,63 @@ typedef struct
 class Sound {
 public:
 
-	static int sourcesInUse;
-	static int effectSlotsInUse;
-	static int maxSources;
-	static int maxSlots;
+	static int sourcesInUse;//Переменная для хранения количества использующихся источников (не более 256)
+	static int effectSlotsInUse;//Переменная для хранения количества использующихся слотов для эффектов (не более 16)
+	static int maxSources;//Переменная хранящая количество максимально возможных источников на устройстве, 256 максимально
+	static int maxSlots;//Переменная хранящая количество максимально возможных слотов для эффектов на устройстве, 16 максимально
 	static float masterGain;//Глобальный модификатор громкости
 	static AL_SOUND_CHANNELS channelsSetup;//Конфигурация каналов - устройств вывода (2.1,4.1,5.1,6.1,7.1)
-	static float currentTime;//
-	static float deltaTime;//переменная для отслеживания изменения времени
+	static float currentTime;//Переменная хранящая текущее время полученное из общей памяти от USPO
+	static float deltaTime;//Gеременная для отслеживания изменения времени
 
 	static float step; //Шаг
 	static float tangaz;//Тангаж
 	static float high;//Высота
 	static float velocityX;//приборная скорость
-	static float accelerationX;//Ускорение по приборной скорости
+	static float accelerationX;//Ускорение по приборной скорости (dvx/dt)
 	static float velocityY;//вертикальная скорость
-	static float dash;//рывок
-	static float accelerationVy;//Вертикальное ускорение
+	static float dash;//Рывок (d2vx/dt)
+	static float accelerationVy;//Вертикальное ускорение (dvy/dt)
 	static float derivStep;//Скорость изменения шага
 	static float calcA;//Атака винта
-	static float RedTurnAcc;//Ускорение оборотов редуктора
+	static float RedTurnAcc;//Ускорение оборотов редуктора (dturn/dt)
 
-	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime, vectorRedTurn;
+	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime, vectorRedTurn;//Массивы для хранения значений переменных за некоторое время (определено условием в main), для расчета производных
 
-	std::unique_ptr<int[]> sourceStatus;
-	std::unique_ptr<ALuint[]> source;
-	std::unique_ptr<ALuint[]> buffer;
+	std::unique_ptr<int[]> sourceStatus;//Переменная для статуса источника
+	std::unique_ptr<ALuint[]> source;//Переменная для источника
+	std::unique_ptr<ALuint[]> buffer;//Переменная для буффера
 	std::unique_ptr<ALuint[]> effectSlot;/*!< Переменная для слота эффекта */
 	std::unique_ptr<ALuint[]> effect;/*!< переменная для эффекта */
 	std::unique_ptr<ALuint[]> filter;/*!< переменная для эффекта */
-	bool soundOn = 0;
-	bool soundWork = 0;
-	bool soundOff = 0;
-	float offsetOn = 0;
-	float offsetOff = 0;
-	float lengthOn = 0;
-	float lengthOff = 0;
-	float pitch = 1;
-	float gain = 1;
+	bool soundOn = 0;//Переменная для определения состояния звука
+	bool soundWork = 0;//Переменная для определения состояния звука
+	bool soundOff = 0;//Переменная для определения состояния звука
+	float offsetOn = 0;//Переменная для хранения отступа от начала файла в секундах, как правило для файла запуска агрегата
+	float offsetOff = 0;//Переменная для хранения отступа от начала файла в секундах, как правило для файла остановки агрегата
+	float lengthOn = 0;//Переменная для хранения длительности файла в секундах, как правило для файла запуска агрегата
+	float lengthOff = 0;//Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата
+	float pitch = 1;//Переменная для параметра высоты тона звука агрегата
+	float gain = 1;//Переменная для параметра громкости звука агрегата
 	double channel[7] = { 1,1,0,0,0,0,0 };//массив для поканального вывода звука
-	int sourceNumber = 1;
-	int effectSlotNumber = 0;
+	int sourceNumber = 1;//Переменная для хранения количества источников используемых объектом звука агрегата
+	int effectSlotNumber = 0;//Переменная для хранения количества слотов эффектов используемых объектом звука агрегата
 
-	Sound();
-	Sound(int n, int ns);
-	~Sound();
-	//возвращает длительность несжатого WAVE файла
+	Sound();//Конструктор по умолчанию, для объекта с 1им источником
+	Sound(int n, int ns);//Конструктор для объекта с n источниками и ns слотами эффектов
+	~Sound();//Деструктор (да неужели)
+
+	//Возвращает длительность несжатого WAVE файла
 	float getLengthWAV(string filename);
+
+	//Инициализирует звуковой объект со структурой запуск->работа->выключение в зависимости от текущего состояния объекта и управлющего параметра,
+	//последний параметр описывает усиление всех звуков относительно глобального параметра усиления (master_gain)
 	int initializeSound(bool status, string path_on, string path_w, string path_off, float gain_mult);
+
+	//Структурирует массив данных для поканального вывода при различных конфигурациях устройств вывода
 	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, double *channels);
+
+	//Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
 	int setAndDeploySound(ALuint *Buffer, ALuint *Source, float offset, string file_path);
 	
 };

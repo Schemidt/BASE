@@ -67,13 +67,7 @@ float periodCalc = 0;//переменная для реального значения периода вычисления, рав
 /*!\brief Основная функция программы*/
 int main(int argc, char *argv[])
 {
-	float timerPodk = 0;
-	float timerNar8 = 0;
-	float timerNar13 = 0;
-	int counterNar8 = 0;
-	int counterNar13 = 0;
-	float vsuDownTimer = 0;
-	float vsuUpTimer = 0;
+	
 	//Получаем указатели на функции EFX
 	setEFXPointers();
 	vector <string> helicoptersNames = { "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29"};
@@ -195,7 +189,13 @@ int main(int argc, char *argv[])
 	Sound *vpryam = nullptr;
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
-	float outputPeriodEng = 0;
+	float timerPodk = 0;
+	float timerNar8 = 0;
+	float timerNar13 = 0;
+	int counterNar8 = 0;
+	int counterNar13 = 0;
+	float vsuDownTimer = 0;
+	float vsuUpTimer = 0;
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (1)
 	{
@@ -290,12 +290,7 @@ int main(int argc, char *argv[])
 					}
 				}
 				
-				//Для отладки двигателей
-				if (outputPeriodEng > 0.01)
-				{
-					outputPeriodEng = 0;
-				}
-				outputPeriodEng += Sound::deltaTime;
+				
 				
 				//ВСУ
 				if (helicopter.vsuFactor)//Если ВСУ включено в проект
@@ -1205,14 +1200,6 @@ int main(int argc, char *argv[])
 						eng[0]->Play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, localdata, helicopter);
 
 
-						if (outputPeriodEng >= 0.01)
-						{
-							FILE *feng = fopen("eng1.txt", "at");
-							fprintf(feng, "%f\t%f\t%f\n", localdata.eng1_obor, eng[0]->pitch, soundread.time);
-							fclose(feng);
-						}
-
-
 						if (eng[0]->sourceStatus[0] != AL_PLAYING && eng[0]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.eng1_obor > 0))//Условие удаления объекта
 							Free(eng[0]);//Удаляем объект
 					}
@@ -1228,15 +1215,6 @@ int main(int argc, char *argv[])
 						eng[1]->Play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.eng2_obor, localdata, helicopter);
 
 						
-						if (outputPeriodEng >= 0.01)
-						{
-							FILE *feng = fopen("eng2.txt", "at");
-							fprintf(feng, "%f\t%f\t%f\n",localdata.eng2_obor,eng[1]->pitch,soundread.time);
-							fclose(feng);
-						}
-
-
-
 						if (eng[1]->sourceStatus[0] != AL_PLAYING && eng[1]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng2_zap | localdata.eng2_obor > 0))//Условие удаления объекта
 							Free(eng[1]);//Удаляем объект
 					}

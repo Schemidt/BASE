@@ -23,7 +23,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>MI_26</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>BASE_4.3</ProjectName>
+    <ProjectName>BASE</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -97,6 +97,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>D:\OAL_soft\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenAL32.lib;alut.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Version>
+      </Version>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -156,6 +158,7 @@
     <ClInclude Include="Helicopter.h" />
     <ClInclude Include="Mono2channels.h" />
     <ClInclude Include="RealTime.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Shared.h" />
     <ClInclude Include="BASE.h" />
     <ClInclude Include="Sound.h" />
@@ -166,6 +169,12 @@
     <ClCompile Include="Helicopter.cpp" />
     <ClCompile Include="RealTime.cpp" />
     <ClCompile Include="Shared.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="BASE.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="BASE.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
