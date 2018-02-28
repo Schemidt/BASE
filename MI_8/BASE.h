@@ -172,9 +172,7 @@ class Engine : public Sound
 {
 public:
 
-	static int engNum;
-	float phase;//Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
-
+	FILE *feng = nullptr;
 	float highFreqTurnGain = 0;
 	float takeoffStep = 0;
 	float turnGain = 0;
@@ -205,8 +203,7 @@ public:
 
 	Engine() : Sound(2, 2)
 	{
-		engNum++;
-		phase = (engNum - 1) * 0.33;
+		remove("eng.txt");
 	}
 	int Play(bool status_on, bool status_off, float parameter, SOUNDREAD sr, Helicopter h);
 };

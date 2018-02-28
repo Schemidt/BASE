@@ -104,10 +104,10 @@ void Helicopter::setPath(string pathToFile)
 	shortName["shoot"] = "shoot.wav";//!<имя файла звука выстрелов ППУ
 	shortName["igla"] = "sturm.wav";//!<имя файла звука ракеты штурм
 									//Винт
-	shortName["vint_hi"] = "vint_hi.wav";//!<имя файла звука свиста винта
+	shortName["vint_hi"] = "vint_hi.wav";//!<имя файла звука винта на высоких обортах
+	shortName["vint_flap_low"] = "vint_flap_lo.wav";//!<имя файла звука винта на низких оборотах
 	shortName["vint_torm"] = "tormoz.wav";//!<имя файла звука тормоза винта
 	shortName["vint_flap"] = "vint_flap.wav";//!<имя файла звука равномерных хлопков винта
-	shortName["vint_flap_low"] = "vint_flap_lo.wav";//!<имя файла звука винта на низких оборотах
 	shortName["vint_flap_A"] = "flap_A.wav";//!<имя файла звука равномерных хлопков винта
 	shortName["vint_flap_B"] = "flap_B.wav";//!<имя файла звука неравномерных хлопков винта
 	shortName["vint_flap_C"] = "flap_C.wav";//!<имя файла звука неравномерных хлопков винта
