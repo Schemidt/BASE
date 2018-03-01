@@ -191,7 +191,7 @@ void Helicopter::setParam(string model)
 		upkFactor = 1/*УПК*/;
 		vintSwishFactor = 1/*ВИНТ Верх*/;
 		vintBrakeFactor = 0.2/*Винт тормоз*/;
-		vintFlapFactor = 0.5/*Винт хлопки*/;
+		vintFlapFactor = 1/*Винт хлопки*/;
 		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
 		consumTankFactor = 0.25/*Расходный бак*/;
@@ -228,7 +228,7 @@ void Helicopter::setParam(string model)
 		upkFactor = 1/*УПК*/;
 		vintSwishFactor = 1/*ВИНТ Верх*/;
 		vintBrakeFactor = 0.2/*Винт тормоз*/;
-		vintFlapFactor = 0.5/*Винт хлопки*/;
+		vintFlapFactor = 1/*Винт хлопки*/;
 		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
 		consumTankFactor = 0.25/*Расходный бак*/;
@@ -285,7 +285,7 @@ void Helicopter::setParam(string model)
 		accumFactor = 0.1/*аккум*/;
 		ptsToneFactor = 0.25/*птс тон*/;
 		tr115Factor = 0.15/*тр115*/;
-		skvFactor = 0.5/*СКВ*/;
+		skvFactor = 0.708/*СКВ*/;
 		runwayFactor = 1/*ВПП*/;
 		//airNoiseFactor = 1/*шум*/;
 		rocketSturmFactor = 1/*ШТУРМ*/;

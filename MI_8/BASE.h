@@ -150,7 +150,7 @@ public:
 
 	vector<double> vector, vectorStep, vectorAtk;
 
-	char eq_key[2] = { ' ',' ' };
+	string eq[2];
 
 	string filetoBuffer[2];
 	string fileBuffered[2];
@@ -201,7 +201,7 @@ public:
 	string fileBuffered[2];
 	float offset[2] = { 0 };
 
-	char eq_key[2] = { ' ',' ' };
+	string eq[2];
 
 	Engine() : Sound(2, 2)
 	{
@@ -265,7 +265,7 @@ public:
 
 	vector<double> vector;
 
-	char flap_key[3];
+	string key[3];
 
 	VintFlap() : Sound(3, 2) 
 	{
@@ -290,6 +290,8 @@ public:
 	string fileBuffered[2];
 	float offset[2] = { 0 };
 
+
+
 	VintSwish() : Sound(2, 0)
 	{
 		
@@ -308,7 +310,7 @@ class SKV : public Sound
 {
 public:
 
-	char SKV_key[2];//!<переменная для единоразовой загрузки буферов в редукторе
+	string eq;
 
 	double averangeCalcPeriod = 0;
 	double vectorElemSumm = 0;
@@ -318,9 +320,19 @@ public:
 	double vectorElemSummStep = 0;
 	double averangeStep = 0;
 
+	float lowFreqGain = 0;
+	float mid1FreqGain = 0;
+	float mid2FreqGain = 0;
+	float highFreqGain = 0;
+
+	float lowCutoffFreq = 0;
+	float mid1CutoffFreq = 0;
+	float mid2CutoffFreq = 0;
+	float highCutoffFreq = 0;
+
 	vector<double> vector, vectorStep;
 
-	SKV() : Sound(2, 0)
+	SKV() : Sound(1, 1)
 	{
 
 	}
