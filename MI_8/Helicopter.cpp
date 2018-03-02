@@ -227,7 +227,7 @@ void Helicopter::setParam(string model)
 		pumpRightFactor = 0.12/*подк р*/;
 		cutoffCraneFactor = 0.18/*перекр*/;
 		ko50Factor = 0.5/*КО-50*/;
-		runwayFactor = 1/*ВПП*/;
+		runwayFactor = 0.794/*ВПП*/;
 		rocketNar8Factor = 1/*НАР8*/;
 		rocketNar13Factor = 1/*НАР13*/;
 		rocketHitFactor = 0.8/*Попадание ракеты*/;

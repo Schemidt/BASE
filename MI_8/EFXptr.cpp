@@ -1,3 +1,9 @@
+/*!
+\file
+\brief Функции EFX / определение
+
+Определяет указатели на функций работы с объектами EFX
+*/
 #include "EFXptr.h"
 #include "stdio.h"
 

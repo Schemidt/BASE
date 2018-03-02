@@ -5,6 +5,19 @@
 Данный файл связывает все элементы программы и определяет ее работу.
 Определяет методы Sound и наследников.
 */
+
+/*! \mainpage My Personal Index Page
+*
+* \section intro_sec Introduction
+*
+* This is the introduction.
+*
+* \section install_sec Installation
+*
+* \subsection step1 Step 1: Opening the box
+*
+* etc...
+*/
 #include "conio.h"
 #include "stdlib.h"
 #include "iostream"
@@ -1747,26 +1760,7 @@ int getMaxAvaliableSources()
 	alcCloseDevice(device);
 	return maxmono + maxstereo;	
 }
-/*!
-\brief Инициализирует воспроизведение звука
-\details Устанавливает шаблон воспроизведения звука при получении признака работы агрегата или физ.эффекта:
-звук устанавления режима работы агрегата (при признаке - "1")
- |
-\|/
-звук работы агрегата (при окончании звука установления работы и признаке - "1")
- |
-\|/
-звук завершения работы агрегата (при признаке - "0")
 
-\param[in] status Признак работы
-
-\param[in] path_on Указатель на строку с адресом звука устанавления режима работы
-\param[in] path_w Указатель на строку с адресом звука режима работы
-\param[in] path_off Указатель на строку с адресом звука завершения работы
-\param[in] gain_mult Коэффициент громкости для агрегата
-\param[in] master_gain Коэффициент громкости проекта
-\return Статус источника OpenAL
-*/
 int Sound::initializeSound(bool status, string path_on, string path_w, string path_off, float gain_mult)
 {
 	bool start;
@@ -2002,7 +1996,6 @@ int Sound::switchBufferAndPlay(ALuint *Buffer, ALuint *Source, float offset)
 	alGetSourcei(*Source, AL_SOURCE_STATE, &play);
 	return play;
 }
-
 
 int Reductor::Play(Helicopter h, SOUNDREAD sr)
 {
@@ -3813,7 +3806,7 @@ Sound::~Sound()
 	sourcesInUse -= sourceNumber;
 	effectSlotsInUse -= effectSlotNumber;
 }
-//возвращает длительность несжатого WAVE файла
+
 float Sound::getLengthWAV(string filename)
 {
 	WAVEHEADER *header;
