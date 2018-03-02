@@ -1,8 +1,9 @@
 /*!
 \file
-\brief Основной файл программы 
+\brief Основной файл программы
 
-Данный файл связывает все элементы программы и определяет ее работу
+Данный файл связывает все элементы программы и определяет ее работу.
+Определяет методы Sound и наследников.
 */
 #include "conio.h"
 #include "stdlib.h"
@@ -95,7 +96,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		helicopter.setParam("mi_28");
+		helicopter.setParam("ka_29");
 	}
 	system("cls");
 	cout << " Using " << helicopter.modelName << endl;

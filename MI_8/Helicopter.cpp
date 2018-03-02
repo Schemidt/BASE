@@ -1,3 +1,9 @@
+/*!
+\file
+\brief Класс Helicopter / определение
+
+Данный файл определяет работу методов класса Helicopter
+*/
 #include "helicopter.h"
 #include "string.h"
 #include "map"

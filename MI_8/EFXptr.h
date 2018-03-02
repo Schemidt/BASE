@@ -1,3 +1,9 @@
+/*!
+\file
+\brief Функции EFX
+
+Определяет шаблоны функций работы с объектами EFX
+*/
 #pragma once
 
 #include"AL\efx.h"
