@@ -116,16 +116,16 @@ struct SOUNDREAD {
     bool p_nasos_perek;         //!< Насос перекачки признак работы, 0-1
     bool p_rocket_hit;          //!< Признак попадания ракетой, 0-1
     bool p_bullet_hit;          //!< Признак попадания из пулемета, 0-1
-	float rez_1;				// Перекрывной кран ВСУ 
-	float rez_2;				// Аккумулятор
-	float rez_3;                // НИП
-	float rez_4;                // Насос расходного бака
-	float rez_5;                // Неопределенный 1 (Ми-28)
-	float rez_6;                // Неопределенный 2 (Ми-28)
-	float rez_7;                // Зуммер
-	float rez_8;                // СКВ
-	float rez_9;                // КО-50
-	float rez_10;               // Хлопки
+	float rez_1;				//!< Перекрывной кран ВСУ 
+	float rez_2;				//!< Аккумулятор
+	float rez_3;                //!< НИП
+	float rez_4;                //!< Насос расходного бака
+	float rez_5;                //!< Неопределенный 1 (Ми-28)
+	float rez_6;                //!< Неопределенный 2 (Ми-28)
+	float rez_7;                //!< Зуммер
+	float rez_8;                //!< СКВ
+	float rez_9;                //!< КО-50
+	float rez_10;               //!< Хлопки
 																								
 };																								
 #pragma pack ( pop )

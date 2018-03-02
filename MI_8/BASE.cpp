@@ -6,17 +6,53 @@
 Определяет методы Sound и наследников.
 */
 
-/*! \mainpage My Personal Index Page
-*
-* \section intro_sec Introduction
-*
-* This is the introduction.
-*
-* \section install_sec Installation
-*
-* \subsection step1 Step 1: Opening the box
-*
-* etc...
+/*! \page page1 Документация на ПО СИЗС
+\tableofcontents
+
+ Lorem ipsum dolor sit amet, consectetur adipiscing elit
+ Aenean varius enim et neque accumsan mollis
+ Mauris quis viverra est, non vehicula nunc
+ Sed ultrices risus quis purus euismod, rutrum cursus enim tincidunt
+ Phasellus consequat nisl sed nunc pulvinar congue
+ Sed eget finibus nisl, in porta metus
+ Aenean at turpis tristique dui iaculis accumsan nec non nisl
+ Nullam iaculis enim ut justo mattis, sit amet elementum ligula commodo
+ Nullam interdum non nibh ut ornare
+ Duis id feugiat nisl
+ Cras eget ipsum mauris
+
+
+ Nulla eu quam a ante ullamcorper maximus
+ Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas
+ Ut lobortis semper nibh sit amet ultrices
+ Proin posuere sodales feugiat
+ Nulla varius nulla tellus, ut aliquam nunc convallis quis
+ Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus
+ Donec dapibus quis tellus at tincidunt
+ Ut urna ipsum, aliquam eget eros ut, eleifend aliquet est
+ Vivamus ante augue, mollis laoreet lectus eget, blandit molestie dolor
+ Mauris id ipsum turpis
+ Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed fermentum cursus justo, eget tincidunt orci volutpat sit amet
+
+
+ Aliquam auctor, mauris ut bibendum aliquet, nunc sem egestas purus, vel rhoncus nibh urna a massa
+ In congue pretium turpis nec porta
+ Suspendisse potenti
+ Suspendisse ultricies convallis ligula a dignissim
+ Sed in eleifend nisl
+ In eu sapien quis nulla porttitor convallis
+ Aenean posuere ut augue vel lacinia
+ Proin erat urna, interdum quis lorem vitae, mollis mattis ligula
+ Morbi magna diam, commodo id tempor eget, vulputate sed mauris
+ Nunc lectus ex, rutrum vel ante ut, ornare pulvinar dui
+ Nulla suscipit eget augue non bibendum
+ Cras cursus porta pretium
+
+\section sec1 Структура <main>
+
+\section sec2 Класс <Sound> и подклассы
+
+\section sec3 Назначение <Helicopter>
 */
 #include "conio.h"
 #include "stdlib.h"

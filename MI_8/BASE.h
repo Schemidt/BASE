@@ -4,6 +4,16 @@
 
 Данный файл объявляет класс Sound и его наследников
 */
+/*! \mainpage Главная страница
+*
+* \section intro_sec Введение
+* Данная документация призвана помочь программисту разобраться в работе данного ПО.
+* \section install_sec Установка
+* Копируем папку с проектом в любое удобное место
+* \section Use_sec Использование
+* Запустить из коммандной строки "BASE.exe" с необходимым параметром:
+* "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29".
+*/
 #pragma once
 #include "Mono2channels.h"
 #include "memory"
@@ -124,18 +134,27 @@ public:
 	*/
 	int initializeSound(bool status, string path_on, string path_w, string path_off, float gain_mult);
 
-	//Структурирует массив данных для поканального вывода при различных конфигурациях устройств вывода
+	/*!
+	\brief Загружает буфер данными
+	\details Структурирует массив данных для поканального вывода при различных конфигурациях устройств вывода и 
+	загружает в буфер OpenAL
+	\param[in] Buffer Объект буфера
+	\param[in] path Имя файла
+	\param[in] channelsCount Конфигурация устройств вывода
+	\param[in] channels Каналы для вывода
+	\return 1 если успешно, иначе 0
+	*/
 	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, double *channels);
 
-	//Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
+	//!<Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
 	int setAndDeploySound(ALuint *Buffer, ALuint *Source, float offset, string file_path);
 
-	//Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
+	//!<Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
 	int switchBufferAndPlay(ALuint *Buffer, ALuint *Source, float offset);
 	
 };
 
-//Наследуем класс редуктора
+//!<Наследуем класс редуктора
 class Reductor : public Sound
 {
 public:
@@ -202,13 +221,13 @@ public:
 	int Play(Helicopter h, SOUNDREAD sr);
 };
 
-//Наследуем класс двигателя
+//!<Наследуем класс двигателя
 class Engine : public Sound
 {
 public:
 
 	static int engNum;
-	float phase;//Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
+	float phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
 
 	float highFreqTurnGain = 0;
 	float takeoffStep = 0;
@@ -246,7 +265,7 @@ public:
 	int Play(bool status_on, bool status_off, float parameter, SOUNDREAD sr, Helicopter h);
 };
 
-//Наследуем класс двигателя
+//!<Наследуем класс двигателя
 class Runway : public Sound
 {
 public:
@@ -262,7 +281,7 @@ public:
 	int Play(Helicopter h, SOUNDREAD sr);
 };
 
-//Наследуем класс хлопков
+//!<Наследуем класс хлопков
 class VintFlap : public Sound
 {
 public:
@@ -271,10 +290,10 @@ public:
 	FILE *fderiv = nullptr;
 	FILE *ffront = nullptr;
 	double path = 0;
-	float lowerFreqLimit;//Нижняя граница частоты среза
-	float highterFreqLimit;//Верхняя граница частоты среза
-	float freqCutoffFromTurns = 0;//Частота среза
-	float freqCutoffResult = 0;//Частота среза
+	float lowerFreqLimit;//!<Нижняя граница частоты среза
+	float highterFreqLimit;//!<Верхняя граница частоты среза
+	float freqCutoffFromTurns = 0;//!<Частота среза
+	float freqCutoffResult = 0;//!<Частота среза
 	float lowFreqGain = 0;
 	float mid1FreqGain = 0;
 	float mid2FreqGain = 0;
@@ -287,11 +306,11 @@ public:
 	float hiSpeedGain = 0;
 	float resFlapCGain = 0;
 
-	float accelerationXBorder = 0.28;//мс/с*с
-	float velocityYBorder = -2;//мс/с
+	float accelerationXBorder = 0.28;//!<мс/с*с
+	float velocityYBorder = -2;//!<мс/с
 	float dashBorder = -0.672;
 	int flapIndicator = 0;
-	float turnsGain = 0;//усиление от оборотов
+	float turnsGain = 0;//!<усиление от оборотов
 	
 	float outputPeriod = 0;
 	float averangeCalcPeriod = 0;
@@ -313,7 +332,7 @@ public:
 	{
 		
 	}
-	//Выводит звук
+	//!<Выводит звук
 	int Play(Helicopter h, SOUNDREAD sr);
 };
 
@@ -336,7 +355,7 @@ public:
 	{
 
 	}
-	//Выводит звук
+	//!<Выводит звук
 	int Play(Helicopter h, SOUNDREAD sr);
 
 };
@@ -376,7 +395,7 @@ public:
 	{
 
 	}
-	//Выводит звук
+	//!<Выводит звук
 	int Play(Helicopter h, SOUNDREAD sr);
 
 };
