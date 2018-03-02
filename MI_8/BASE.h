@@ -68,6 +68,7 @@ public:
 	std::unique_ptr<ALuint[]> effectSlot;/*!< Переменная для слота эффекта */
 	std::unique_ptr<ALuint[]> effect;/*!< переменная для эффекта */
 	std::unique_ptr<ALuint[]> filter;/*!< переменная для эффекта */
+	string load;
 	bool soundOn = 0;//Переменная для определения состояния звука
 	bool soundWork = 0;//Переменная для определения состояния звука
 	bool soundOff = 0;//Переменная для определения состояния звука
@@ -79,10 +80,11 @@ public:
 	float gain = 1;//Переменная для параметра громкости звука агрегата
 	double channel[7] = { 1,1,0,0,0,0,0 };//массив для поканального вывода звука
 	int sourceNumber = 1;//Переменная для хранения количества источников используемых объектом звука агрегата
+	int bufferNumber = 3;//Переменная для хранения количества буфферов используемых объектом звука агрегата
 	int effectSlotNumber = 0;//Переменная для хранения количества слотов эффектов используемых объектом звука агрегата
 
 	Sound();//Конструктор по умолчанию, для объекта с 1им источником
-	Sound(int n, int ns);//Конструктор для объекта с n источниками и ns слотами эффектов
+	Sound(int sources,int buffers, int effectslots);//Конструктор для объекта с n источниками и ns слотами эффектов
 	~Sound();//Деструктор (да неужели)
 
 	//Возвращает длительность несжатого WAVE файла
@@ -97,6 +99,9 @@ public:
 
 	//Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
 	int setAndDeploySound(ALuint *Buffer, ALuint *Source, float offset, string file_path);
+
+	//Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
+	int switchBufferAndPlay(ALuint *Buffer, ALuint *Source, float offset);
 	
 };
 
@@ -156,7 +161,7 @@ public:
 	string fileBuffered[2];
 	float offset[2] = {0};
 
-	Reductor() : Sound(3, 2)
+	Reductor() : Sound(3, 3, 2)
 	{
 		remove("red.txt");
 	}
@@ -203,7 +208,7 @@ public:
 
 	string eq[2];
 
-	Engine() : Sound(2, 2)
+	Engine() : Sound(2, 2, 2)
 	{
 		engNum++;
 		phase = (engNum - 1) * 0.33;
@@ -220,7 +225,7 @@ public:
 	string fileBuffered[2];
 	float offset[2] = { 0 };
 
-	Runway() : Sound(2, 0)
+	Runway() : Sound(2, 2, 0)
 	{
 
 	}
@@ -267,7 +272,7 @@ public:
 
 	string key[3];
 
-	VintFlap() : Sound(3, 2) 
+	VintFlap() : Sound(3, 3, 2) 
 	{
 		remove("flap.txt");
 		remove("der.txt");
@@ -292,7 +297,7 @@ public:
 
 
 
-	VintSwish() : Sound(2, 0)
+	VintSwish() : Sound(2, 2, 0)
 	{
 		
 	}
@@ -332,7 +337,7 @@ public:
 
 	vector<double> vector, vectorStep;
 
-	SKV() : Sound(1, 1)
+	SKV() : Sound(1, 3, 1)
 	{
 
 	}

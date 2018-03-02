@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		helicopter.setParam("mi_8_amtsh");
+		helicopter.setParam("mi_28");
 	}
 	system("cls");
 	cout << " Using " << helicopter.modelName << endl;
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
 	Engine *eng[2] = { nullptr };
 	Reductor *red = nullptr;
 	Sound *beep = nullptr;
-	Sound *undefined0 = nullptr;
+	/*Sound *undefined0 = nullptr;*/
 	Sound *undefined1 = nullptr;
 	Sound *vintFlapUniversal = nullptr;
 	Sound *kranKolc = nullptr;
@@ -1226,19 +1226,19 @@ int main(int argc, char *argv[])
 						Free(beep);//Удаляем объект
 				}
 			}
-			//Вентилятор
-			if (helicopter.fenFactor)
-			{
-				if (localdata.rez_5)//Условие создания объекта
-					if (!undefined0)//Если объект не создан 
-						undefined0 = new Sound;//Создаем объект
-				if (undefined0)//Если объект создан - используем его
-				{
-					undefined0->initializeSound(localdata.rez_5, helicopter.fullName["undefined0_on"], helicopter.fullName["undefined0_w"], "NULL", helicopter.fenFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (undefined0->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-						Free(undefined0);//Удаляем объект
-				}
-			}
+			////Вентилятор
+			//if (helicopter.fenFactor)
+			//{
+			//	if (localdata.rez_5)//Условие создания объекта
+			//		if (!undefined0)//Если объект не создан 
+			//			undefined0 = new Sound;//Создаем объект
+			//	if (undefined0)//Если объект создан - используем его
+			//	{
+			//		undefined0->initializeSound(localdata.rez_5, helicopter.fullName["undefined0_on"], helicopter.fullName["undefined0_w"], "NULL", helicopter.fenFactor);//Воспроизводим звук - записываем состояние звука в play
+			//		if (undefined0->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+			//			Free(undefined0);//Удаляем объект
+			//	}
+			//}
 			//Неопределенный 1
 			if (helicopter.undefinedFactor)
 			{
@@ -1773,6 +1773,20 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 	bool end;
 	bool free;
 
+	if (load != "set")
+	{
+		if (path_on != "NULL")
+			if (!setBuffer(buffer[0], path_on, channelsSetup, channel))
+				return 0;
+		if (path_w != "NULL")
+			if (!setBuffer(buffer[1], path_w, channelsSetup, channel))
+				return 0;
+		if (path_off != "NULL")
+			if (!setBuffer(buffer[2], path_off, channelsSetup, channel))
+				return 0;
+		load = "set";
+	}
+
 	if (path_on != "NULL")
 		lengthOn = getLengthWAV(path_on);
 	if (path_off != "NULL")
@@ -1849,7 +1863,7 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 		soundWork = 0;
 		soundOff = 0;
 
-		setAndDeploySound(&buffer[0], &source[0], offsetOn, path_on);
+		sourceStatus[0] = switchBufferAndPlay(&buffer[0], &source[0], offsetOn);
 		alSourcei(source[0], AL_LOOPING, AL_FALSE);
 	}
 	//Работа (если path_w указывает на пустую область -> у агрегата отсутствует звук режима работы)
@@ -1859,7 +1873,7 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 		soundWork = 1;
 		soundOff = 0;
 
-		setAndDeploySound(&buffer[0], &source[0], 0, path_w);
+		sourceStatus[0] = switchBufferAndPlay(&buffer[1], &source[0], 0);
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 	}
 	//Выключение (если path_off указывает на пустую область -> у агрегата отсутствует звук выключения)
@@ -1869,7 +1883,7 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 		soundWork = 0;
 		soundOff = 1;
 
-		setAndDeploySound(&buffer[0], &source[0], offsetOff, path_off);
+		sourceStatus[0] = switchBufferAndPlay(&buffer[2], &source[0], offsetOff);
 		alSourcei(source[0], AL_LOOPING, AL_FALSE);
 	}
 	//Освобождение памяти
@@ -1975,6 +1989,19 @@ int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, float offset, strin
 	alGetSourcei(*Source, AL_SOURCE_STATE, &play);
 	return play;
 }
+
+int Sound::switchBufferAndPlay(ALuint *Buffer, ALuint *Source, float offset)
+{
+	int play = 0;
+	alSourceStop(*Source);
+	alSourcei(*Source, AL_BUFFER, NULL);
+	alSourcei(*Source, AL_BUFFER, *Buffer);
+	alSourcef(*Source, AL_SEC_OFFSET, offset);
+	alSourcePlay(*Source);
+	alGetSourcei(*Source, AL_SOURCE_STATE, &play);
+	return play;
+}
+
 
 int Reductor::Play(Helicopter h, SOUNDREAD sr)
 {
@@ -2323,7 +2350,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 
 
 			lowFreqGain = pow(10, (turnGain /*+ stepGain * 1 */ + velocityGain * 3 + atkGain + flapCGain/*+ lowFreqVelocityGain + highGain + mid2FreqStepGain*/ /*+ accelerationGain*/)*0.05);
-			mid1FreqGain = pow(10, (turnGain + stepGain * 2 + velocityGain * 5 + flapCGain/*+ mid2FreqStepGain*//*+ lowFreqVelocityGain*/)*0.05);
+			mid1FreqGain = pow(10, (turnGain + stepGain * 2 + velocityGain * 5 /*+ flapCGain*//*+ mid2FreqStepGain*//*+ lowFreqVelocityGain*/)*0.05);
 			mid2FreqGain = pow(10, (turnGain + stepGain * 4 /*+ velocityGain*/ /*+ lowFreqVelocityGain*/)*0.05);
 			highFreqGain = pow(10, (turnGain + stepGain * 4 /*+ velocityGain *//*+ highFreqTurnGain*/)*0.05);
 
@@ -3071,8 +3098,6 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		averangeTurn = vectorElemSumm / vector.size();
 		vectorElemSumm = 0;
 
-		
-
 		double gain_a = 0;
 		double h_g = 0;
 		double v_g = 0;
@@ -3109,9 +3134,13 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 		double flap_h = 0;
 		double flap_lo = 0;
+		double flap_hv = 0;
+		double flap_lov = 0;
 		crossFade(&flap_lo, &flap_h, step, 4, 5, 1);
-		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * flap_h);
-		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * flap_lo);
+		crossFade(&flap_lov, &flap_hv, velocityX, 14, 16.67, 1);
+		double low = (flap_lo > flap_lov) ? flap_lo : flap_lov;
+		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor *masterGain *(h.vintFlapFactor*masterGain - low));
+		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor *masterGain * low);
 
 		cout << sourceStatus[0] << " " << sourceStatus[1] << " " << gain * h.vintFlapFactor * flap_h <<" "<<calcA<< "\r";
 		outputPeriod += deltaTime;
@@ -3153,6 +3182,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		double h_g = 0;
 		double v_g = 0;
 		double floor = 5;//сдвигаем передаточную функцию атаки на floor вправо
+
 		//
 		double atkXvel = calcA * lineInterpolation(0, 0, 16.67, 1, abs(velocityX));
 
@@ -3184,9 +3214,15 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 		double flap_h = 0;
 		double flap_lo = 0;
+		double flap_hv = 0;
+		double flap_lov = 0;
 		crossFade(&flap_lo, &flap_h, step, 5, 6, 1);
-		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * flap_h);
-		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * flap_lo);
+		crossFade(&flap_lov, &flap_hv, velocityX, 14, 16.67, 1);
+		double low = (flap_lo > flap_lov) ? flap_lo : flap_lov;
+		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor *masterGain *(h.vintFlapFactor*masterGain - low));
+		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor *masterGain * low);
+
+		
 	}
 	//Полеты ка 27 - 29
 	if (h.modelName == "ka_27" || h.modelName == "ka_29")
@@ -3701,7 +3737,7 @@ double attack(double velocityX, double velocityXPrevious, double tangaz, double 
 	return calcA;
 }
 
-Sound::Sound() : sourceStatus(new int), source(new ALuint), buffer(new ALuint), effectSlot(new ALuint), effect(new ALuint), filter(new ALuint)
+Sound::Sound() : sourceStatus(new int), source(new ALuint), buffer(new ALuint[3]), effectSlot(new ALuint), effect(new ALuint), filter(new ALuint)
 {
 	try
 	{
@@ -3715,11 +3751,13 @@ Sound::Sound() : sourceStatus(new int), source(new ALuint), buffer(new ALuint), 
 	alGenSources(1, &source[0]);
 	alGenEffects(1, &effect[0]);
 	alGenBuffers(1, &buffer[0]);
+	alGenBuffers(1, &buffer[1]);
+	alGenBuffers(1, &buffer[2]);
 	alGenFilters(1, &filter[0]);
 	sourcesInUse++;
 }
 
-Sound::Sound(int n, int ns) : sourceStatus(new int[n]), source(new ALuint[n]), buffer(new ALuint[n]), effectSlot(new ALuint[ns]), effect(new ALuint[n]), filter(new ALuint[n])
+Sound::Sound(int sources, int buffers, int effectslots) : sourceStatus(new int[sources]), source(new ALuint[sources]), buffer(new ALuint[buffers]), effectSlot(new ALuint[effectslots]), effect(new ALuint[sources]), filter(new ALuint[sources])
 {
 	try
 	{
@@ -3736,19 +3774,24 @@ Sound::Sound(int n, int ns) : sourceStatus(new int[n]), source(new ALuint[n]), b
 		case 16: cout << " Cant gen more aux slots...\n" << endl; break;
 		}
 	}
-	sourceNumber = n;
-	for (size_t i = 0; i < n; i++)
+	sourceNumber = sources;
+	bufferNumber = buffers;
+	for (size_t i = 0; i < sourceNumber; i++)
 	{
 		alGenSources(1, &source[i]);
 		alGenEffects(1, &effect[i]);
-		alGenBuffers(1, &buffer[i]);
 		alGenFilters(1, &filter[i]);
 	}
-	for (size_t i = 0; i < ns; i++)
+	for (size_t i = 0; i < bufferNumber; i++)
+	{
+		alGenBuffers(1, &buffer[i]);
+	}
+	effectSlotNumber = effectslots;
+	for (size_t i = 0; i < effectSlotNumber; i++)
 		alGenAuxiliaryEffectSlots(1, &effectSlot[i]);
-	effectSlotNumber = ns;
-	sourcesInUse += n;
-	effectSlotsInUse += ns;
+	effectSlotNumber = effectslots;
+	sourcesInUse += sources;
+	effectSlotsInUse += effectslots;
 }
 
 Sound::~Sound()
@@ -3758,6 +3801,10 @@ Sound::~Sound()
 		alDeleteEffects(1, &effect[i]);
 		alDeleteFilters(1, &filter[i]);
 		alDeleteSources(1, &source[i]);
+		alDeleteBuffers(1, &buffer[i]);
+	}
+	for (size_t i = 0; i < bufferNumber; i++)
+	{
 		alDeleteBuffers(1, &buffer[i]);
 	}
 	for (size_t i = 0; i < effectSlotNumber; i++)
