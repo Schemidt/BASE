@@ -190,14 +190,14 @@ void Helicopter::setParam(string model)
 		pumpRightFactor = 0.12/*подк р*/;
 		cutoffCraneFactor = 0.18/*перекр*/;
 		ko50Factor = 0.5/*КО-50*/;
-		runwayFactor = 1/*ВПП*/;
+		runwayFactor = 0.75/*ВПП*/;
 		rocketNar8Factor = 1/*НАР8*/;
 		rocketNar13Factor = 1/*НАР13*/;
 		rocketHitFactor = 0.8/*Попадание ракеты*/;
 		upkFactor = 1/*УПК*/;
 		vintSwishFactor = 1/*ВИНТ Верх*/;
 		vintBrakeFactor = 0.2/*Винт тормоз*/;
-		vintFlapFactor = 1/*Винт хлопки*/;
+		vintFlapFactor = 0.794/*Винт хлопки*/;
 		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
 		consumTankFactor = 0.25/*Расходный бак*/;

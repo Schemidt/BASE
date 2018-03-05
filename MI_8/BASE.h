@@ -60,22 +60,22 @@ public:
 	static int effectSlotsInUse;/*!< Переменная для хранения количества использующихся слотов для эффектов (не более 16) */
 	static int maxSources;/*!< Переменная хранящая количество максимально возможных источников на устройстве, 256 максимально */
 	static int maxSlots;/*!< Переменная хранящая количество максимально возможных слотов для эффектов на устройстве, 16 максимально */
-	static float masterGain;/*!< Глобальный модификатор громкости */
+	static double masterGain;/*!< Глобальный модификатор громкости */
 	static AL_SOUND_CHANNELS channelsSetup;/*!< Конфигурация каналов - устройств вывода (2.1,4.1,5.1,6.1,7.1) */
-	static float currentTime;/*!< Переменная хранящая текущее время полученное из общей памяти от USPO */
-	static float deltaTime;/*!< Gеременная для отслеживания изменения времени */
+	static double currentTime;/*!< Переменная хранящая текущее время полученное из общей памяти от USPO */
+	static double deltaTime;/*!< Gеременная для отслеживания изменения времени */
 
-	static float step; /*!< Шаг */
-	static float tangaz;/*!< Тангаж */
-	static float high;/*!< Высота */
-	static float velocityX;/*!< приборная скорость */
-	static float accelerationX;/*!< Ускорение по приборной скорости (dvx/dt) */
-	static float velocityY;/*!< вертикальная скорость */
-	static float dash;/*!< Рывок (d2vx/dt) */
-	static float accelerationVy;/*!< Вертикальное ускорение (dvy/dt) */
-	static float derivStep;/*!< Скорость изменения шага */
-	static float calcA;/*!< Атака винта */
-	static float RedTurnAcc;/*!< Ускорение оборотов редуктора (dturn/dt) */
+	static double step; /*!< Шаг */
+	static double tangaz;/*!< Тангаж */
+	static double high;/*!< Высота */
+	static double velocityX;/*!< приборная скорость */
+	static double accelerationX;/*!< Ускорение по приборной скорости (dvx/dt) */
+	static double velocityY;/*!< вертикальная скорость */
+	static double dash;/*!< Рывок (d2vx/dt) */
+	static double accelerationVy;/*!< Вертикальное ускорение (dvy/dt) */
+	static double derivStep;/*!< Скорость изменения шага */
+	static double calcA;/*!< Атака винта */
+	static double RedTurnAcc;/*!< Ускорение оборотов редуктора (dturn/dt) */
 
 	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime, vectorRedTurn;//Массивы для хранения значений переменных за некоторое время (определено условием в main), для расчета производных
 
@@ -91,10 +91,10 @@ public:
 	bool soundOff = 0;/*!< Переменная для определения состояния звука */
 	float offsetOn = 0;/*!< Переменная для хранения отступа от начала файла в секундах, как правило для файла запуска агрегата */
 	float offsetOff = 0;/*!< Переменная для хранения отступа от начала файла в секундах, как правило для файла остановки агрегата */
-	float lengthOn = 0;/*!< Переменная для хранения длительности файла в секундах, как правило для файла запуска агрегата */
-	float lengthOff = 0;/*!< Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата */
-	float pitch = 1;/*!< Переменная для параметра высоты тона звука агрегата */
-	float gain = 1;/*!< Переменная для параметра громкости звука агрегата */
+	double lengthOn = 0;/*!< Переменная для хранения длительности файла в секундах, как правило для файла запуска агрегата */
+	double lengthOff = 0;/*!< Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата */
+	double pitch = 1;/*!< Переменная для параметра высоты тона звука агрегата */
+	double gain = 1;/*!< Переменная для параметра громкости звука агрегата */
 	double channel[7] = { 1,1,0,0,0,0,0 };/*!< массив для поканального вывода звука */
 	int sourceNumber = 1;/*!< Переменная для хранения количества источников используемых объектом звука агрегата */
 	int bufferNumber = 3;/*!< Переменная для хранения количества буфферов используемых объектом звука агрегата */
@@ -110,7 +110,7 @@ public:
 	\param[in] filename имя файла
 	\return длительность WAVE файла
 	*/
-	float getLengthWAV(string filename);
+	double getLengthWAV(string filename);
 
 	/*!
 	\brief Инициализирует воспроизведение звука
@@ -132,7 +132,7 @@ public:
 	\param[in] gain_mult Коэффициент громкости для агрегата
 	\return Статус источника OpenAL
 	*/
-	int initializeSound(bool status, string path_on, string path_w, string path_off, float gain_mult);
+	int initializeSound(bool status, string path_on, string path_w, string path_off, double gain_mult);
 
 	/*!
 	\brief Загружает буфер данными
@@ -147,10 +147,10 @@ public:
 	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, double *channels);
 
 	//!<Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
-	int setAndDeploySound(ALuint *Buffer, ALuint *Source, float offset, string file_path);
+	int setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, string file_path);
 
 	//!<Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
-	int switchBufferAndPlay(ALuint *Buffer, ALuint *Source, float offset);
+	int switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset);
 	
 };
 
@@ -160,28 +160,28 @@ class Reductor : public Sound
 public:
 
 	FILE *fred = nullptr;
-	float lowFreqGain = 0;
-	float mid1FreqGain = 0;
-	float mid2FreqGain = 0;
-	float highFreqGain = 0;
+	double lowFreqGain = 0;
+	double mid1FreqGain = 0;
+	double mid2FreqGain = 0;
+	double highFreqGain = 0;
 
-	float lowCutoffFreq = 0;
-	float mid1CutoffFreq = 0;
-	float mid2CutoffFreq = 0;
-	float highCutoffFreq = 0;
+	double lowCutoffFreq = 0;
+	double mid1CutoffFreq = 0;
+	double mid2CutoffFreq = 0;
+	double highCutoffFreq = 0;
 
-	float pinkNoiseGain = 0;
-	float highGain = 0;
-	float stepGain = 0;
-	float mid2FreqStepGain = 0;
-	float velocityGain = 0;
-	float lowFreqVelocityGain = 0;
-	float accelerationGain = 0;
-	float turnGain = 0;
-	float highFreqTurnGain = 0;
-	float multiplierStep = 1;
+	double pinkNoiseGain = 0;
+	double highGain = 0;
+	double stepGain = 0;
+	double mid2FreqStepGain = 0;
+	double velocityGain = 0;
+	double lowFreqVelocityGain = 0;
+	double accelerationGain = 0;
+	double turnGain = 0;
+	double highFreqTurnGain = 0;
+	double multiplierStep = 1;
 
-	float takeoffStep = 8;
+	double takeoffStep = 8;
 	string pinkNoise;
 
 	double outputPeriod = 0;
@@ -208,7 +208,7 @@ public:
 
 	string filetoBuffer[2];
 	string fileBuffered[2];
-	float offset[2] = {0};
+	double offset[2] = {0};
 
 	Reductor() : Sound(3, 3, 2)
 	{
@@ -227,22 +227,22 @@ class Engine : public Sound
 public:
 
 	static int engNum;
-	float phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
+	double phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
 
-	float highFreqTurnGain = 0;
-	float takeoffStep = 0;
-	float turnGain = 0;
-	float stepGain = 0;
+	double highFreqTurnGain = 0;
+	double takeoffStep = 0;
+	double turnGain = 0;
+	double stepGain = 0;
 
-	float lowFreqGain = 0;
-	float mid1FreqGain = 0;
-	float mid2FreqGain = 0;
-	float highFreqGain = 0;
+	double lowFreqGain = 0;
+	double mid1FreqGain = 0;
+	double mid2FreqGain = 0;
+	double highFreqGain = 0;
 
-	float lowCutoffFreq = 0;
-	float mid1CutoffFreq = 0;
-	float mid2CutoffFreq = 0;
-	float highCutoffFreq = 0;
+	double lowCutoffFreq = 0;
+	double mid1CutoffFreq = 0;
+	double mid2CutoffFreq = 0;
+	double highCutoffFreq = 0;
 
 	double averangeCalcPeriod = 0;
 	double outputPeriod = 0;
@@ -253,7 +253,7 @@ public:
 
 	string filetoBuffer[2];
 	string fileBuffered[2];
-	float offset[2] = { 0 };
+	double offset[2] = { 0 };
 
 	string eq[2];
 
@@ -262,7 +262,7 @@ public:
 		engNum++;
 		phase = (engNum - 1) * 0.33;
 	}
-	int Play(bool status_on, bool status_off, float parameter, SOUNDREAD sr, Helicopter h);
+	int Play(bool status_on, bool status_off, double parameter, SOUNDREAD sr, Helicopter h);
 };
 
 //!<Наследуем класс двигателя
@@ -273,7 +273,7 @@ public:
 	string eq;
 	string filetoBuffer[2];
 	string fileBuffered[2];
-	float offset[2] = { 0 };
+	double offset[2] = { 0 };
 
 	Runway() : Sound(2, 2, 1)
 	{
@@ -291,32 +291,32 @@ public:
 	FILE *fderiv = nullptr;
 	FILE *ffront = nullptr;
 	double path = 0;
-	float lowerFreqLimit;//!<Нижняя граница частоты среза
-	float highterFreqLimit;//!<Верхняя граница частоты среза
-	float freqCutoffFromTurns = 0;//!<Частота среза
-	float freqCutoffResult = 0;//!<Частота среза
-	float lowFreqGain = 0;
-	float mid1FreqGain = 0;
-	float mid2FreqGain = 0;
-	float highFreqGain = 0;
-	float lowCutoff = 0;
-	float mid1Cutoff = 0;
-	float mid2Cutoff = 0;
-	float highCutoff = 0;
-	float accelerationGain = 0;
-	float hiSpeedGain = 0;
-	float resFlapCGain = 0;
+	double lowerFreqLimit;//!<Нижняя граница частоты среза
+	double highterFreqLimit;//!<Верхняя граница частоты среза
+	double freqCutoffFromTurns = 0;//!<Частота среза
+	double freqCutoffResult = 0;//!<Частота среза
+	double lowFreqGain = 0;
+	double mid1FreqGain = 0;
+	double mid2FreqGain = 0;
+	double highFreqGain = 0;
+	double lowCutoff = 0;
+	double mid1Cutoff = 0;
+	double mid2Cutoff = 0;
+	double highCutoff = 0;
+	double accelerationGain = 0;
+	double hiSpeedGain = 0;
+	double resFlapCGain = 0;
 
-	float accelerationXBorder = 0.28;//!<мс/с*с
-	float velocityYBorder = -2;//!<мс/с
-	float dashBorder = -0.672;
+	double accelerationXBorder = 0.28;//!<мс/с*с
+	double velocityYBorder = -2;//!<мс/с
+	double dashBorder = -0.672;
 	int flapIndicator = 0;
-	float turnsGain = 0;//!<усиление от оборотов
+	double turnsGain = 0;//!<усиление от оборотов
 	
-	float outputPeriod = 0;
-	float averangeCalcPeriod = 0;
-	float vectorElemSumm = 0;
-	float averangeTurn = 0;
+	double outputPeriod = 0;
+	double averangeCalcPeriod = 0;
+	double vectorElemSumm = 0;
+	double averangeTurn = 0;
 
 	vector<double> vector;
 
@@ -343,7 +343,7 @@ public:
 
 	string filetoBuffer[2];
 	string fileBuffered[2];
-	float offset[2] = { 0 };
+	double offset[2] = { 0 };
 
 
 
@@ -375,15 +375,15 @@ public:
 	double vectorElemSummStep = 0;
 	double averangeStep = 0;
 
-	float lowFreqGain = 0;
-	float mid1FreqGain = 0;
-	float mid2FreqGain = 0;
-	float highFreqGain = 0;
+	double lowFreqGain = 0;
+	double mid1FreqGain = 0;
+	double mid2FreqGain = 0;
+	double highFreqGain = 0;
 
-	float lowCutoffFreq = 0;
-	float mid1CutoffFreq = 0;
-	float mid2CutoffFreq = 0;
-	float highCutoffFreq = 0;
+	double lowCutoffFreq = 0;
+	double mid1CutoffFreq = 0;
+	double mid2CutoffFreq = 0;
+	double highCutoffFreq = 0;
 
 	vector<double> vector, vectorStep;
 
@@ -493,9 +493,32 @@ void printProgrammStatus(SOUNDREAD srd);
 \return максимальное количество доступных источников, 0 в случае ошибки
 */
 int getMaxAvaliableSources();
-//Вычисляет атаку (Угол атаки несущего винта — угол между направлением воздушного потока (противоположным направлению полета) и плоскостью вращения втулки несущего винта. Этот угол может иметь любое значение (от —180° до +180°) в зависимости от направления полета.
-//Если воздушный поток подходит к плоскости вращения винта снизу(автожирный режим), то угол атаки несущего винта считается положительным.Если воздушный поток набегает на несущий винт сверху, то угол атаки принимается отрицательным.)
-double attack(double velocityX, double velocityXPrevious, double tangaz, double deltaHigh, double periodCalc);
+/*!
+\brief Вычисляет атаку
+\details Вычисляет атаку (Угол атаки несущего винта — угол между направлением воздушного потока (противоположным направлению полета) и плоскостью вращения втулки несущего винта. Этот угол может иметь любое значение (от —180° до +180°) в зависимости от направления полета.
+Если воздушный поток подходит к плоскости вращения винта снизу(автожирный режим), то угол атаки несущего винта считается положительным.Если воздушный поток набегает на несущий винт сверху, то угол атаки принимается отрицательным.)
 
+Код вычисления атаки:
+\code
+tangaz = tangaz * M_PI / 180.0;
+calcA = atan(tan(tangaz) - (2 * deltaHigh) / ((velocityXPrevious + velocityX) * cos(tangaz) * periodCalc));
+calcA = calcA * 180 / M_PI;
+\endcode
+
+\param[in] velocityX Приборная скорость в прошлый момент времени t0
+\param[in] velocityXPrevious Приборная скорость в момент времени t0 + periodCalc
+\param[in] tangaz Тангаж в момент времени t0 + periodCalc
+\param[in] deltaHigh Разница высоты между выбранными моментами
+\param[in] periodCalc Разница по времени между выбранными моментами
+\return Значение атаки при данных параметрах
+*/
+double attack(double velocityX, double velocityXPrevious, double tangaz, double deltaHigh, double periodCalc);
+/*!
+\brief Проверяет наличие процесса
+\details Проверяет наличие процесса
+
+\param[in] szExe имя процесса
+\return True если процесс выполняется в системе, иначе False
+*/
 bool IsProcessPresent(wchar_t * szExe);
 

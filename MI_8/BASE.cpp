@@ -98,29 +98,29 @@ SOUNDREAD soundread;/*!< Переменная класса soundread для хранения управляющих пр
 
 int Sound::maxSlots;/*!< Переменная инициализирующаяся максимальным числом источников ,которые могут проигрываться одновременно*/
 int Sound::maxSources;/*!< Переменная инициализирующаяся максимальным числом источников ,которые могут проигрываться одновременно*/
-float Sound::masterGain = 1;//!< общая громкость звука
+double Sound::masterGain = 1;//!< общая громкость звука
 int Sound::sourcesInUse = 0;
 int Sound::effectSlotsInUse = 0;
-float Sound::currentTime = 0;//
-float Sound::deltaTime = 0;//переменная для отслеживания изменения времени
-float Sound::step = 0; //шаг (временно используем параметр перегрузки)
-float Sound::tangaz = 0;
-float Sound::high = 0;
-float Sound::velocityX = 0;//приборная скорость
-float Sound::accelerationX = 0;//
-float Sound::velocityY = 0;//вертикальная скорость
-float Sound::dash = 0;
-float Sound::accelerationVy = 0;
-float Sound::derivStep = 0;
-float Sound::calcA = 0;
-float Sound::RedTurnAcc = 0;
+double Sound::currentTime = 0;//
+double Sound::deltaTime = 0;//переменная для отслеживания изменения времени
+double Sound::step = 0; //шаг (временно используем параметр перегрузки)
+double Sound::tangaz = 0;
+double Sound::high = 0;
+double Sound::velocityX = 0;//приборная скорость
+double Sound::accelerationX = 0;//
+double Sound::velocityY = 0;//вертикальная скорость
+double Sound::dash = 0;
+double Sound::accelerationVy = 0;
+double Sound::derivStep = 0;
+double Sound::calcA = 0;
+double Sound::RedTurnAcc = 0;
 int Engine::engNum = 0;
 
 vector<double> Sound::vectorHigh, Sound::vectorVy, Sound::vectorVx, Sound::vectorAcc, Sound::vectorStep, Sound::vectorTime, Sound::vectorRedTurn;
 
 AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_2;//Конфигурация каналов звука
-float window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
-float periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
+double window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
+double periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
 
 /*!\brief Основная функция программы*/
 int main(int argc, char *argv[])
@@ -256,13 +256,13 @@ int main(int argc, char *argv[])
 	Sound::vectorStep.push_back(Sound::step);
 	Sound::vectorRedTurn.push_back(localdata.reduktor_gl_obor);
 
-	float timerPodk = 0;
-	float timerNar8 = 0;
-	float timerNar13 = 0;
+	double timerPodk = 0;
+	double timerNar8 = 0;
+	double timerNar13 = 0;
 	int counterNar8 = 0;
 	int counterNar13 = 0;
-	float vsuDownTimer = 0;
-	float vsuUpTimer = 0;
+	double vsuDownTimer = 0;
+	double vsuUpTimer = 0;
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (1)
 	{	
@@ -511,7 +511,7 @@ int main(int argc, char *argv[])
 						Free(nip);//Удаляем объект
 					else
 					{
-						float p1 = 1, p2 = 1;
+						double p1 = 1, p2 = 1;
 						//Если включено ВУ, то высота тона повышается на 1.5%
 						if (localdata.p_vu1 && "mi_26" == helicopter.modelName)
 						{
@@ -1804,7 +1804,7 @@ int getMaxAvaliableSources()
 	return maxmono + maxstereo;	
 }
 
-int Sound::initializeSound(bool status, string path_on, string path_w, string path_off, float gain_mult)
+int Sound::initializeSound(bool status, string path_on, string path_w, string path_off, double gain_mult)
 {
 	bool start;
 	bool work;
@@ -2012,7 +2012,7 @@ int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount
 	return 1;
 }
 
-int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, float offset, string file_path)
+int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, string file_path)
 {
 	int play = 0;
 	alSourceStop(*Source);
@@ -2028,7 +2028,7 @@ int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, float offset, strin
 	return play;
 }
 
-int Sound::switchBufferAndPlay(ALuint *Buffer, ALuint *Source, float offset)
+int Sound::switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset)
 {
 	int play = 0;
 	alSourceStop(*Source);
@@ -2302,7 +2302,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			vectorElemSumm = 0;
 
 			//Усиление по атаке
-			float atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+			double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
 			averangeCalcPeriodAtk += deltaTime;
 			if (averangeCalcPeriodAtk >= 20 && !vectorAtk.empty())
 				vectorAtk.erase(vectorAtk.begin());
@@ -2312,7 +2312,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			averangeAtk = vectorElemSummAtk / vectorAtk.size();
 			vectorElemSummAtk = 0;
 
-			float atkGain = (atkXvel - averangeAtk) * -0.4;
+			double atkGain = (atkXvel - averangeAtk) * -0.4;
 			atkGain = (atkGain < -2) ? -2 : atkGain;
 			atkGain = (atkGain > 3) ? 3 : atkGain;
 
@@ -2345,7 +2345,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 
 			bool boost = 0;
 			//усиление НЧ когда нет хлопков на границе 2го условия
-			float flapCGain = 0;
+			double flapCGain = 0;
 			if (abs(velocityX) <= 16.67) //ниже 60ти висение
 			{
 				if (vectorVx.size() > 2)
@@ -2502,7 +2502,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//=========================================
 			//Висение
 			//усиление НЧ когда нет хлопков на границе 2го условия
-			float flapCGain = 0;
+			double flapCGain = 0;
 			if (abs(velocityX) <= 16.67) //ниже 60ти висение
 			{
 				if (vectorVx.size() > 2)
@@ -2543,7 +2543,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 
 			//=========================================
 			//Страгивание
-			float stalkingGain = accelerationX * interpolation(0, 1, 8.3, 0, velocityX) * !high;
+			double stalkingGain = accelerationX * interpolation(0, 1, 8.3, 0, velocityX) * !high;
 			//=========================================
 
 			lowFreqGain = pow(10, (mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
@@ -2647,7 +2647,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			mid2FreqStepGain = step * interpolation(0, 1, 5, 0, high);//0.3 -> 0.2
 
 																				//усиление по шагу в Средних чатотах
-			float absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
+			double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
 
 			//усиление от оборотов выше 10000
 			highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1;
@@ -2657,7 +2657,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 
 			bool boost = 0;
 			//усиление НЧ когда нет хлопков на границе 2го условия
-			float flapCGain = 0;
+			double flapCGain = 0;
 			if (abs(velocityX) <= 16.67) //ниже 60ти висение
 			{
 				if (vectorVx.size() > 2)
@@ -2816,7 +2816,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			mid2FreqStepGain = step * interpolation(0, 1, 5, 0, high);//0.3 -> 0.2
 
 																		  //усиление по шагу в Средних чатотах
-			float absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
+			double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
 
 			//усиление от оборотов выше 10000
 			highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1;
@@ -2828,7 +2828,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 
 			bool boost = 0;
 			//усиление НЧ когда нет хлопков на границе 2го условия
-			float flapCGain = 0;
+			double flapCGain = 0;
 			if (abs(velocityX) <= 16.67) //ниже 60ти висение
 			{
 				if (vectorVx.size() > 2)
@@ -2921,7 +2921,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
-int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, Helicopter h)
+int Engine::Play(bool status_on, bool status_off, double parameter,SOUNDREAD sr, Helicopter h)
 {
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -3070,7 +3070,6 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 		}
 	}
 
-	
 	//Полеты 8 мтв5, 8 амтш, ка 27м, ка 29
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "ka_27" || h.modelName == "ka_29")
 	{
@@ -3086,7 +3085,7 @@ int Engine::Play(bool status_on, bool status_off, float parameter,SOUNDREAD sr, 
 			vectorElemSumm = 0;
 
 			//усиление от оборотов выше 10000
-			highFreqTurnGain = (parameter - averangeTurn) * 0.5;
+			highFreqTurnGain = (parameter - averangeTurn) * 0.35;
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 			//усиление от оборотов
 			turnGain = (parameter - averangeTurn) * 0.35;
@@ -3493,7 +3492,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		crossFade(&flapCVX, &flapABVX, abs(velocityX), 15.28, 16.67, 1);
 		
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		float flapCGainAccX = 1;
+		double flapCGainAccX = 1;
 		if (flapIndicator == 2 && abs(velocityX) < 16.67)
 		{
 			flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY);//переходит в усиление нч по vy
@@ -3512,13 +3511,13 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		if (outputPeriod >= 0.1)
 		{
 			fflaps = fopen("flap.txt", "at");
-			fprintf(fflaps, "%i\t%f\t%f\t%f\t%f\t%f\n", flapIndicator, flapAGain, flapBGain, flapCGain, calcA, soundread.time);
+			fprintf(fflaps, "%i\t%lf\t%lf\t%lf\t%lf\t%lf\n", flapIndicator, flapAGain, flapBGain, flapCGain, calcA, soundread.time);
 			fclose(fflaps);
 			fderiv = fopen("der.txt", "at");
-			fprintf(fderiv, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", accelerationX, dash, velocityY, accelerationVy, derivStep, calcA, soundread.time);
+			fprintf(fderiv, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", accelerationX, dash, velocityY, accelerationVy, derivStep, calcA, soundread.time);
 			fclose(fderiv);
 			ffront = fopen("front.txt", "at");
-			fprintf(ffront, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", accelerationX, vectorVx.front(),velocityX,periodCalc,vectorTime.front(),currentTime,soundread.time);
+			fprintf(ffront, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", accelerationX, vectorVx.front(),velocityX,periodCalc,vectorTime.front(),currentTime,soundread.time);
 			fclose(ffront);
 			outputPeriod = 0;
 		}
@@ -3711,7 +3710,7 @@ vectorElemSummStep = 0;
 
 
 
-float stepPPitch = averangeStep * 0.03;
+double stepPPitch = averangeStep * 0.03;
 
 skvUni->pitch = (1 + stepPPitch) + (sr.reduktor_gl_obor - averangeTurn)*0.1;
 
@@ -3878,7 +3877,7 @@ Sound::~Sound()
 	effectSlotsInUse -= effectSlotNumber;
 }
 
-float Sound::getLengthWAV(string filename)
+double Sound::getLengthWAV(string filename)
 {
 	WAVEHEADER *header;
 	FILE *in;
@@ -3891,7 +3890,7 @@ float Sound::getLengthWAV(string filename)
 	}
 	header = new WAVEHEADER;
 	fread(header, sizeof(WAVEHEADER), 1, in);//считываем заголовочную информацию
-	float length = ((float)header->lDataSize / ((float)header->wfex.wBitsPerSample * (float)header->wfex.nSamplesPerSec)) * 8;//вычисляем длинну в секундах
+	double length = ((double)header->lDataSize / ((double)header->wfex.wBitsPerSample * (double)header->wfex.nSamplesPerSec)) * 8;//вычисляем длинну в секундах
 	fclose(in);
 	delete header;
 	return length;
