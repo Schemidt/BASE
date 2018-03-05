@@ -125,7 +125,6 @@ double periodCalc = 0;//переменная для реального значения периода вычисления, ра
 /*!\brief Основная функция программы*/
 int main(int argc, char *argv[])
 {
-	
 	//Получаем указатели на функции EFX
 	setEFXPointers();
 	vector <string> helicoptersNames = { "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29"};
@@ -138,16 +137,8 @@ int main(int argc, char *argv[])
 			if (regex_match(argv[1], regex("^(" + helicoptersNames[i] + ")")))
 			{
 				model = argv[1];
+				helicopter.setParam(model);
 			}
-		}
-		if (model.empty())
-		{
-			cout << " Unknown argument..." << endl;
-			helicopter.setParam("ka_29");
-		}
-		else
-		{
-			helicopter.setParam(model);
 		}
 	}
 	else
@@ -1970,8 +1961,7 @@ int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount
 	check = fopen(path.c_str(), "r");
 	if (!check)
 	{
-		cout <<"\n file [" << path << "] is missing" << endl;
-		system("cls");
+		cout <<"\n file [" << path << "] is missing\t\t\t\t\t\t\r" << endl;
 		return 0;
 	}
 	fclose(check);
@@ -3751,7 +3741,7 @@ int Runway::Play(Helicopter h, SOUNDREAD sr)
 	alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
 	filetoBuffer[1] = h.fullName["runway"];
-	filetoBuffer[0] = h.fullName["stagger"];
+	filetoBuffer[0] = h.fullName["landing"];
 	alSourcei(source[1], AL_LOOPING, AL_TRUE);
 	alSourcei(source[0], AL_LOOPING, AL_TRUE);
 

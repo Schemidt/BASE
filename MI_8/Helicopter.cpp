@@ -152,7 +152,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["undefined1_w"] = "undefined1_w.wav";//
 											   //Другое
 	shortName["pinkNoise"] = "vadd.wav";//
-	shortName["stagger"] = "stagger.wav";//
+	shortName["landing"] = "landing.wav";//
 
 	fullName = shortName;
 
