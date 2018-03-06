@@ -3180,13 +3180,14 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor *masterGain * low);
 
 		cout << sourceStatus[0] << " " << sourceStatus[1] << " " << gain * h.vintFlapFactor * flap_h <<" "<<calcA<< "\r";
-		/*outputPeriod += deltaTime;
+		
+		outputPeriod += deltaTime;
 		if (outputPeriod >= 0.1)
 		{
 			fderiv = fopen("der.txt", "at");
-			fprintf(fderiv, "%f\t%f\t%f\t%f\t%f\n", gain, calcA, sr.reduktor_gl_obor, averangeTurn, soundread.time);
+			fprintf(fderiv, "%lf\t%lf\t%lf\t%lf\t%lf\n", atkFls, flapCGainAccX, calcA, low, soundread.time);
 			fclose(fderiv);
-		}*/
+		}
 
 	}
 	//Полеты 28
