@@ -65,22 +65,36 @@ public:
 	double chassisBrakePumpFactor = 0;//!<Множитель громкости тормоза шасси
 	double chassisBrakeReleaseFactor = 0;//!<Множитель громкости сброса давления
 	double consumTankFactor = 0;//!<Множитель громкости насоса расходного бака
-	double nipFactor = 0;//НИП
-	double fireCraneFactor = 0;//Пожарный кран
-	double girovertFactor = 0;//Гировертикаль
-	double pumpStationFactor = 0;//Насосная станция
-	double rainFactor = 0;//Дождь
-	double buzzerFactor = 0;//Зуммер
-	double fenFactor = 0;//Фен
-	double undefinedFactor = 0;//Неизвестный
-	double circlingCraneFactor = 0;//Кран кольцевания
-	double rocketIglaFactor = 0;//Игла
-	double vpryam = 0;//Выпрямительное устройство
+	double nipFactor = 0;//!<НИП
+	double fireCraneFactor = 0;//!<Пожарный кран
+	double girovertFactor = 0;//!<Гировертикаль
+	double pumpStationFactor = 0;//!<Насосная станция
+	double rainFactor = 0;//!<Дождь
+	double buzzerFactor = 0;//!<Зуммер
+	double fenFactor = 0;//!<Фен
+	double undefinedFactor = 0;//!<Неизвестный
+	double circlingCraneFactor = 0;//!<Кран кольцевания
+	double rocketIglaFactor = 0;//!<Игла
+	double vpryam = 0;//!<Выпрямительное устройство
 
+	//!<Ассоциативный массив с именами файлов - звуков
 	map<string, string> shortName;
+
+	//!<Ассоциативный массив с полными именами файлов - звуков
 	map<string, string> fullName;
 
+	/*!
+	\brief Заполняет массив с полными именами файлов
+	\details Заполняет массив fullName с полными именами файлов: shortName + pathToFile
+	\param[in] pathToFile Путь к аудиофайлам
+	*/
 	void setPath(string pathToFile);
+
+	/*!
+	\brief Заполняет параметры объекта ЛА
+	\details Заполняет параметры объекта ЛА в зависимости от переданного параметра model
+	\param[in] model Модель летательного аппарата
+	*/
 	void setParam(string model);
 	Helicopter();
 	~Helicopter();

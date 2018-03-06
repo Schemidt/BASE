@@ -1,3 +1,7 @@
+/*!
+\file
+\brief –еализует реальное врем€ \ ќбъ€вление
+*/
 #ifndef __RUN_TIME__
 #define __RUN_TIME__
 

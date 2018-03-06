@@ -1,3 +1,7 @@
+/*!
+\file
+\brief Реализует общую память / Определение
+*/
 #include <Windows.h>
 #include "Shared.h"
 

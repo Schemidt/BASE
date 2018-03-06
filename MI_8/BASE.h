@@ -20,7 +20,7 @@
 
 using namespace std;
 
-//Шаблон очишения указателей
+//!<Шаблон освобождия памяти
 template <class T>
 void Free(T &x)
 {
@@ -29,7 +29,7 @@ void Free(T &x)
 }
 
 #pragma pack ( push, 1 )
-//Структура для хранения загруженных wave файлов
+//!<Структура для хранения загруженных wave файлов
 typedef struct
 {
 	char			szRIFF[4];
@@ -146,15 +146,37 @@ public:
 	*/
 	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, double *channels);
 
-	//!<Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
+	/*!
+	\brief Загружает буфер, подключает к источнику и запускает
+	\details Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
+	\param[in] Buffer Объект буфера
+	\param[in] Source Объект источника
+	\param[in] offset оступ от начала файла, сек
+	\param[in] file_path Полное имя файла
+	\return Статус источника OpenAL
+	*/
 	int setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, string file_path);
 
-	//!<Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
+	/*!
+	\brief Подключает буфер к источнику и запускает
+	\details Выгружает буффер, загружает данными из file_path, подключает к источнику, запускает источник используя параметр отступа в секундах offset
+	\param[in] Buffer Объект буфера
+	\param[in] Source Объект источника
+	\param[in] offset оступ от начала файла, сек
+	\return Статус источника OpenAL
+	*/
 	int switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset);
 	
 };
 
-//!<Наследуем класс редуктора
+/*!
+\brief Класс объекта редуктора
+\author Самсонов А.В.
+\version 2.0
+\date  06.03.2018
+
+Класс определяющий работу объекта - редуктора
+*/
 class Reductor : public Sound
 {
 public:
@@ -218,10 +240,25 @@ public:
 	{
 		
 	}
+
+	/*!
+	\brief Определяет логику вывода звука
+	\details определяет логику изменения параметров акустических объектов OpenAL
+	\param[in] h Объект хранящий характеристики вертолета
+	\param[in] sr Объект хранящий текущие параметры вертолета
+	\return Статус источника OpenAL
+	*/
 	int Play(Helicopter h, SOUNDREAD sr);
 };
 
-//!<Наследуем класс двигателя
+/*!
+\brief Класс объекта двигателя
+\author Самсонов А.В.
+\version 2.0
+\date  06.03.2018
+
+Класс определяющий работу объекта - двигателя
+*/
 class Engine : public Sound
 {
 public:
@@ -262,10 +299,27 @@ public:
 		engNum++;
 		phase = (engNum - 1) * 0.33;
 	}
+	/*!
+	\brief Определяет логику вывода звука
+	\details определяет логику изменения параметров акустических объектов OpenAL
+	\param[in] status_on Переменная статуса запуска
+	\param[in] status_off Переменная статуса остановки
+	\param[in] parameter Обороты двигателя
+	\param[in] h Объект хранящий характеристики вертолета
+	\param[in] sr Объект хранящий текущие параметры вертолета
+	\return Статус источника OpenAL
+	*/
 	int Play(bool status_on, bool status_off, double parameter, SOUNDREAD sr, Helicopter h);
 };
 
-//!<Наследуем класс двигателя
+/*!
+\brief Класс объекта - звук движения по ВПП
+\author Самсонов А.В.
+\version 2.0
+\date  06.03.2018
+
+Класс определяющий логику звука движения по ВПП и РД
+*/
 class Runway : public Sound
 {
 public:
@@ -279,10 +333,25 @@ public:
 	{
 
 	}
+
+	/*!
+	\brief Определяет логику вывода звука
+	\details определяет логику изменения параметров акустических объектов OpenAL
+	\param[in] h Объект хранящий характеристики вертолета
+	\param[in] sr Объект хранящий текущие параметры вертолета
+	\return Статус источника OpenAL
+	*/
 	int Play(Helicopter h, SOUNDREAD sr);
 };
 
-//!<Наследуем класс хлопков
+/*!
+\brief Класс объекта - хлопков винта
+\author Самсонов А.В.
+\version 2.0
+\date  06.03.2018
+
+Класс определяющий логику звука хлопков винта
+*/
 class VintFlap : public Sound
 {
 public:
@@ -333,10 +402,25 @@ public:
 	{
 		
 	}
-	//!<Выводит звук
+	
+	/*!
+	\brief Определяет логику вывода звука
+	\details определяет логику изменения параметров акустических объектов OpenAL
+	\param[in] h Объект хранящий характеристики вертолета
+	\param[in] sr Объект хранящий текущие параметры вертолета
+	\return Статус источника OpenAL
+	*/
 	int Play(Helicopter h, SOUNDREAD sr);
 };
 
+/*!
+\brief Класс объекта - свиста винта
+\author Самсонов А.В.
+\version 2.0
+\date  06.03.2018
+
+Класс определяющий логику звука свиста винта
+*/
 class VintSwish : public Sound
 {
 public:
@@ -356,11 +440,26 @@ public:
 	{
 
 	}
-	//!<Выводит звук
+	
+	/*!
+	\brief Определяет логику вывода звука
+	\details определяет логику изменения параметров акустических объектов OpenAL
+	\param[in] h Объект хранящий характеристики вертолета
+	\param[in] sr Объект хранящий текущие параметры вертолета
+	\return Статус источника OpenAL
+	*/
 	int Play(Helicopter h, SOUNDREAD sr);
 
 };
 
+/*!
+\brief Класс объекта - СКВ
+\author Самсонов А.В.
+\version 2.0
+\date  06.03.2018
+
+Класс определяющий логику звука объекта - СКВ (система кондиционирования воздуха)
+*/
 class SKV : public Sound
 {
 public:
@@ -396,7 +495,14 @@ public:
 	{
 
 	}
-	//!<Выводит звук
+	
+	/*!
+	\brief Определяет логику вывода звука
+	\details определяет логику изменения параметров акустических объектов OpenAL
+	\param[in] h Объект хранящий характеристики вертолета
+	\param[in] sr Объект хранящий текущие параметры вертолета
+	\return Статус источника OpenAL
+	*/
 	int Play(Helicopter h, SOUNDREAD sr);
 
 };

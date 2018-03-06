@@ -1,3 +1,7 @@
+/*!
+\file
+\brief Реализует реальное время \ Определение
+*/
 #include <stdio.h>
 #include <conio.h>
 #include <math.h>

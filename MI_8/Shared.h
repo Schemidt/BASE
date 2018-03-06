@@ -1,3 +1,7 @@
+/*!
+\file
+\brief Реализует общую память / Объявление
+*/
 #ifndef __SHARED__
 #define __SHARED__
 
