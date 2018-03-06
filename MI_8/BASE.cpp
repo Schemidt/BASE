@@ -48,15 +48,15 @@
  Nulla suscipit eget augue non bibendum
  Cras cursus porta pretium
 
-\section sec1 Структура <main>
+\section sec1 Структура "main"
  
  -вычисляются недостающие переменные
  -проверяются условия создания объектов - устройств
  -выполняются функции работы устройств
 
-\section sec2 Класс <Sound> и подклассы
+\section sec2 Класс "Sound" и подклассы
 
- Класс <Sound> описывает объект - устройство, звук которого необходимо получить.
+ Класс "Sound" описывает объект - устройство, звук которого необходимо получить.
  Метод "initializeSound" - описывает логику присущую большинству устройств
 
 \section sec3 Назначение <Helicopter>
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 	setEFXPointers();
 	vector <string> helicoptersNames = { "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29"};
 	string model;
-	Helicopter helicopter;/*!< Переменная класса Helicopter для хранения параметров выбранного вертолета */
+	Helicopter helicopter;//Переменная класса Helicopter для хранения параметров выбранного вертолета
 	if (argc > 1)// если передаем аргументы, то argc будет больше 1(в зависимости от кол-ва аргументов)
 	{
 		for (size_t i = 0; i < helicoptersNames.size(); i++)
@@ -1354,7 +1354,7 @@ int main(int argc, char *argv[])
 			//alutSleep(0.5);
 		}
 	}
-	atexit(freeOpenAL);//!<Выполнение функции KillALData на завершении программы
+	atexit(freeOpenAL);//Выполнение функции KillALData на завершении программы
 	StopRealTime();
 	return 0;
 }
