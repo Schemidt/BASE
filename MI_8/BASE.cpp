@@ -5,61 +5,29 @@
 Данный файл связывает все элементы программы и определяет ее работу.
 Определяет методы Sound и наследников.
 */
-
-/*! \page page1 Документация на ПО СИЗС
+/*! 
+\page page1 Документация на ПО СИЗС
 \tableofcontents
-
- Lorem ipsum dolor sit amet, consectetur adipiscing elit
- Aenean varius enim et neque accumsan mollis
- Mauris quis viverra est, non vehicula nunc
- Sed ultrices risus quis purus euismod, rutrum cursus enim tincidunt
- Phasellus consequat nisl sed nunc pulvinar congue
- Sed eget finibus nisl, in porta metus
- Aenean at turpis tristique dui iaculis accumsan nec non nisl
- Nullam iaculis enim ut justo mattis, sit amet elementum ligula commodo
- Nullam interdum non nibh ut ornare
- Duis id feugiat nisl
- Cras eget ipsum mauris
-
-
- Nulla eu quam a ante ullamcorper maximus
- Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas
- Ut lobortis semper nibh sit amet ultrices
- Proin posuere sodales feugiat
- Nulla varius nulla tellus, ut aliquam nunc convallis quis
- Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus
- Donec dapibus quis tellus at tincidunt
- Ut urna ipsum, aliquam eget eros ut, eleifend aliquet est
- Vivamus ante augue, mollis laoreet lectus eget, blandit molestie dolor
- Mauris id ipsum turpis
- Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed fermentum cursus justo, eget tincidunt orci volutpat sit amet
-
-
- Aliquam auctor, mauris ut bibendum aliquet, nunc sem egestas purus, vel rhoncus nibh urna a massa
- In congue pretium turpis nec porta
- Suspendisse potenti
- Suspendisse ultricies convallis ligula a dignissim
- Sed in eleifend nisl
- In eu sapien quis nulla porttitor convallis
- Aenean posuere ut augue vel lacinia
- Proin erat urna, interdum quis lorem vitae, mollis mattis ligula
- Morbi magna diam, commodo id tempor eget, vulputate sed mauris
- Nunc lectus ex, rutrum vel ante ut, ornare pulvinar dui
- Nulla suscipit eget augue non bibendum
- Cras cursus porta pretium
-
+ <pre>
+ Ниже будут поясненны все элементы программы, которые ,по мнению разработчика, 
+ могут быть непонятны будущему разработчику или тестировщику
+ <pre>
 \section sec1 Структура "main"
- 
+ <pre>
  -вычисляются недостающие переменные
  -проверяются условия создания объектов - устройств
  -выполняются функции работы устройств
-
+ <pre>
 \section sec2 Класс "Sound" и подклассы
-
+ <pre>
  Класс "Sound" описывает объект - устройство, звук которого необходимо получить.
  Метод "initializeSound" - описывает логику присущую большинству устройств
-
+ <pre>
 \section sec3 Назначение <Helicopter>
+ <pre>
+ Объекты данного класса хранят некоторые характеристики выбранного для имитации ЛА.
+ Также в данном объекте указаны полные названия всех необходимых для работы звуков.
+ <pre>
 */
 #include "conio.h"
 #include "stdlib.h"
@@ -185,7 +153,8 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	InitRealTime(1);//инициируется "реальное" время с задержкой в 1мс
-	//указатели на объекты определяющие параметры выводимого звука
+
+	//Указатели на объекты определяющие параметры выводимого звука
 	Sound *vsu = nullptr;
 	Sound *vsuHp = nullptr;
 	Sound *vsuKran = nullptr;
@@ -311,8 +280,6 @@ int main(int argc, char *argv[])
 					Sound::RedTurnAcc = (localdata.reduktor_gl_obor - Sound::vectorRedTurn.front()) / periodCalc;
 				}
 			}
-
-
 
 			//ВСУ
 			if (helicopter.vsuFactor)//Если ВСУ включено в проект

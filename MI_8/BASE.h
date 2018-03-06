@@ -101,7 +101,7 @@ public:
 	int effectSlotNumber = 0;/*!< Переменная для хранения количества слотов эффектов используемых объектом звука агрегата */
 
 	Sound();/*!< Конструктор по умолчанию, для объекта с 1им источником */
-	Sound(int sources,int buffers, int effectslots);/*!< Конструктор для объекта с n источниками и ns слотами эффектов */
+	Sound(int sources,int buffers, int effectslots);/*!< Конструктор для объекта с sources источниками, buffers буферами и effectslots слотами эффектов */
 	~Sound();/*!< Деструктор (да неужели) */
 
 	/*!
