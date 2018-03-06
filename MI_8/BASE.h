@@ -309,7 +309,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int Play(bool status_on, bool status_off, double parameter, SOUNDREAD sr, Helicopter h);
+	int Play(bool status_on, bool status_off, double parameter, Helicopter h);
 };
 
 /*!
@@ -341,7 +341,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int Play(Helicopter h, SOUNDREAD sr);
+	int Play(Helicopter h, double obj);
 };
 
 /*!

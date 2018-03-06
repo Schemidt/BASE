@@ -293,11 +293,12 @@ int main(int argc, char *argv[])
 				}
 				if (vsu)
 				{
-					vsu->lengthOff = vsu->getLengthWAV(helicopter.fullName["vsu_off"]);
-					vsu->lengthOn = vsu->getLengthWAV(helicopter.fullName["vsu_on"]);
-					vsu->offsetOff = vsu->lengthOff * (1 - localdata.vsu_obor / 100.);//Включаем запись с текущего уровня оборотов
-					vsu->offsetOn = vsu->lengthOn * localdata.vsu_obor / 100.;//Включаем запись с текущего уровня оборотов
-																			  //Для 27 29 и 8
+					//vsu->lengthOff = vsu->getLengthWAV(helicopter.fullName["vsu_off"]);
+					//vsu->lengthOn = vsu->getLengthWAV(helicopter.fullName["vsu_on"]);
+					//vsu->offsetOff = vsu->lengthOff * (1 - localdata.vsu_obor / 100.);//Включаем запись с текущего уровня оборотов
+					//vsu->offsetOn = vsu->lengthOn * localdata.vsu_obor / 100.;//Включаем запись с текущего уровня оборотов
+					
+					//Для 27 29 и 8
 					if (helicopter.modelName == "ka_27" || helicopter.modelName == "ka_29" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_8_amtsh")
 					{
 						//Подсадка ВСУ при запущенном двигателе, но до запуска редуктора
@@ -340,13 +341,13 @@ int main(int argc, char *argv[])
 				}
 				if (vsuHp)
 				{
-					if (localdata.vsu_obor > 0 & localdata.vsu_obor < 35.)
-					{
-						vsuHp->lengthOff = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_off"]);
-						vsuHp->lengthOn = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_on"]);
-						vsuHp->offsetOff = vsuHp->lengthOff * (1 - localdata.vsu_obor / 35.);//Включаем запись с текущего уровня оборотов
-						vsuHp->offsetOn = vsuHp->lengthOn * localdata.vsu_obor / 35.;//Включаем запись с текущего уровня оборотов
-					}
+					//if (localdata.vsu_obor > 0 & localdata.vsu_obor < 35.)
+					//{
+					//	vsuHp->lengthOff = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_off"]);
+					//	vsuHp->lengthOn = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_on"]);
+					//	vsuHp->offsetOff = vsuHp->lengthOff * (1 - localdata.vsu_obor / 35.);//Включаем запись с текущего уровня оборотов
+					//	vsuHp->offsetOn = vsuHp->lengthOn * localdata.vsu_obor / 35.;//Включаем запись с текущего уровня оборотов
+					//}
 					if (localdata.p_vsu_zap | localdata.p_vsu_ostanov)//если ВСУ работает - вырубаем прокрутку
 					{
 						vsuHp->initializeSound(localdata.p_vsu_hp, "NULL", "NULL", "NULL", helicopter.vsuHpFactor);
@@ -755,7 +756,7 @@ int main(int argc, char *argv[])
 							runwayMi8 = new Runway;//Создаем объект
 					if (runwayMi8)//Если объект создан - используем его
 					{
-						runwayMi8->Play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
+						runwayMi8->Play(helicopter, localdata.obj_l);//Воспроизводим звук - записываем состояние звука в play
 						if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
 							Free(runwayMi8);//Удаляем объект
 					}
@@ -1186,7 +1187,7 @@ int main(int argc, char *argv[])
 					//eng[0]->position = PosLeft;
 					eng[0]->channel[0] = 1;//magic numbers//1
 					eng[0]->channel[1] = 1;//-1
-					eng[0]->Play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, localdata, helicopter);
+					eng[0]->Play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, helicopter);
 
 
 					if (eng[0]->sourceStatus[0] != AL_PLAYING && eng[0]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.eng1_obor > 0))//Условие удаления объекта
@@ -1201,7 +1202,7 @@ int main(int argc, char *argv[])
 					//eng[1]->position = PosRight;
 					eng[1]->channel[0] = 1;//magic numbers0
 					eng[1]->channel[1] = 1;//2
-					eng[1]->Play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.eng2_obor, localdata, helicopter);
+					eng[1]->Play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.eng2_obor, helicopter);
 
 
 					if (eng[1]->sourceStatus[0] != AL_PLAYING && eng[1]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng2_zap | localdata.eng2_obor > 0))//Условие удаления объекта
@@ -2878,7 +2879,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
-int Engine::Play(bool status_on, bool status_off, double parameter,SOUNDREAD sr, Helicopter h)
+int Engine::Play(bool status_on, bool status_off, double parameter, Helicopter h)
 {
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -3676,7 +3677,7 @@ alGetSourcef(source[0], AL_GAIN, &gain);//
 	return 1;
 }
 
-int Runway::Play(Helicopter h, SOUNDREAD sr)
+int Runway::Play(Helicopter h, double obj)
 {
 	if (eq != "set")
 	{
