@@ -2517,17 +2517,8 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//Если рывок слишком большой и бьет по ушам
 			if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
 			{
-				flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
+				flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
 				flapCGain = (flapCGain > 4) ? 4 : flapCGain;
-				tay += deltaTime;
-				tay = (tay > 1) ? 1 : tay;
-			}
-			else
-			{
-				//flapCGain = 0;
-				//tay = 0;
-				tay -= deltaTime;
-				tay = (tay < 0) ? 0 : tay;
 			}
 			//=========================================
 
@@ -2561,10 +2552,10 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			}
 			outputPeriod += deltaTime;
-			if (outputPeriod >= 0.5)
+			if (outputPeriod >= 0.1)
 			{
 				fred = fopen("red.txt", "at");
-				fprintf(fred, "%f\t%f\n", calcA, soundread.time);
+				fprintf(fred, "%f\t%f\n", flapCGain, soundread.time);
 				fclose(fred);
 				outputPeriod = 0;
 			}
@@ -3112,6 +3103,82 @@ int Engine::Play(bool status_on, bool status_off, double parameter, Helicopter h
 
 int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 {
+	//Условия хлопков
+	//для отрицательной скорости условия зеркальные
+	flapIndicator = 0;
+	if (velocityX < 0)
+	{
+		//dv>1 и vy<-2
+		if (accelerationX >= -accelerationXBorder && velocityY <= velocityYBorder)//1
+		{
+			if ((calcA > 0) & (dash < -dashBorder) & (accelerationVy < 3))
+			{
+				flapIndicator = 1;
+			}
+		}
+		//dv>1 и vy>-2
+		if (accelerationX >= -accelerationXBorder && velocityY > velocityYBorder)//2
+		{
+
+			if ((accelerationX > 0.56 & velocityY < 0) || ((velocityY > 4) & (dash > 0.5) & (accelerationVy > 3)))
+			{
+				flapIndicator = 2;
+			}
+		}
+		//
+		if (accelerationX < -accelerationXBorder && velocityY <= velocityYBorder)//3
+		{
+			if ((accelerationX < -1.4) & (abs(derivStep) > 2))
+			{
+				flapIndicator = 3;
+			}
+		}
+		//
+		if (accelerationX < -accelerationXBorder && velocityY > velocityYBorder)//4
+		{
+			if ((accelerationX < -0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
+			{
+				flapIndicator = 4;
+			}
+		}
+	}
+	else
+	{
+		//dv<1 и vy<-2
+		if (accelerationX <= accelerationXBorder && velocityY <= velocityYBorder)//1
+		{
+			if ((calcA > 0) & (dash > dashBorder) & (accelerationVy < 3))
+			{
+				flapIndicator = 1;
+			}
+		}
+		//dv<1 и vy>-2
+		if (accelerationX <= accelerationXBorder && velocityY > velocityYBorder)//2
+		{
+
+			if ((accelerationX < -0.56 & velocityY < 0) || ((velocityY > 4) & (dash < -0.5) & (accelerationVy > 3)))
+			{
+				flapIndicator = 2;
+			}
+		}
+		//
+		if (accelerationX > accelerationXBorder && velocityY <= velocityYBorder)//3
+		{
+			if ((accelerationX > 1.4) & (abs(derivStep) > 2))
+			{
+				flapIndicator = 3;
+			}
+		}
+		//
+		if (accelerationX > accelerationXBorder && velocityY > velocityYBorder)//4
+		{
+			if ((accelerationX > 0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
+			{
+				flapIndicator = 4;
+			}
+		}
+	}
+
 	//Полеты 8 мтв5, 8 амтш
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
@@ -3149,17 +3216,23 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		double flapCGainAccX = 0;
-		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67)
+		double flapCGainAccX = interpolation(0.56, 0, 1.68, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
+		
+		if (flapIndicator == 2)//хлопаем
 		{
-			flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY);//переходит в усиление нч по vy
+			offsetOn += deltaTime;
+			offsetOn = (offsetOn > 1) ? 1 : offsetOn;//плавно наводим громкость за 1с
+		}
+		else
+		{
+			offsetOn -= deltaTime;
+			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
 		}
 
 		//усиление от оборотов
 		if (atkXvel >= 2)
 		{
 			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
-			//turnsGain = (turnsGain < 0) ? 0 : turnsGain;
 		}
 		else
 		{
@@ -3167,17 +3240,17 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		}
 		double atkFls = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
 
-		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX;
+		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX * offsetOn;
 
 		double flap_h = 0;
 		double flap_lo = 0;
 		double flap_hv = 0;
 		double flap_lov = 0;
 		crossFade(&flap_lo, &flap_h, step, 4, 5, 1);
-		crossFade(&flap_lov, &flap_hv, velocityX, 14, 16.67, 1);
+		crossFade(&flap_lov, &flap_hv, abs(velocityX), 14, 16.67, 1);
 		double low = (flap_lo > flap_lov) ? flap_lo : flap_lov;
-		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor *masterGain *(1 - low));
-		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor *masterGain * low);
+		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain * (1 - low));
+		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low);
 
 		cout << sourceStatus[0] << " " << sourceStatus[1] << " " << gain * h.vintFlapFactor * flap_h <<" "<<calcA<< "\r";
 		
@@ -3185,10 +3258,10 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		if (outputPeriod >= 0.1)
 		{
 			fderiv = fopen("der.txt", "at");
-			fprintf(fderiv, "%lf\t%lf\t%lf\t%lf\t%lf\n", atkFls, flapCGainAccX, calcA, low, soundread.time);
+			fprintf(fderiv, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", atkFls, flapCGainAccX * offsetOn, calcA, low, velocityX, soundread.time);
 			fclose(fderiv);
+			outputPeriod = 0;
 		}
-
 	}
 	//Полеты 28
 	if (h.modelName == "mi_28")
@@ -3229,12 +3302,19 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		gain_a = interpolation(-1 + floor, -18, 1 + floor, -12, 3 + floor, -6, atkXvel);
 
 
-			//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-			double flapCGainAccX = 0;
-			if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 )
-			{
-				flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY);//переходит в усиление нч по vy
-			}
+		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
+		double flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
+
+		if (flapIndicator == 2)//хлопаем
+		{
+			offsetOn += deltaTime;
+			offsetOn = (offsetOn > 1) ? 1 : offsetOn;//плавно наводим громкость за 1с
+		}
+		else
+		{
+			offsetOn -= deltaTime;
+			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
+		}
 
 		//усиление от оборотов
 		if (atkXvel >= 2)
@@ -3248,7 +3328,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		}
 		double atkFls = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
 
-		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX;
+		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX * offsetOn;
 
 		double flap_h = 0;
 		double flap_lo = 0;
@@ -3305,81 +3385,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			key[1] = h.fullName["vint_flap_B"];
 			key[2] = h.fullName["vint_flap_C"];
 		}
-		flapIndicator = 0;
-		//Условия хлопков
-		//для отрицательной скорости условия зеркальные
-		if (velocityX < 0)
-		{
-			//dv>1 и vy<-2
-			if (accelerationX >= -accelerationXBorder && velocityY <= velocityYBorder)//1
-			{
-				if ((calcA > 0) & (dash < -dashBorder) & (accelerationVy < 3))
-				{
-					flapIndicator = 1;
-				}
-			}
-			//dv>1 и vy>-2
-			if (accelerationX >= -accelerationXBorder && velocityY > velocityYBorder)//2
-			{
-
-				if ((accelerationX > 0.56 & velocityY < 0) || ((velocityY > 4) & (dash > 0.5) & (accelerationVy > 3)))
-				{
-					flapIndicator = 2;
-				}
-			}
-			//
-			if (accelerationX < -accelerationXBorder && velocityY <= velocityYBorder)//3
-			{
-				if ((accelerationX < -1.4) & (abs(derivStep) > 2))
-				{
-					flapIndicator = 3;
-				}
-			}
-			//
-			if (accelerationX < -accelerationXBorder && velocityY > velocityYBorder)//4
-			{
-				if ((accelerationX < -0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
-				{
-					flapIndicator = 4;
-				}
-			}
-		}
-		else
-		{
-			//dv<1 и vy<-2
-			if (accelerationX <= accelerationXBorder && velocityY <= velocityYBorder)//1
-			{
-				if ((calcA > 0) & (dash > dashBorder) & (accelerationVy < 3))
-				{
-					flapIndicator = 1;
-				}
-			}
-			//dv<1 и vy>-2
-			if (accelerationX <= accelerationXBorder && velocityY > velocityYBorder)//2
-			{
-
-				if ((accelerationX < -0.56 & velocityY < 0) || ((velocityY > 4) & (dash < -0.5) & (accelerationVy > 3)))
-				{
-					flapIndicator = 2;
-				}
-			}
-			//
-			if (accelerationX > accelerationXBorder && velocityY <= velocityYBorder)//3
-			{
-				if ((accelerationX > 1.4) & (abs(derivStep) > 2))
-				{
-					flapIndicator = 3;
-				}
-			}
-			//
-			if (accelerationX > accelerationXBorder && velocityY > velocityYBorder)//4
-			{
-				if ((accelerationX > 0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
-				{
-					flapIndicator = 4;
-				}
-			}
-		}
+		
 		
 		//Управляем частотой среза хлопков от оборотов редуктора
 		lowerFreqLimit = log10(1000);//переходим в линейную шкалу
@@ -3712,6 +3718,8 @@ alGetSourcef(source[0], AL_GAIN, &gain);//
 
 int Runway::Play(Helicopter h, double obj)
 {
+	//Блок настройки эффекта эквалайзер
+	//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
 	if (eq != "set")
 	{
 		alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
@@ -3748,8 +3756,15 @@ int Runway::Play(Helicopter h, double obj)
 
 	//alSourcef(source[1], AL_GAIN, interpolation(0, 0, 11.2, 1, abs(velocityX)) * sr.obj_l);//
 	//alSourcef(source[0], AL_GAIN, interpolation(0, 0, 16.8, 1, abs(velocityX)) * sr.obj_l);//
-	alSourcef(source[1], AL_GAIN, interpolation(0, 0, 11.2, 1, 16.8, 0, abs(velocityX)) * !high);//
-	alSourcef(source[0], AL_GAIN, interpolation(0, 0, 16.8, 1, abs(velocityX)) * !high);//
+
+	alSourcef(source[1], AL_GAIN, interpolation(0, 0, 11.2, 1, 16.8, 0, abs(velocityX)) * !high * h.runwayFactor);//
+	alSourcef(source[0], AL_GAIN, interpolation(11.2, 0, 16.8, 1, abs(velocityX)) * !high * h.runwayFactor);//
+
+	/*float a = 0;
+	alGetSourcef(source[1], AL_GAIN, &a);
+	float b = 0;
+	alGetSourcef(source[0], AL_GAIN, &b);
+	printf("%f\t%f\r", a, b);*/
 
 	return 1;
 }
