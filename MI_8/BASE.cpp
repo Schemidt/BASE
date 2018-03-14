@@ -783,13 +783,13 @@ int main(int argc, char *argv[])
 			{
 				if (helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "mi_8_mtv5")
 				{
-					if (localdata.v != 0 && Sound::high <= 0)//Условие создания объекта
+					if (localdata.v != 0 && Sound::high <= 1)//Условие создания объекта
 						if (!runwayMi8)//Если объект не создан 
 							runwayMi8 = new Runway;//Создаем объект
 					if (runwayMi8)//Если объект создан - используем его
 					{
 						runwayMi8->Play(helicopter, localdata.obj_l);//Воспроизводим звук - записываем состояние звука в play
-						if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
+						if (localdata.v == 0 || Sound::high > 1)//Условие удаления объекта
 							Free(runwayMi8);//Удаляем объект
 					}
 				}
@@ -2524,7 +2524,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 
 			//=========================================
 			//Страгивание
-			double stalkingGain = accelerationX * interpolation(0, 1, 8.3, 0, velocityX) * !high;
+			double stalkingGain = accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high;
 			//=========================================
 
 			lowFreqGain = pow(10, (mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
@@ -2555,7 +2555,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			if (outputPeriod >= 0.1)
 			{
 				fred = fopen("red.txt", "at");
-				fprintf(fred, "%f\t%f\n", flapCGain, soundread.time);
+				fprintf(fred, "%f\t%f\t%f\n", flapCGain, stalkingGain, soundread.time);
 				fclose(fred);
 				outputPeriod = 0;
 			}
@@ -3187,12 +3187,14 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			sourceStatus[0] = setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap"]);
 			alSourcei(source[0], AL_LOOPING, AL_TRUE);
 			key[0] = h.fullName["vint_flap"];
+			
 		}
 		if (key[1] != h.fullName["vint_flap_low"])
 		{
 			sourceStatus[1] = setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_low"]);//////
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
 			key[1] = h.fullName["vint_flap_low"];
+			
 		}
 
 		averangeCalcPeriod += deltaTime;
@@ -3216,7 +3218,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		double flapCGainAccX = interpolation(0.56, 0, 1.68, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
+		double flapCGainAccX = interpolation(0.56, 0, 2, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
 		
 		if (flapIndicator == 2)//хлопаем
 		{
@@ -3252,7 +3254,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain * (1 - low));
 		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low);
 
-		cout << sourceStatus[0] << " " << sourceStatus[1] << " " << gain * h.vintFlapFactor * flap_h <<" "<<calcA<< "\r";
+		cout <<" "<< sourceStatus[0] << " " << sourceStatus[1] << " " << gain * h.vintFlapFactor * flap_h <<" "<<calcA<< "\r";
 		
 		outputPeriod += deltaTime;
 		if (outputPeriod >= 0.1)
@@ -3745,7 +3747,7 @@ int Runway::Play(Helicopter h, double obj)
 
 	alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
 
-	alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(12.6, 0.126, 16.8, 1, velocityX));//
+	alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(11.2, 0.126, 14, 1, velocityX));//
 
 	alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
@@ -3757,8 +3759,9 @@ int Runway::Play(Helicopter h, double obj)
 	//alSourcef(source[1], AL_GAIN, interpolation(0, 0, 11.2, 1, abs(velocityX)) * sr.obj_l);//
 	//alSourcef(source[0], AL_GAIN, interpolation(0, 0, 16.8, 1, abs(velocityX)) * sr.obj_l);//
 
-	alSourcef(source[1], AL_GAIN, interpolation(0, 0, 11.2, 1, 16.8, 0, abs(velocityX)) * !high * h.runwayFactor);//
-	alSourcef(source[0], AL_GAIN, interpolation(11.2, 0, 16.8, 1, abs(velocityX)) * !high * h.runwayFactor);//
+	alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(velocityX)) * !high * h.runwayFactor * 0.25/*Уменьшаем движение по полосе*/);//
+	//alSourcef(source[1], AL_GAIN, 0);//
+	alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.794);//
 
 	/*float a = 0;
 	alGetSourcef(source[1], AL_GAIN, &a);
