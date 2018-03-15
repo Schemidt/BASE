@@ -94,13 +94,13 @@ public:
 	double lengthOff = 0;/*!< Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата */
 	double pitch = 1;/*!< Переменная для параметра высоты тона звука агрегата */
 	double gain = 1;/*!< Переменная для параметра громкости звука агрегата */
-	double channel[7] = { 1,1,0,0,0,0,0 };/*!< массив для поканального вывода звука */
+	vector<double> channel = { 1,1,0,0,0,0,0 };/*!< массив для поканального вывода звука */
 	int sourceNumber = 1;/*!< Переменная для хранения количества источников используемых объектом звука агрегата */
 	int bufferNumber = 3;/*!< Переменная для хранения количества буфферов используемых объектом звука агрегата */
 	int effectSlotNumber = 0;/*!< Переменная для хранения количества слотов эффектов используемых объектом звука агрегата */
 
 	Sound();/*!< Конструктор по умолчанию, для объекта с 1им источником */
-	Sound(const Sound &);/*!< Конструктор копирования*/
+	Sound(const Sound &copy);/*!< Конструктор копирования*/
 	Sound(int sources,int buffers, int effectslots);/*!< Конструктор для объекта с sources источниками, buffers буферами и effectslots слотами эффектов */
 	~Sound();/*!< Деструктор (да неужели) */
 
@@ -145,7 +145,7 @@ public:
 	\param[in] channels Каналы для вывода
 	\return 1 если успешно, иначе 0
 	*/
-	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, double *channels);
+	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, vector<double> channels);
 
 	/*!
 	\brief Загружает буфер, подключает к источнику и запускает

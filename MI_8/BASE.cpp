@@ -1943,7 +1943,7 @@ int Sound::initializeSound(bool status, string path_on, string path_w, string pa
 	return sourceStatus[0];
 }
 
-int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, double *channels)
+int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, vector<double>channels)
 {
 	int format;
 	int size;
@@ -2415,16 +2415,9 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 				alSourcei(source[2], AL_LOOPING, AL_TRUE);
 				pinkNoise = "set";
 			}
-			//регулируем громкость шума
-			if (abs(velocityX) < 41.67)
-			{
-				pinkNoiseGain = interpolation(0, 0, 41.67, 0.25, abs(velocityX));
-			}
-			else
-			{
-				pinkNoiseGain = interpolation(41.67, 0.25, 50, 0.5, 69.4, 1, abs(velocityX));
-			}
-			alSourcef(source[2], AL_GAIN, pinkNoiseGain);//230км.ч
+			
+			pinkNoiseGain = interpolation(0, 0, 42, 0.125, 70, 1, abs(velocityX));
+			alSourcef(source[2], AL_GAIN, pinkNoiseGain);
 			//=========================================
 
 			//=========================================
@@ -2447,7 +2440,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//=========================================
 			//ќбщее усиление от скорости выше 28м/с
 			if (abs(velocityX) >= 28)
-				velocityGain = (abs(velocityX) - 28)* 0.15;//0.15дб на 1 м/с
+				velocityGain = (abs(velocityX) - 28)* 0.1;//0.15дб на 1 м/с
 			else
 				velocityGain = 0;
 			//=========================================
@@ -3909,12 +3902,10 @@ Sound::Sound() : sourceStatus(new int), source(new ALuint), buffer(new ALuint[3]
 	{
 		cout << " [" << e << "] Sources exist...cant gen more sources...\n" << endl;
 	}
-	alGenSources(1, &source[0]);
-	alGenEffects(1, &effect[0]);
-	alGenBuffers(1, &buffer[0]);
-	alGenBuffers(1, &buffer[1]);
-	alGenBuffers(1, &buffer[2]);
-	alGenFilters(1, &filter[0]);
+	alGenSources(1, source.get());
+	alGenEffects(1, effect.get());
+	alGenBuffers(3, buffer.get());
+	alGenFilters(1, filter.get());
 	sourcesInUse++;
 }
 
@@ -3937,44 +3928,30 @@ Sound::Sound(int sources, int buffers, int effectslots) : sourceStatus(new int[s
 	}
 	sourceNumber = sources;
 	bufferNumber = buffers;
-	for (size_t i = 0; i < sourceNumber; i++)
-	{
-		alGenSources(1, &source[i]);
-		alGenEffects(1, &effect[i]);
-		alGenFilters(1, &filter[i]);
-	}
-	for (size_t i = 0; i < bufferNumber; i++)
-	{
-		alGenBuffers(1, &buffer[i]);
-	}
 	effectSlotNumber = effectslots;
-	for (size_t i = 0; i < effectSlotNumber; i++)
-		alGenAuxiliaryEffectSlots(1, &effectSlot[i]);
-	effectSlotNumber = effectslots;
+
+	alGenSources(sourceNumber, source.get());
+	alGenEffects(sourceNumber, effect.get());
+	alGenFilters(sourceNumber, filter.get());
+	alGenBuffers(bufferNumber, buffer.get());
+	alGenAuxiliaryEffectSlots(effectSlotNumber, effectSlot.get());
+
 	sourcesInUse += sources;
 	effectSlotsInUse += effectslots;
 }
 
-Sound::Sound(const Sound &)
+Sound::Sound(const Sound &copy)
 {
-
 }
 
 Sound::~Sound()
 {
-	for (size_t i = 0; i < sourceNumber; i++)
-	{
-		alDeleteEffects(1, &effect[i]);
-		alDeleteFilters(1, &filter[i]);
-		alDeleteSources(1, &source[i]);
-		alDeleteBuffers(1, &buffer[i]);
-	}
-	for (size_t i = 0; i < bufferNumber; i++)
-	{
-		alDeleteBuffers(1, &buffer[i]);
-	}
-	for (size_t i = 0; i < effectSlotNumber; i++)
-		alDeleteAuxiliaryEffectSlots(1, &effect[i]);
+	alDeleteSources(sourceNumber, source.get());
+	alDeleteEffects(sourceNumber, effect.get());
+	alDeleteFilters(sourceNumber, filter.get());
+	alDeleteBuffers(bufferNumber, buffer.get());
+	alDeleteAuxiliaryEffectSlots(effectSlotNumber, effectSlot.get());
+
 	sourcesInUse -= sourceNumber;
 	effectSlotsInUse -= effectSlotNumber;
 }
