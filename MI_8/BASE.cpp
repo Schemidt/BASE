@@ -569,8 +569,6 @@ int main(int argc, char *argv[])
 
 						}
 					}
-
-
 				}
 			}
 			//Топливна система
@@ -2360,21 +2358,9 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//Если рывок слишком большой и бьет по ушам
 			if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
 			{
-				//flapCGain = ((abs(accelerationX) - 0.56) * 4)*(1 - exp((-tay) / 0.5));//RC цепь
 				flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
 				flapCGain = (flapCGain > 4) ? 4 : flapCGain;
-				tay += deltaTime;
-				tay = (tay > 1) ? 1 : tay;
-				boost = 1;
 			}
-			else
-			{
-				//flapCGain = 0;
-				//tay = 0;
-				tay -= deltaTime;
-				tay = (tay < 0) ? 0 : tay;
-			}
-
 
 			lowFreqGain = pow(10, (turnGain /*+ stepGain * 1 */ + velocityGain * 3 + atkGain + flapCGain/*+ lowFreqVelocityGain + highGain + mid2FreqStepGain*/ /*+ accelerationGain*/)*0.05);
 			mid1FreqGain = pow(10, (turnGain + stepGain * 2 + velocityGain * 5 /*+ flapCGain*//*+ mid2FreqStepGain*//*+ lowFreqVelocityGain*/)*0.05);
@@ -2432,7 +2418,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//регулируем громкость шума
 			if (abs(velocityX) < 41.67)
 			{
-				pinkNoiseGain = pow(10, ((41.67 - abs(velocityX)) / -2.78) * 2 * 0.05) * 0.25;
+				pinkNoiseGain = interpolation(0, 0, 41.67, 0.25, abs(velocityX));
 			}
 			else
 			{
@@ -2467,7 +2453,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 			//=========================================
 
 			//=========================================
-			//усиление от шага
+			//Усиление от шага
 			if (high > 0)
 			{
 				averangeCalcPeriodStep += deltaTime;
@@ -2524,7 +2510,15 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 
 			//=========================================
 			//Страгивание
-			double stalkingGain = accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high;
+			double stalkingGain = 0;
+			if (accelerationX > 0)
+			{
+				stalkingGain = accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high;
+			}
+			else
+			{
+				stalkingGain = 0;
+			}
 			//=========================================
 
 			lowFreqGain = pow(10, (mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
@@ -3179,8 +3173,8 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 		}
 	}
 
-	//Полеты 8 мтв5, 8 амтш
-	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
+	//Полеты 8 мтв5
+	if (h.modelName == "mi_8_mtv5")
 	{
 		if (key[0] != h.fullName["vint_flap"])
 		{
@@ -3189,9 +3183,112 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			key[0] = h.fullName["vint_flap"];
 			
 		}
+		//if (key[1] != h.fullName["vint_flap_low"])
+		//{
+		//	sourceStatus[1] = setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_low"]);//////
+		//	alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		//	key[1] = h.fullName["vint_flap_low"];
+		//	
+		//}
+
+		averangeCalcPeriod += deltaTime;
+		if (averangeCalcPeriod >= 30 && !vector.empty())
+			vector.erase(vector.begin());
+		vector.push_back(sr.reduktor_gl_obor);
+		for (auto& x : vector)
+			vectorElemSumm += x;
+		averangeTurn = vectorElemSumm / vector.size();
+		vectorElemSumm = 0;
+
+		double gain_a = 0;
+		double h_g = 0;
+		double v_g = 0;
+
+		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+
+		//Хлопки плавно появляются
+		h_g = interpolation(0, 0, 0.5, 0.5, 1, 1, high);//К 1 метру по высоте
+		v_g = interpolation(10, 0, 14, 0.25, 28, 1, abs(velocityX));//К 28 м/с
+		
+		//Громкость хлопков зависит от атаки
+		gain_a = interpolation(-1, -15, 1, -9, 3, -3, atkXvel);
+
+
+		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
+		double flapCGainAccX = interpolation(0.56, 0, 2, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
+		
+		if (flapIndicator == 2)//хлопаем
+		{
+			offsetOn += deltaTime;
+			offsetOn = (offsetOn > 1) ? 1 : offsetOn;//плавно наводим громкость за 1с
+		}
+		else
+		{
+			offsetOn -= deltaTime;
+			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
+		}
+
+		//Усиление от оборотов
+		//только если атака больше 2х
+		//делает огибающую атаки более динамичной
+		if (atkXvel >= 2)
+		{
+			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
+		}
+		else
+		{
+			turnsGain = 0;
+		}
+		double atkFls = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
+
+		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX * offsetOn;
+
+		//double flap_h = 0;
+		//double flap_lo = 0;
+		//if(h.modelName == "mi_8_amtsh")
+		//	crossFade(&flap_lo, &flap_h, step, 4, 5, 1);
+		//if(h.modelName == "mi_8_mtv5")
+		//	crossFade(&flap_lo, &flap_h, step, 3, 4, 1);
+		//double flap_hv = 0;
+		//double flap_lov = 0;
+		//crossFade(&flap_lov, &flap_hv, abs(velocityX), 14, 16.67, 1);
+		//double low = (flap_lo > flap_lov) ? flap_lo : flap_lov;
+		//alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain * (1 - low));
+		////alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low);
+		//if (h.modelName == "mi_8_amtsh")
+		//	alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low);
+		//if (h.modelName == "mi_8_mtv5")
+		//	alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low * ((step < 3) ? ((3 - step) * 0.794) : 1));
+
+		//Уменьшаем громкость хлопков на 6дб за каждый градус шага ниже 6
+		double stepDamping = pow(10, ((step < 3.5) ? ((3.5 - step) * -6) : 0)*0.05);
+
+		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain * stepDamping);
+
+		cout <<" "<< sourceStatus[0] << " " << sourceStatus[1] << " " << gain * h.vintFlapFactor * masterGain * stepDamping <<" "<< atkXvel << "\r";
+		
+		outputPeriod += deltaTime;
+		if (outputPeriod >= 0.1)
+		{
+			fderiv = fopen("der.txt", "at");
+			fprintf(fderiv, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", gain * h.vintFlapFactor * masterGain * stepDamping, stepDamping, interpolation(-0.25, 1, 0.25, 0, velocityY), interpolation(0, 1, 16.67, 0, velocityX), atkXvel, soundread.time);
+			fclose(fderiv);
+			outputPeriod = 0;
+		}
+	}
+	//Полеты 8 амтш
+	if (h.modelName == "mi_8_amtsh")
+	{
+		if (key[0] != h.fullName["vint_flap"])
+		{
+			sourceStatus[0] = setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap"]);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			key[0] = h.fullName["vint_flap"];
+
+		}
 		if (key[1] != h.fullName["vint_flap_low"])
 		{
-			sourceStatus[1] = setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_low"]);//////
+			sourceStatus[1] = setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_low"]);
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
 			key[1] = h.fullName["vint_flap_low"];
 			
@@ -3219,7 +3316,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		double flapCGainAccX = interpolation(0.56, 0, 2, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
-		
+
 		if (flapIndicator == 2)//хлопаем
 		{
 			offsetOn += deltaTime;
@@ -3231,7 +3328,9 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
 		}
 
-		//усиление от оборотов
+		//Усиление от оборотов
+		//только если атака больше 2х
+		//делает огибающую атаки более динамичной
 		if (atkXvel >= 2)
 		{
 			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
@@ -3246,24 +3345,13 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 		double flap_h = 0;
 		double flap_lo = 0;
+		crossFade(&flap_lo, &flap_h, step, 4, 5, 1);
 		double flap_hv = 0;
 		double flap_lov = 0;
-		crossFade(&flap_lo, &flap_h, step, 4, 5, 1);
 		crossFade(&flap_lov, &flap_hv, abs(velocityX), 14, 16.67, 1);
 		double low = (flap_lo > flap_lov) ? flap_lo : flap_lov;
 		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain * (1 - low));
 		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low);
-
-		cout <<" "<< sourceStatus[0] << " " << sourceStatus[1] << " " << gain * h.vintFlapFactor * flap_h <<" "<<calcA<< "\r";
-		
-		outputPeriod += deltaTime;
-		if (outputPeriod >= 0.1)
-		{
-			fderiv = fopen("der.txt", "at");
-			fprintf(fderiv, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", atkFls, flapCGainAccX * offsetOn, calcA, low, velocityX, soundread.time);
-			fclose(fderiv);
-			outputPeriod = 0;
-		}
 	}
 	//Полеты 28
 	if (h.modelName == "mi_28")
@@ -3759,9 +3847,9 @@ int Runway::Play(Helicopter h, double obj)
 	//alSourcef(source[1], AL_GAIN, interpolation(0, 0, 11.2, 1, abs(velocityX)) * sr.obj_l);//
 	//alSourcef(source[0], AL_GAIN, interpolation(0, 0, 16.8, 1, abs(velocityX)) * sr.obj_l);//
 
-	alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(velocityX)) * !high * h.runwayFactor * 0.25/*Уменьшаем движение по полосе*/);//
+	alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.25/*Уменьшаем движение по полосе*/);//
 	//alSourcef(source[1], AL_GAIN, 0);//
-	alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.794);//
+	alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.854);//
 
 	/*float a = 0;
 	alGetSourcef(source[1], AL_GAIN, &a);
@@ -3865,6 +3953,11 @@ Sound::Sound(int sources, int buffers, int effectslots) : sourceStatus(new int[s
 	effectSlotNumber = effectslots;
 	sourcesInUse += sources;
 	effectSlotsInUse += effectslots;
+}
+
+Sound::Sound(const Sound &)
+{
+
 }
 
 Sound::~Sound()

@@ -78,12 +78,12 @@ public:
 
 	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime, vectorRedTurn;//Массивы для хранения значений переменных за некоторое время (определено условием в main), для расчета производных
 
-	std::unique_ptr<int[]> sourceStatus;/*!< Переменная для статуса источника */
-	std::unique_ptr<ALuint[]> source;/*!< Переменная для источника */
-	std::unique_ptr<ALuint[]> buffer;/*!< Переменная для буффера */
-	std::unique_ptr<ALuint[]> effectSlot;/*!< Переменная для слота эффекта */
-	std::unique_ptr<ALuint[]> effect;/*!< переменная для эффекта */
-	std::unique_ptr<ALuint[]> filter;/*!< переменная для эффекта */
+	unique_ptr<int[]> sourceStatus;/*!< Переменная для статуса источника */
+	unique_ptr<ALuint[]> source;/*!< Переменная для источника */
+	unique_ptr<ALuint[]> buffer;/*!< Переменная для буффера */
+	unique_ptr<ALuint[]> effectSlot;/*!< Переменная для слота эффекта */
+	unique_ptr<ALuint[]> effect;/*!< переменная для эффекта */
+	unique_ptr<ALuint[]> filter;/*!< переменная для эффекта */
 	string load;
 	bool soundOn = 0;/*!< Переменная для определения состояния звука */
 	bool soundWork = 0;/*!< Переменная для определения состояния звука */
@@ -100,6 +100,7 @@ public:
 	int effectSlotNumber = 0;/*!< Переменная для хранения количества слотов эффектов используемых объектом звука агрегата */
 
 	Sound();/*!< Конструктор по умолчанию, для объекта с 1им источником */
+	Sound(const Sound &);/*!< Конструктор копирования*/
 	Sound(int sources,int buffers, int effectslots);/*!< Конструктор для объекта с sources источниками, buffers буферами и effectslots слотами эффектов */
 	~Sound();/*!< Деструктор (да неужели) */
 
