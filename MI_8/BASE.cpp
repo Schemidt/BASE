@@ -325,10 +325,10 @@ int main(int argc, char *argv[])
 				}
 				if (vsu)
 				{
-					//vsu->lengthOff = vsu->getLengthWAV(helicopter.fullName["vsu_off"]);
-					//vsu->lengthOn = vsu->getLengthWAV(helicopter.fullName["vsu_on"]);
-					//vsu->offsetOff = vsu->lengthOff * (1 - localdata.vsu_obor / 100.);//Включаем запись с текущего уровня оборотов
-					//vsu->offsetOn = vsu->lengthOn * localdata.vsu_obor / 100.;//Включаем запись с текущего уровня оборотов
+					vsu->lengthOff = vsu->getLengthWAV(helicopter.fullName["vsu_off"]);
+					vsu->lengthOn = vsu->getLengthWAV(helicopter.fullName["vsu_on"]);
+					vsu->offsetOff = vsu->lengthOff * (1 - localdata.vsu_obor / 100.);//Включаем запись с текущего уровня оборотов
+					vsu->offsetOn = vsu->lengthOn * localdata.vsu_obor / 100.;//Включаем запись с текущего уровня оборотов
 					
 					//Для 27 29 и 8
 					if (helicopter.modelName == "ka_27" || helicopter.modelName == "ka_29" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_8_amtsh")
@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
 							}
 						}
 					}
-					vsu->initializeSound(localdata.p_vsu_zap, helicopter.fullName["vsu_on"], helicopter.fullName["vsu_w"], helicopter.fullName["vsu_off"], helicopter.vsuFactor);
+					vsu->play(localdata.p_vsu_zap, helicopter.fullName["vsu_on"], helicopter.fullName["vsu_w"], helicopter.fullName["vsu_off"], helicopter.vsuFactor);
 				}
 				if (vsu && vsu->sourceStatus[0] != AL_PLAYING)
 				{
@@ -382,11 +382,11 @@ int main(int argc, char *argv[])
 					//}
 					if (localdata.p_vsu_zap | localdata.p_vsu_ostanov)//если ВСУ работает - вырубаем прокрутку
 					{
-						vsuHp->initializeSound(localdata.p_vsu_hp, "NULL", "NULL", "NULL", helicopter.vsuHpFactor);
+						vsuHp->play(localdata.p_vsu_hp, "NULL", "NULL", "NULL", helicopter.vsuHpFactor);
 					}
 					else
 					{
-						vsuHp->initializeSound(localdata.p_vsu_hp, helicopter.fullName["vsu_hp_on"], helicopter.fullName["vsu_hp_w"], helicopter.fullName["vsu_hp_off"], helicopter.vsuHpFactor);
+						vsuHp->play(localdata.p_vsu_hp, helicopter.fullName["vsu_hp_on"], helicopter.fullName["vsu_hp_w"], helicopter.fullName["vsu_hp_off"], helicopter.vsuHpFactor);
 					}
 					if (vsuHp->sourceStatus[0] != AL_PLAYING)
 					{
@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
 							accum = new Sound;//Создаем объект
 					if (accum)//Если объект создан - используем его
 					{
-						accum->initializeSound(localdata.rez_2, "NULL", helicopter.fullName["accum"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
+						accum->play(localdata.rez_2, "NULL", helicopter.fullName["accum"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (accum->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(accum);//Удаляем объект
 					}
@@ -416,7 +416,7 @@ int main(int argc, char *argv[])
 							accumTr = new Sound;//Создаем объект
 					if (accumTr)//Если объект создан - используем его
 					{
-						accumTr->initializeSound(localdata.rez_2, "NULL", helicopter.fullName["accum_tr"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
+						accumTr->play(localdata.rez_2, "NULL", helicopter.fullName["accum_tr"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (accumTr->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(accumTr);//Удаляем объект
 					}
@@ -430,7 +430,7 @@ int main(int argc, char *argv[])
 						pts = new Sound;//Создаем объект
 				if (pts)//Если объект создан - используем его
 				{
-					pts->initializeSound(localdata.p_pts, helicopter.fullName["pts_on"], helicopter.fullName["pts_w"], helicopter.fullName["pts_off"], helicopter.ptsFactor);//Воспроизводим звук - записываем состояние звука в play
+					pts->play(localdata.p_pts, helicopter.fullName["pts_on"], helicopter.fullName["pts_w"], helicopter.fullName["pts_off"], helicopter.ptsFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (pts->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(pts);//Удаляем объект
 				}
@@ -444,7 +444,7 @@ int main(int argc, char *argv[])
 						ptsTone = new Sound;//Создаем объект
 				if (ptsTone)//Если объект создан - используем его
 				{
-					ptsTone->initializeSound(localdata.p_pts, "NULL", helicopter.fullName["pts_tone"], "NULL", helicopter.ptsToneFactor);//Воспроизводим звук - записываем состояние звука в play
+					ptsTone->play(localdata.p_pts, "NULL", helicopter.fullName["pts_tone"], "NULL", helicopter.ptsToneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (ptsTone->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(ptsTone);//Удаляем объект
 				}
@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
 						vpryam = new Sound;//Создаем объект
 				if (vpryam)//Если объект создан - используем его
 				{
-					vpryam->initializeSound(localdata.p_vu1, "NULL", helicopter.fullName["vpryam"], "NULL", helicopter.vpryam);//Воспроизводим звук - записываем состояние звука в play
+					vpryam->play(localdata.p_vu1, "NULL", helicopter.fullName["vpryam"], "NULL", helicopter.vpryam);//Воспроизводим звук - записываем состояние звука в play
 					if (vpryam->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(vpryam);//Удаляем объект
 				}
@@ -471,7 +471,7 @@ int main(int argc, char *argv[])
 						tr36 = new Sound;//Создаем объект
 				if (tr36)//Если объект создан - используем его
 				{
-					tr36->initializeSound(localdata.p_trans_36_osn || localdata.p_trans_36_rez, helicopter.fullName["tr36_on"], helicopter.fullName["tr36_w"], helicopter.fullName["tr36_off"], helicopter.tr36Factor);//Воспроизводим звук - записываем состояние звука в play
+					tr36->play(localdata.p_trans_36_osn || localdata.p_trans_36_rez, helicopter.fullName["tr36_on"], helicopter.fullName["tr36_w"], helicopter.fullName["tr36_off"], helicopter.tr36Factor);//Воспроизводим звук - записываем состояние звука в play
 					if (tr36->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(tr36);//Удаляем объект
 				}
@@ -484,7 +484,7 @@ int main(int argc, char *argv[])
 						tr115 = new Sound;//Создаем объект
 				if (tr115)//Если объект создан - используем его
 				{
-					tr115->initializeSound(localdata.p_po500, helicopter.fullName["tr115_on"], helicopter.fullName["tr115_w"], helicopter.fullName["tr115_off"], helicopter.tr115Factor);//Воспроизводим звук - записываем состояние звука в play
+					tr115->play(localdata.p_po500, helicopter.fullName["tr115_on"], helicopter.fullName["tr115_w"], helicopter.fullName["tr115_off"], helicopter.tr115Factor);//Воспроизводим звук - записываем состояние звука в play
 					if (tr115->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(tr115);//Удаляем объект
 				}
@@ -497,7 +497,7 @@ int main(int argc, char *argv[])
 						nip = new Sound;//Создаем объект
 				if (nip)//Если объект создан - используем его
 				{
-					nip->initializeSound(localdata.rez_3, "NULL", helicopter.fullName["nip_tone"], "NULL", helicopter.nipFactor);
+					nip->play(localdata.rez_3, "NULL", helicopter.fullName["nip_tone"], "NULL", helicopter.nipFactor);
 					if (nip->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(nip);//Удаляем объект
 					else
@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
 					girovert->lengthOn = girovert->getLengthWAV(helicopter.fullName["girovert_on"]);
 					if (girovert->pitch < 1)
 						girovert->offsetOn = girovert->lengthOn * girovert->pitch;//Включаем запись с текущего уровня оборотов
-					girovert->initializeSound(localdata.rez_3, helicopter.fullName["girovert_on"], helicopter.fullName["girovert_w"], helicopter.fullName["girovert_w"], helicopter.ptsFactor);
+					girovert->play(localdata.rez_3, helicopter.fullName["girovert_on"], helicopter.fullName["girovert_w"], helicopter.fullName["girovert_w"], helicopter.ptsFactor);
 					if (girovert->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(girovert);//Удаляем объект
 					else
@@ -565,7 +565,7 @@ int main(int argc, char *argv[])
 							girovert->pitch -= Sound::deltaTime*0.0024;//уменьшаем питч по 0.0024 в сек
 																	   //если Pitch == 0 - звук пропал, источник можно отключить
 							if (girovert->pitch <= 0.8)
-								girovert->initializeSound(localdata.rez_3, "NULL", "NULL", "NULL", helicopter.ptsFactor);
+								girovert->play(localdata.rez_3, "NULL", "NULL", "NULL", helicopter.ptsFactor);
 
 						}
 					}
@@ -595,10 +595,10 @@ int main(int argc, char *argv[])
 							timerPodk = 0;
 							podk1->pitch = 1;
 						}
-						podk1->initializeSound(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], helicopter.fullName["podk_l_off"], helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
+						podk1->play(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], helicopter.fullName["podk_l_off"], helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					else
-						podk1->initializeSound(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], "NULL", helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
+						podk1->play(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], "NULL", helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (podk1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(podk1);//Удаляем объект
 				}
@@ -623,10 +623,10 @@ int main(int argc, char *argv[])
 							timerPodk = 0;
 							podk2->pitch = 1;
 						}
-						podk2->initializeSound(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], helicopter.fullName["podk_r_off"], helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
+						podk2->play(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], helicopter.fullName["podk_r_off"], helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					else
-						podk2->initializeSound(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], "NULL", helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
+						podk2->play(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], "NULL", helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (podk2->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(podk2);//Удаляем объект
 				}
@@ -642,7 +642,7 @@ int main(int argc, char *argv[])
 					//perek1->position = PosLeft;
 					kranKolc->channel[0] = 1;
 					kranKolc->channel[1] = 1;
-					kranKolc->initializeSound(localdata.p_kran_kolcev, helicopter.fullName["kran_circle"], "NULL", "NULL", helicopter.circlingCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+					kranKolc->play(localdata.p_kran_kolcev, helicopter.fullName["kran_circle"], "NULL", "NULL", helicopter.circlingCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (kranKolc->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_kolcev)//Условие удаления объекта
 						Free(kranKolc);//Удаляем объект
 				}
@@ -658,7 +658,7 @@ int main(int argc, char *argv[])
 					//perek1->position = PosLeft;
 					perek1->channel[0] = 1;
 					perek1->channel[1] = 0;
-					perek1->initializeSound(localdata.p_kran_perekr_1, helicopter.fullName["perekr_l"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+					perek1->play(localdata.p_kran_perekr_1, helicopter.fullName["perekr_l"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (perek1->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_1)//Условие удаления объекта
 						Free(perek1);//Удаляем объект
 				}
@@ -671,7 +671,7 @@ int main(int argc, char *argv[])
 					//perek2->position = PosRight;
 					perek2->channel[0] = 0;
 					perek2->channel[1] = 1;
-					perek2->initializeSound(localdata.p_kran_perekr_2, helicopter.fullName["perekr_r"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+					perek2->play(localdata.p_kran_perekr_2, helicopter.fullName["perekr_r"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (perek2->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_2)//Условие удаления объекта
 						Free(perek2);//Удаляем объект
 				}
@@ -687,7 +687,7 @@ int main(int argc, char *argv[])
 							skv = new SKV;//Создаем объект
 					if (skv)//Если объект создан - используем его
 					{
-						skv->Play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
+						skv->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
 						if (skv->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(skv);//Удаляем объект
 					}
@@ -699,7 +699,7 @@ int main(int argc, char *argv[])
 							skvUni = new Sound;//Создаем объект
 					if (skvUni)//Если объект создан - используем его
 					{
-						skvUni->initializeSound(localdata.p_skv_on, helicopter.fullName["skv_on"], helicopter.fullName["skv_w"], helicopter.fullName["skv_off"], helicopter.skvFactor);//Воспроизводим звук - записываем состояние звука в play
+						skvUni->play(localdata.p_skv_on, helicopter.fullName["skv_on"], helicopter.fullName["skv_w"], helicopter.fullName["skv_off"], helicopter.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (skvUni->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(skvUni);//Удаляем объект
 					}
@@ -715,7 +715,7 @@ int main(int argc, char *argv[])
 						ko50 = new Sound;//Создаем объект
 				if (ko50)//Если объект создан - используем его
 				{
-					ko50->initializeSound(localdata.rez_9, helicopter.fullName["ko50_on"], helicopter.fullName["ko50_w"], helicopter.fullName["ko50_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
+					ko50->play(localdata.rez_9, helicopter.fullName["ko50_on"], helicopter.fullName["ko50_w"], helicopter.fullName["ko50_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
 					if (ko50->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(ko50);//Удаляем объект
 				}
@@ -728,7 +728,7 @@ int main(int argc, char *argv[])
 						consTank = new Sound;//Создаем объект
 				if (consTank)//Если объект создан - используем его
 				{
-					consTank->initializeSound(localdata.rez_4, helicopter.fullName["cons_tank_on"], helicopter.fullName["cons_tank_w"], "NULL", helicopter.consumTankFactor);//Воспроизводим звук - записываем состояние звука в play
+					consTank->play(localdata.rez_4, helicopter.fullName["cons_tank_on"], helicopter.fullName["cons_tank_w"], "NULL", helicopter.consumTankFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (consTank->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(consTank);//Удаляем объект
 				}
@@ -744,7 +744,7 @@ int main(int argc, char *argv[])
 					//fire1->position = PosLeft;
 					fire1->channel[0] = 1;
 					fire1->channel[1] = 0;
-					fire1->initializeSound(localdata.p_kran_poj_l, helicopter.fullName["kran_fire_l"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+					fire1->play(localdata.p_kran_poj_l, helicopter.fullName["kran_fire_l"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (fire1->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_poj_l)//Условие удаления объекта
 						Free(fire1);//Удаляем объект
 				}
@@ -757,7 +757,7 @@ int main(int argc, char *argv[])
 					//fire2->position = PosRight;
 					fire2->channel[0] = 0;
 					fire2->channel[1] = 1;
-					fire2->initializeSound(localdata.p_kran_poj_r, helicopter.fullName["kran_fire_r"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+					fire2->play(localdata.p_kran_poj_r, helicopter.fullName["kran_fire_r"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (fire2->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_poj_r)//Условие удаления объекта
 						Free(fire2);//Удаляем объект
 				}
@@ -770,7 +770,7 @@ int main(int argc, char *argv[])
 						pstat = new Sound;//Создаем объект
 				if (pstat)//Если объект создан - используем его
 				{
-					pstat->initializeSound(localdata.p_nasos, helicopter.fullName["pstat_on"], helicopter.fullName["pstat_w"], helicopter.fullName["pstat_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
+					pstat->play(localdata.p_nasos, helicopter.fullName["pstat_on"], helicopter.fullName["pstat_w"], helicopter.fullName["pstat_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
 					if (pstat->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(pstat);//Удаляем объект
 				}
@@ -786,7 +786,7 @@ int main(int argc, char *argv[])
 							runwayMi8 = new Runway;//Создаем объект
 					if (runwayMi8)//Если объект создан - используем его
 					{
-						runwayMi8->Play(helicopter, localdata.obj_l);//Воспроизводим звук - записываем состояние звука в play
+						runwayMi8->play(helicopter, localdata.obj_l);//Воспроизводим звук - записываем состояние звука в play
 						if (localdata.v == 0 || Sound::high > 1)//Условие удаления объекта
 							Free(runwayMi8);//Удаляем объект
 					}
@@ -798,7 +798,7 @@ int main(int argc, char *argv[])
 							runway = new Sound;//Создаем объект
 					if (runway)//Если объект создан - используем его
 					{
-						runway->initializeSound(localdata.p_na_vpp && localdata.v != 0, "NULL", helicopter.fullName["runway"], "NULL", helicopter.runwayFactor);//Воспроизводим звук - записываем состояние звука в play
+						runway->play(localdata.p_na_vpp && localdata.v != 0, "NULL", helicopter.fullName["runway"], "NULL", helicopter.runwayFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
 							Free(runway);//Удаляем объект
 						else
@@ -817,7 +817,7 @@ int main(int argc, char *argv[])
 						airNoise = new Sound;//Создаем объект
 				if (airNoise)//Если объект создан - используем его
 				{
-					airNoise->initializeSound(localdata.v > 20, "NULL", helicopter.fullName["air"], "NULL", helicopter.airNoiseFactor);//Воспроизводим звук - записываем состояние звука в play
+					airNoise->play(localdata.v > 20, "NULL", helicopter.fullName["air"], "NULL", helicopter.airNoiseFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (airNoise->sourceStatus[0] != AL_PLAYING && localdata.v <= 20)//Условие удаления объекта
 						Free(airNoise);//Удаляем объект
 					else
@@ -838,7 +838,7 @@ int main(int argc, char *argv[])
 						crash = new Sound;//Создаем объект
 				if (crash)//Если объект создан - используем его
 				{
-					crash->initializeSound(localdata.p_crash, helicopter.fullName["crash"], "NULL", "NULL", 1);//Воспроизводим звук - записываем состояние звука в play
+					crash->play(localdata.p_crash, helicopter.fullName["crash"], "NULL", "NULL", 1);//Воспроизводим звук - записываем состояние звука в play
 					if (crash->sourceStatus[0] != AL_PLAYING && !localdata.p_crash)//Условие удаления объекта
 						Free(crash);//Удаляем объект
 				}
@@ -854,7 +854,7 @@ int main(int argc, char *argv[])
 							vintSwish = new VintSwish;//Создаем объект
 					if (vintSwish)//Если объект создан - используем его
 					{
-						vintSwish->Play(helicopter, localdata);
+						vintSwish->play(helicopter, localdata);
 						if (localdata.reduktor_gl_obor == 0 || !localdata.p_vu3)//Условие удаления объекта
 							Free(vintSwish);//Удаляем объект
 					}
@@ -866,7 +866,7 @@ int main(int argc, char *argv[])
 							vintSwishUni = new Sound;//Создаем объект
 					if (vintSwishUni)//Если объект создан - используем его
 					{
-						vintSwishUni->initializeSound(localdata.reduktor_gl_obor >= helicopter.redTurnoverMg2, "NULL", helicopter.fullName["vint_hi"], "NULL", helicopter.vintSwishFactor);//Воспроизводим звук - записываем состояние звука в play
+						vintSwishUni->play(localdata.reduktor_gl_obor >= helicopter.redTurnoverMg2, "NULL", helicopter.fullName["vint_hi"], "NULL", helicopter.vintSwishFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (localdata.reduktor_gl_obor < helicopter.redTurnoverMg2 || !localdata.p_vu3)//Условие удаления объекта
 							Free(vintSwishUni);//Удаляем объект
 						else
@@ -889,7 +889,7 @@ int main(int argc, char *argv[])
 						vintBrake = new Sound;//Создаем объект
 				if (vintBrake)//Если объект создан - используем его
 				{
-					vintBrake->initializeSound(localdata.tormoz_vint, "NULL", helicopter.fullName["vint_torm"], "NULL", helicopter.vintBrakeFactor);//Воспроизводим звук - записываем состояние звука в play
+					vintBrake->play(localdata.tormoz_vint, "NULL", helicopter.fullName["vint_torm"], "NULL", helicopter.vintBrakeFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (vintBrake->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(vintBrake);//Удаляем объект
 					else
@@ -908,7 +908,7 @@ int main(int argc, char *argv[])
 							vintFlap = new VintFlap;//Создаем объект
 					if (vintFlap)//Если объект создан - используем его
 					{
-						vintFlap->Play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
+						vintFlap->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
 						if (localdata.styk_hv <= 0)//Условие удаления объекта
 							Free(vintFlap);//Удаляем объект
 					}
@@ -920,7 +920,7 @@ int main(int argc, char *argv[])
 							vintFlapUniversal = new Sound;//Создаем объект
 					if (vintFlapUniversal)//Если объект создан - используем его
 					{
-						vintFlapUniversal->initializeSound(localdata.rez_10, "NULL", helicopter.fullName["vint_flap"], "NULL", helicopter.vintFlapFactor);//Воспроизводим звук - записываем состояние звука в play
+						vintFlapUniversal->play(localdata.rez_10, "NULL", helicopter.fullName["vint_flap"], "NULL", helicopter.vintFlapFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (vintFlapUniversal->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(vintFlapUniversal);//Удаляем объект
 					}
@@ -937,11 +937,11 @@ int main(int argc, char *argv[])
 				{
 					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
 					{
-						brake->initializeSound(localdata.p_tormoz, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor);//Воспроизводим звук - записываем состояние звука в play
+						brake->play(localdata.p_tormoz, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					else
 					{
-						brake->initializeSound(localdata.p_tormoz, helicopter.fullName["brake"], "NULL", helicopter.fullName["poff"], helicopter.chassisBrakePumpFactor);//Воспроизводим звук - записываем состояние звука в play
+						brake->play(localdata.p_tormoz, helicopter.fullName["brake"], "NULL", helicopter.fullName["poff"], helicopter.chassisBrakePumpFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					if (brake->sourceStatus[0] != AL_PLAYING && !localdata.p_tormoz)//Условие удаления объекта
 						Free(brake);//Удаляем объект
@@ -955,7 +955,7 @@ int main(int argc, char *argv[])
 						rain = new Sound;//Создаем объект
 				if (rain)//Если объект создан - используем его
 				{
-					rain->initializeSound(localdata.p_rain, "NULL", helicopter.fullName["rain"], "NULL", helicopter.rainFactor);//Воспроизводим звук - записываем состояние звука в play
+					rain->play(localdata.p_rain, "NULL", helicopter.fullName["rain"], "NULL", helicopter.rainFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (rain->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(rain);//Удаляем объект
 				}
@@ -968,7 +968,7 @@ int main(int argc, char *argv[])
 						rocket = new Sound;//Создаем объект
 				if (rocket)//Если объект создан - используем его
 				{
-					rocket->initializeSound(localdata.p_rocket_hit, helicopter.fullName["rocket"], "NULL", "NULL", helicopter.rocketHitFactor);//Воспроизводим звук - записываем состояние звука в play
+					rocket->play(localdata.p_rocket_hit, helicopter.fullName["rocket"], "NULL", "NULL", helicopter.rocketHitFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (rocket->sourceStatus[0] != AL_PLAYING && !localdata.p_rocket_hit)//Условие удаления объекта
 						Free(rocket);//Удаляем объект
 				}
@@ -991,7 +991,7 @@ int main(int argc, char *argv[])
 								nar8[i] = new Sound;//Создаем объект
 							if (nar8[i])//Если объект создан - используем его
 							{
-								nar8[i]->initializeSound(localdata.p_nar_s8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);//Воспроизводим звук - записываем состояние звука в play
+								nar8[i]->play(localdata.p_nar_s8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);//Воспроизводим звук - записываем состояние звука в play
 								nar8[i]->soundOn = 0;
 							}
 							counterNar8++;
@@ -1036,7 +1036,7 @@ int main(int argc, char *argv[])
 								nar13[i] = new Sound;//Создаем объект
 							if (nar13[i])//Если объект создан - используем его
 							{
-								nar13[i]->initializeSound(localdata.p_nar_c13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);//Воспроизводим звук - записываем состояние звука в play
+								nar13[i]->play(localdata.p_nar_c13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);//Воспроизводим звук - записываем состояние звука в play
 								nar13[i]->soundOn = 0;
 							}
 							counterNar13++;
@@ -1072,7 +1072,7 @@ int main(int argc, char *argv[])
 						ppu = new Sound;//Создаем объект
 				if (ppu)//Если объект создан - используем его
 				{
-					ppu->initializeSound(localdata.p_spo_ppu, "NULL", helicopter.fullName["ppu"], "NULL", helicopter.ppuFactor);//Воспроизводим звук - записываем состояние звука в play
+					ppu->play(localdata.p_spo_ppu, "NULL", helicopter.fullName["ppu"], "NULL", helicopter.ppuFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (ppu->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(ppu);//Удаляем объект
 				}
@@ -1085,7 +1085,7 @@ int main(int argc, char *argv[])
 						upk = new Sound;//Создаем объект
 				if (upk)//Если объект создан - используем его
 				{
-					upk->initializeSound(localdata.p_spo_upk, "NULL", helicopter.fullName["upk"], "NULL", helicopter.upkFactor);//Воспроизводим звук - записываем состояние звука в play
+					upk->play(localdata.p_spo_upk, "NULL", helicopter.fullName["upk"], "NULL", helicopter.upkFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (upk->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(upk);//Удаляем объект
 				}
@@ -1098,7 +1098,7 @@ int main(int argc, char *argv[])
 						sturm = new Sound;//Создаем объект
 				if (sturm)//Если объект создан - используем его
 				{
-					sturm->initializeSound(localdata.p_ur_ataka, helicopter.fullName["sturm"], "NULL", "NULL", helicopter.rocketSturmFactor);//Воспроизводим звук - записываем состояние звука в play
+					sturm->play(localdata.p_ur_ataka, helicopter.fullName["sturm"], "NULL", "NULL", helicopter.rocketSturmFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (sturm->sourceStatus[0] != AL_PLAYING && !localdata.p_ur_ataka)//Условие удаления объекта
 						Free(sturm);//Удаляем объект
 				}
@@ -1111,7 +1111,7 @@ int main(int argc, char *argv[])
 						igla = new Sound;//Создаем объект
 				if (igla)//Если объект создан - используем его
 				{
-					igla->initializeSound(localdata.p_ur_igla, helicopter.fullName["igla"], "NULL", "NULL", helicopter.rocketIglaFactor);//Воспроизводим звук - записываем состояние звука в play
+					igla->play(localdata.p_ur_igla, helicopter.fullName["igla"], "NULL", "NULL", helicopter.rocketIglaFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (igla->sourceStatus[0] != AL_PLAYING && !localdata.p_ur_igla)//Условие удаления объекта
 						Free(igla);//Удаляем объект
 				}
@@ -1124,7 +1124,7 @@ int main(int argc, char *argv[])
 						redCrash = new Sound;//Создаем объект
 				if (redCrash)//Если объект создан - используем его
 				{
-					redCrash->initializeSound(localdata.p_reduktor_gl_crash, "NULL", helicopter.fullName["red_crash"], "NULL", helicopter.redFactor);//Воспроизводим звук - записываем состояние звука в play
+					redCrash->play(localdata.p_reduktor_gl_crash, "NULL", helicopter.fullName["red_crash"], "NULL", helicopter.redFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (redCrash->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(redCrash);//Удаляем объект
 					else
@@ -1138,7 +1138,7 @@ int main(int argc, char *argv[])
 				{
 					red->channel[0] = 1;
 					red->channel[1] = 1;
-					red->Play(helicopter, localdata);//
+					red->play(helicopter, localdata);//
 					if (red->sourceStatus[0] != AL_PLAYING && red->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.p_eng2_zap | localdata.reduktor_gl_obor > 0))//Условие удаления объекта
 						Free(red);//Удаляем объект
 				}
@@ -1157,10 +1157,10 @@ int main(int argc, char *argv[])
 					engHp[0]->channel[1] = 0;
 					if (localdata.p_eng1_zap | localdata.p_eng1_ostanov)
 					{
-						engHp[0]->initializeSound(localdata.p_eng1_hp & localdata.eng1_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
+						engHp[0]->play(localdata.p_eng1_hp & localdata.eng1_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					else
-						engHp[0]->initializeSound(localdata.p_eng1_hp & localdata.eng1_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
+						engHp[0]->play(localdata.p_eng1_hp & localdata.eng1_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (engHp[0]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng1_hp)//Условие удаления объекта
 						Free(engHp[0]);//Удаляем объект
 				}
@@ -1175,10 +1175,10 @@ int main(int argc, char *argv[])
 					engHp[1]->channel[1] = 1;
 					if (localdata.p_eng2_zap | localdata.p_eng2_ostanov)
 					{
-						engHp[1]->initializeSound(localdata.p_eng2_hp & localdata.eng2_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
+						engHp[1]->play(localdata.p_eng2_hp & localdata.eng2_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					else
-						engHp[1]->initializeSound(localdata.p_eng2_hp & localdata.eng2_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
+						engHp[1]->play(localdata.p_eng2_hp & localdata.eng2_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (engHp[1]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng2_hp)//Условие удаления объекта
 						Free(engHp[1]);//Удаляем объект
 				}
@@ -1191,7 +1191,7 @@ int main(int argc, char *argv[])
 					//eng_pomp[0]->position = PosLeft;
 					engPomp[0]->channel[0] = 1;
 					engPomp[0]->channel[1] = 0;
-					engPomp[0]->initializeSound(localdata.p_eng1_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
+					engPomp[0]->play(localdata.p_eng1_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (engPomp[0]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng1_pomp)//Условие удаления объекта
 						Free(engPomp[0]);//Удаляем объект
 				}
@@ -1204,7 +1204,7 @@ int main(int argc, char *argv[])
 					//eng_pomp[1]->position = PosRight;
 					engPomp[1]->channel[0] = 0;
 					engPomp[1]->channel[1] = 1;
-					engPomp[1]->initializeSound(localdata.p_eng2_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
+					engPomp[1]->play(localdata.p_eng2_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (engPomp[1]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng2_pomp)//Условие удаления объекта
 						Free(engPomp[1]);//Удаляем объект
 				}
@@ -1217,7 +1217,7 @@ int main(int argc, char *argv[])
 					//eng[0]->position = PosLeft;
 					eng[0]->channel[0] = 1;//magic numbers//1
 					eng[0]->channel[1] = 1;//-1
-					eng[0]->Play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, helicopter);
+					eng[0]->play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, helicopter);
 
 
 					if (eng[0]->sourceStatus[0] != AL_PLAYING && eng[0]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.eng1_obor > 0))//Условие удаления объекта
@@ -1232,7 +1232,7 @@ int main(int argc, char *argv[])
 					//eng[1]->position = PosRight;
 					eng[1]->channel[0] = 1;//magic numbers0
 					eng[1]->channel[1] = 1;//2
-					eng[1]->Play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.eng2_obor, helicopter);
+					eng[1]->play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.eng2_obor, helicopter);
 
 
 					if (eng[1]->sourceStatus[0] != AL_PLAYING && eng[1]->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng2_zap | localdata.eng2_obor > 0))//Условие удаления объекта
@@ -1249,11 +1249,11 @@ int main(int argc, char *argv[])
 				{
 					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
 					{
-						vsuKran->initializeSound(localdata.rez_1, helicopter.fullName["vsu_kran_on"], "NULL", "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						vsuKran->play(localdata.rez_1, helicopter.fullName["vsu_kran_on"], "NULL", "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					else
 					{
-						vsuKran->initializeSound(localdata.rez_1, helicopter.fullName["vsu_kran_on"], helicopter.fullName["vsu_kran_w"], "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						vsuKran->play(localdata.rez_1, helicopter.fullName["vsu_kran_on"], helicopter.fullName["vsu_kran_w"], "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					if (vsuKran->sourceStatus[0] != AL_PLAYING && !localdata.rez_1)//Условие удаления объекта
 						Free(vsuKran);//Удаляем объект
@@ -1267,7 +1267,7 @@ int main(int argc, char *argv[])
 						beep = new Sound;//Создаем объект
 				if (beep)//Если объект создан - используем его
 				{
-					beep->initializeSound(localdata.rez_7, "NULL", helicopter.fullName["beep"], "NULL", helicopter.buzzerFactor);//Воспроизводим звук - записываем состояние звука в play
+					beep->play(localdata.rez_7, "NULL", helicopter.fullName["beep"], "NULL", helicopter.buzzerFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (beep->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(beep);//Удаляем объект
 				}
@@ -1295,7 +1295,7 @@ int main(int argc, char *argv[])
 							undefined1 = new Sound;//Создаем объект
 					if (undefined1)//Если объект создан - используем его
 					{
-						undefined1->initializeSound(localdata.rez_6, "NULL", helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
+						undefined1->play(localdata.rez_6, "NULL", helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (undefined1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(undefined1);//Удаляем объект
 					}
@@ -1307,7 +1307,7 @@ int main(int argc, char *argv[])
 							undefined1 = new Sound;//Создаем объект
 					if (undefined1)//Если объект создан - используем его
 					{
-						undefined1->initializeSound(localdata.rez_6, helicopter.fullName["undefined1_on"], helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
+						undefined1->play(localdata.rez_6, helicopter.fullName["undefined1_on"], helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (undefined1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(undefined1);//Удаляем объект
 					}
@@ -1793,7 +1793,7 @@ int getMaxAvaliableSources()
 	return maxmono + maxstereo;	
 }
 
-int Sound::initializeSound(bool status, string path_on, string path_w, string path_off, double gain_mult)
+int Sound::play(bool status, string path_on, string path_w, string path_off, double gain_mult)
 {
 	bool start;
 	bool work;
@@ -2028,7 +2028,7 @@ int Sound::switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset)
 	return play;
 }
 
-int Reductor::Play(Helicopter h, SOUNDREAD sr)
+int Reductor::play(Helicopter h, SOUNDREAD sr)
 {
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -2889,7 +2889,7 @@ int Reductor::Play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
-int Engine::Play(bool status_on, bool status_off, double parameter, Helicopter h)
+int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h)
 {
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -3088,7 +3088,7 @@ int Engine::Play(bool status_on, bool status_off, double parameter, Helicopter h
 	return 1;
 }
 
-int VintFlap::Play(Helicopter h, SOUNDREAD sr)
+int VintFlap::play(Helicopter h, SOUNDREAD sr)
 {
 	//Условия хлопков
 	//для отрицательной скорости условия зеркальные
@@ -3208,7 +3208,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		double flapCGainAccX = interpolation(0.56, 0, 2, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
+		double flapCGainAccX = interpolation(0.56, 0, 6, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
 		
 		if (flapIndicator == 2)//хлопаем
 		{
@@ -3606,7 +3606,7 @@ int VintFlap::Play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
-int VintSwish::Play(Helicopter h, SOUNDREAD sr)
+int VintSwish::play(Helicopter h, SOUNDREAD sr)
 {
 
 	for (size_t i = 0; i < 2; i++)
@@ -3702,7 +3702,7 @@ int VintSwish::Play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
-int SKV::Play(Helicopter h, SOUNDREAD sr)
+int SKV::play(Helicopter h, SOUNDREAD sr)
 {
 	if (eq != "set")
 	{
@@ -3724,7 +3724,7 @@ int SKV::Play(Helicopter h, SOUNDREAD sr)
 		pitch = 0.029 * sr.eng2_obor - 1.484;
 	}
 
-	initializeSound(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
+	Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 
 	averangeCalcPeriod += deltaTime;
 	//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
@@ -3799,7 +3799,7 @@ alGetSourcef(source[0], AL_GAIN, &gain);//
 	return 1;
 }
 
-int Runway::Play(Helicopter h, double obj)
+int Runway::play(Helicopter h, double obj)
 {
 	//Блок настройки эффекта эквалайзер
 	//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
@@ -3893,6 +3893,7 @@ double attack(double velocityX, double velocityXPrevious, double tangaz, double 
 
 Sound::Sound() : sourceStatus(new int), source(new ALuint), buffer(new ALuint[3]), effectSlot(new ALuint), effect(new ALuint), filter(new ALuint)
 {
+	sourceStatus[0] = 0;
 	try
 	{
 		if (sourcesInUse == maxSources)
@@ -3930,18 +3931,39 @@ Sound::Sound(int sources, int buffers, int effectslots) : sourceStatus(new int[s
 	bufferNumber = buffers;
 	effectSlotNumber = effectslots;
 
+	for (size_t i = 0; i < sourceNumber; i++)
+	{
+		sourceStatus[i] = 0;
+	}
+
+	if (sourcesInUse + sourceNumber > 256)
+		cout << "Caution: only [" << sourcesInUse + sourceNumber - 256 << "] sources can be generated" << endl;
 	alGenSources(sourceNumber, source.get());
 	alGenEffects(sourceNumber, effect.get());
 	alGenFilters(sourceNumber, filter.get());
 	alGenBuffers(bufferNumber, buffer.get());
 	alGenAuxiliaryEffectSlots(effectSlotNumber, effectSlot.get());
 
-	sourcesInUse += sources;
-	effectSlotsInUse += effectslots;
+	sourcesInUse += sourceNumber;
+	effectSlotsInUse += effectSlotNumber;
 }
 
-Sound::Sound(const Sound &copy)
+Sound::Sound(const Sound &copy) : Sound(copy.sourceNumber, copy.bufferNumber, copy.effectSlotNumber)
 {
+	load = copy.load;
+	soundOn = copy.soundOn;
+	soundWork = copy.soundWork;
+	soundOff = copy.soundOff;
+	offsetOn = copy.offsetOn;
+	offsetOff = copy.offsetOff;
+	lengthOn = copy.lengthOn;
+	lengthOff = copy.lengthOff;
+	pitch = copy.pitch;
+	gain = copy.gain;
+	channel = copy.channel;
+	sourceNumber = copy.sourceNumber;
+	bufferNumber = copy.bufferNumber;
+	effectSlotNumber = copy.effectSlotNumber;
 }
 
 Sound::~Sound()

@@ -133,7 +133,7 @@ public:
 	\param[in] gain_mult Коэффициент громкости для агрегата
 	\return Статус источника OpenAL 
 	*/
-	int initializeSound(bool status, string path_on, string path_w, string path_off, double gain_mult);
+	virtual int play(bool status, string path_on, string path_w, string path_off, double gain_mult);
 
 	/*!
 	\brief Загружает буфер данными
@@ -249,7 +249,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int Play(Helicopter h, SOUNDREAD sr);
+	int play(Helicopter h, SOUNDREAD sr);
 };
 
 /*!
@@ -309,7 +309,7 @@ public:
 	\param[in] h Объект хранящий характеристики вертолета
 	\return Статус источника OpenAL
 	*/
-	int Play(bool status_on, bool status_off, double parameter, Helicopter h);
+	int play(bool status_on, bool status_off, double parameter, Helicopter h);
 };
 
 /*!
@@ -341,7 +341,7 @@ public:
 	\param[in] obj Параметр обжатия стоек шасси
 	\return Статус источника OpenAL
 	*/
-	int Play(Helicopter h, double obj);
+	int play(Helicopter h, double obj);
 };
 
 /*!
@@ -410,7 +410,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int Play(Helicopter h, SOUNDREAD sr);
+	int play(Helicopter h, SOUNDREAD sr);
 };
 
 /*!
@@ -448,7 +448,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int Play(Helicopter h, SOUNDREAD sr);
+	int play(Helicopter h, SOUNDREAD sr);
 
 };
 
@@ -503,7 +503,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int Play(Helicopter h, SOUNDREAD sr);
+	int play(Helicopter h, SOUNDREAD sr);
 
 };
 
