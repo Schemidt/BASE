@@ -236,11 +236,11 @@ int main(int argc, char *argv[])
 	Sound *kranKolc = nullptr;
 	Sound *vpryam = nullptr;
 
-	//Вектор для объектов Sound
+	//Вектор для объектов Sound [WIP]
 	//Все созданные объекты звуков добавляются в данный вектор, 
 	//что позволяет в любой момент оценивать количество и качество
 	//используемых объектов - агрегатов, а также использовать глобальные стратегии по управлению
-	vector<Sound *> Sounds;
+	//vector<Sound *> Sounds;
 
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
