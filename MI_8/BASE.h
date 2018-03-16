@@ -5,8 +5,6 @@
 Данный файл объявляет класс Sound и его наследников
 */
 
-
-
 #pragma once
 #include "Mono2channels.h"
 #include "memory"
@@ -22,7 +20,6 @@ void Free(T &x)
 }
 
 #pragma pack ( push, 1 )
-
 
 /*!
 \struct WAVEHEADER
@@ -183,47 +180,19 @@ class Reductor : public Sound
 public:
 
 	FILE *fred = nullptr;
-	double lowFreqGain = 0;
-	double mid1FreqGain = 0;
-	double mid2FreqGain = 0;
-	double highFreqGain = 0;
 
-	double lowCutoffFreq = 0;
-	double mid1CutoffFreq = 0;
-	double mid2CutoffFreq = 0;
-	double highCutoffFreq = 0;
+	bool hovering = 0;
 
-	double pinkNoiseGain = 0;
-	double highGain = 0;
-	double stepGain = 0;
-	double mid2FreqStepGain = 0;
-	double velocityGain = 0;
-	double lowFreqVelocityGain = 0;
-	double accelerationGain = 0;
-	double turnGain = 0;
-	double highFreqTurnGain = 0;
-	double multiplierStep = 1;
-
-	double takeoffStep = 8;
 	string pinkNoise;
 
 	double outputPeriod = 0;
 	double calcPeriod = 0;
 
 	double averangeCalcPeriod = 0;
-	double vectorElemSumm = 0;
-	double averangeTurn = 0;
 
 	double averangeCalcPeriodAtk = 0;
-	double vectorElemSummAtk = 0;
-	double averangeAtk = 0;
 	
 	double averangeCalcPeriodStep = 0;
-	double vectorElemSummStep = 0;
-	double averangeStep = 0;
-
-	double tay = 0;
-	bool hovering = 0;
 
 	vector<double> vector, vectorStep, vectorAtk;
 
@@ -267,25 +236,9 @@ public:
 	static int engNum;
 	double phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
 
-	double highFreqTurnGain = 0;
-	double takeoffStep = 0;
-	double turnGain = 0;
-	double stepGain = 0;
-
-	double lowFreqGain = 0;
-	double mid1FreqGain = 0;
-	double mid2FreqGain = 0;
-	double highFreqGain = 0;
-
-	double lowCutoffFreq = 0;
-	double mid1CutoffFreq = 0;
-	double mid2CutoffFreq = 0;
-	double highCutoffFreq = 0;
-
 	double averangeCalcPeriod = 0;
+
 	double outputPeriod = 0;
-	double vectorElemSumm = 0;
-	double averangeTurn = 0;
 
 	vector<double> vector;
 
@@ -297,6 +250,8 @@ public:
 
 	Engine() : Sound(2, 2, 2)
 	{
+		//При одновременном запуске двигателей возможен эффект наложения, дающий искажение звука
+		//Поэтому каждый объект двигателя имеет свой параметр фазы запуска
 		engNum++;
 		phase = (engNum - 1) * 0.33;
 	}
@@ -359,33 +314,10 @@ public:
 	FILE *fflaps = nullptr;
 	FILE *fderiv = nullptr;
 	FILE *ffront = nullptr;
-	double path = 0;
-	double lowerFreqLimit;//!<Нижняя граница частоты среза
-	double highterFreqLimit;//!<Верхняя граница частоты среза
-	double freqCutoffFromTurns = 0;//!<Частота среза
-	double freqCutoffResult = 0;//!<Частота среза
-	double lowFreqGain = 0;
-	double mid1FreqGain = 0;
-	double mid2FreqGain = 0;
-	double highFreqGain = 0;
-	double lowCutoff = 0;
-	double mid1Cutoff = 0;
-	double mid2Cutoff = 0;
-	double highCutoff = 0;
-	double accelerationGain = 0;
-	double hiSpeedGain = 0;
-	double resFlapCGain = 0;
 
-	double accelerationXBorder = 0.28;//!<мс/с*с
-	double velocityYBorder = -2;//!<мс/с
-	double dashBorder = -0.672;
-	int flapIndicator = 0;
-	double turnsGain = 0;//!<усиление от оборотов
-	
 	double outputPeriod = 0;
+
 	double averangeCalcPeriod = 0;
-	double vectorElemSumm = 0;
-	double averangeTurn = 0;
 
 	vector<double> vector;
 
@@ -429,8 +361,6 @@ public:
 	string fileBuffered[2];
 	double offset[2] = { 0 };
 
-
-
 	VintSwish() : Sound(2, 2, 0)
 	{
 		
@@ -449,7 +379,6 @@ public:
 	\return Статус источника OpenAL
 	*/
 	int play(Helicopter h, SOUNDREAD sr);
-
 };
 
 /*!
@@ -467,22 +396,8 @@ public:
 	string eq;
 
 	double averangeCalcPeriod = 0;
-	double vectorElemSumm = 0;
-	double averangeTurn = 0;
 
 	double averangeCalcPeriodStep = 0;
-	double vectorElemSummStep = 0;
-	double averangeStep = 0;
-
-	double lowFreqGain = 0;
-	double mid1FreqGain = 0;
-	double mid2FreqGain = 0;
-	double highFreqGain = 0;
-
-	double lowCutoffFreq = 0;
-	double mid1CutoffFreq = 0;
-	double mid2CutoffFreq = 0;
-	double highCutoffFreq = 0;
 
 	vector<double> vector, vectorStep;
 
