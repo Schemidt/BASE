@@ -6,14 +6,12 @@
 Определяет методы Sound и наследников.
 */
 
-
 /*! \mainpage Документация
 
 Эта документация разделена на следующие разделы:
 - \subpage intro
 - \subpage advanced
 */
-
 
 /*! \page intro Введение
 <pre>
@@ -238,6 +236,12 @@ int main(int argc, char *argv[])
 	Sound *kranKolc = nullptr;
 	Sound *vpryam = nullptr;
 
+	//Вектор для объектов Sound
+	//Все созданные объекты звуков добавляются в данный вектор, 
+	//что позволяет в любой момент оценивать количество и качество
+	//используемых объектов - агрегатов, а также использовать глобальные стратегии по управлению
+	vector<Sound *> Sounds;
+
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
 	Sound::vectorTime.push_back(Sound::currentTime);
@@ -427,12 +431,17 @@ int main(int argc, char *argv[])
 			{
 				if (localdata.p_pts)//Условие создания объекта
 					if (!pts)//Если объект не создан 
-						pts = new Sound;//Создаем объект
+					{
+						pts = new Sound;
+					}
 				if (pts)//Если объект создан - используем его
 				{
 					pts->play(localdata.p_pts, helicopter.fullName["pts_on"], helicopter.fullName["pts_w"], helicopter.fullName["pts_off"], helicopter.ptsFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (pts->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+					{
 						Free(pts);//Удаляем объект
+					}
+						
 				}
 			}
 			//ПТС тон
@@ -3131,6 +3140,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//	
 		//}
 
+		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+
 		double averangeTurn = 0;
 		averangeCalcPeriod += deltaTime;
 		if (averangeCalcPeriod >= 30 && !vector.empty())
@@ -3139,19 +3150,23 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		for (auto& x : vector)
 			averangeTurn += x / vector.size();
 
-		double gain_a = 0;
-		double h_g = 0;
-		double v_g = 0;
-
-		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+		//Усиление от оборотов
+		//только если атака больше 2х
+		//делает огибающую атаки более динамичной
+		double turnsGain = 0;
+		if (atkXvel >= 2)
+		{
+			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
+		}
 
 		//Хлопки плавно появляются
-		h_g = interpolation(0, 0, 0.5, 0.5, 1, 1, high);//К 1 метру по высоте
-		v_g = interpolation(10, 0, 14, 0.25, 28, 1, abs(velocityX));//К 28 м/с
+		double h_g = interpolation(0, 0, 0.5, 0.5, 1, 1, high);//К 1 метру по высоте
+		double v_g = interpolation(10, 0, 14, 0.25, 28, 1, abs(velocityX));//К 28 м/с
 		
 		//Громкость хлопков зависит от атаки
-		gain_a = interpolation(-1, -15, 1, -9, 3, -3, atkXvel);
+		double gain_a = interpolation(-1, -15, 1, -9, 3, -3, atkXvel);
 
+		double atkFls = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		//При а = 6 м/с^2 громкость хлопков номинальная, при условии, что вертолет летит вниз, а скорость ниже 60 км/ч (16.67)
@@ -3167,17 +3182,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			offsetOn -= deltaTime;
 			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
 		}
-
-		//Усиление от оборотов
-		//только если атака больше 2х
-		//делает огибающую атаки более динамичной
-		double turnsGain = 0;
-		if (atkXvel >= 2)
-		{
-			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
-		}
-
-		double atkFls = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
 
 		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX * offsetOn;
 
@@ -3240,44 +3244,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		for (auto& x : vector)
 			averangeTurn += x / vector.size();
 
-		double gain_a = 0;
-		double h_g = 0;
-		double v_g = 0;
-
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
-
-		h_g = interpolation(0, 0, 0.5, 0.5, 1, 1, high);
-		v_g = interpolation(10, 0, 12, 0.5, 14, 1, abs(velocityX));//
-		gain_a = interpolation(-1, -15, 1, -9, 3, -3, atkXvel);
-
-		//Хлопки на висении возникают при 2ом условии хлопков
-		if (flapIndicator == 2)
-		{
-			offsetOn += deltaTime;
-			offsetOn = (offsetOn > 1) ? 1 : offsetOn;//плавно наводим громкость за 1с
-		}
-		else
-		{
-			offsetOn -= deltaTime;
-			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
-		}
-
-		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		double flapCGainAccX = interpolation(0.56, 0, 2, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX) * offsetOn;//переходит в усиление нч по vy
-
-		//Усиление от оборотов
-		//только если атака больше 2х
-		//делает огибающую атаки более динамичной
-		double turnsGain = 0;
-		if (atkXvel >= 2)
-		{
-			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
-		}
-		//Вычисляем громкость хлопков по атаке
-		double atkFls = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
-
-		//Из 2х видов хлопков выбираем более громкие
-		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX;
 
 		//Осуществляем переход в НЧ хлопки, при малых значениях шага (4-5)
 		double flap_h = 0;
@@ -3292,9 +3259,62 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Из 2х условия НЧ хлопков выбираем преобладающий
 		double low = (flap_lo > flap_lov) ? flap_lo : flap_lov;
 
+		//Усиление от оборотов
+		//только если атака больше 2х
+		//делает огибающую атаки более динамичной
+		double turnsGain = 0;
+		if (atkXvel >= 2)
+		{
+			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
+		}
+
+		double hG = interpolation(0, 0, 0.5, 0.5, 1, 1, high);
+
+		//Передаточные функции по скорости для хлопков по атаки
+		//vL для НЧ
+		//vH для ВЧ
+		double vL = 0;
+		double vH = 0;
+		if (abs(velocityX) < 11)
+		{
+			vL = interpolation(10, 0, 11, 0.5, abs(velocityX));//
+			vH = interpolation(10, 0, 11, 0.25, abs(velocityX));//
+		}
+		else
+		{
+			vL = interpolation(11, 0.5, 21, 1, abs(velocityX));//
+			vH = interpolation(11, 0.25, 21, 1, abs(velocityX));//
+		}
+		double vG = vL * low + vH * (1 - low);
+
+		double gainAtk = interpolation(-1, -15, 1, -9, 3, -3, atkXvel);
+
+		//Вычисляем громкость хлопков по атаке
+		double atkFls = pow(10, (turnsGain + gainAtk)*0.05) * vG * hG;
+
+		//Хлопки на висении возникают при 2ом условии хлопков
+		if (flapIndicator == 2)
+		{
+			offsetOn += deltaTime;
+			offsetOn = (offsetOn > 1) ? 1 : offsetOn;//плавно наводим громкость за 1с
+		}
+		else
+		{
+			offsetOn -= deltaTime;
+			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
+		}
+
+		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
+		//переходит в усиление НЧ редуктора по vy
+		double flapCGainAccX = interpolation(0.56, 0, 3, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * offsetOn  * interpolation(0, 1, 16.67, 0, velocityX);
+		
+		//Из 2х видов хлопков выбираем более громкие
+		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX;
+		
 		//Устанавливаем громкость НЧ и ВЧ хлопков
 		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain * (1 - low));
 		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low);
+
 	}
 	//Полеты 28
 	if (h.modelName == "mi_28")
