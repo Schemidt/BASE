@@ -39,7 +39,7 @@ template <class T >
 bool mono2channels(  T                         *monodata,        /* in  */
                      int                        sizeBytes,       /* in  */
                      AL_SOUND_CHANNELS          channelsCount,   /* in  */
-					 vector<double>             channels,        /* in (enum AL_SOUND_CHANNELS)  */
+					 double						*channels,        /* in (enum AL_SOUND_CHANNELS)  */
                      void                      **returnedData,   /* out */
                      int                       *returnedSize )   /* out */
 {
