@@ -30,7 +30,7 @@
 </pre>
 */
 
-/*! \page advanced Пояснительные сведения
+/*! \page advanced Основные сведения
 \tableofcontents
 <pre>
 Ниже будут поясненны все элементы программы, которые ,по мнению разработчика,
@@ -624,21 +624,31 @@ int main(int argc, char *argv[])
 			{
 				//ВУ
 				if (localdata.p_vu1)//Условие создания объекта
+				{
 					if (!vpryam)//Если объект не создан 
+					{
 						vpryam = new Sound;//Создаем объект
+					}
+				}		
 				if (vpryam)//Если объект создан - используем его
 				{
 					vpryam->play(localdata.p_vu1, "NULL", helicopter.fullName["vpryam"], "NULL", helicopter.vpryam);//Воспроизводим звук - записываем состояние звука в play
 					if (vpryam->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+					{
 						Free(vpryam);//Удаляем объект
+					}
 				}
 			}
 			//Если Трансформатор 36В присутствует на Борту
 			if (helicopter.tr36Factor)
 			{
 				if (localdata.p_trans_36_osn || localdata.p_trans_36_rez)//Условие создания объекта
+				{
 					if (!tr36)//Если объект не создан 
+					{
 						tr36 = new Sound;//Создаем объект
+					}
+				}
 				if (tr36)//Если объект создан - используем его
 				{
 					tr36->play(localdata.p_trans_36_osn || localdata.p_trans_36_rez, helicopter.fullName["tr36_on"], helicopter.fullName["tr36_w"], helicopter.fullName["tr36_off"], helicopter.tr36Factor);//Воспроизводим звук - записываем состояние звука в play
@@ -2845,7 +2855,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			//усиление по шагу в НЧ
 			double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, high);//0.3 -> 0.2
 
-																				//усиление по шагу в Средних чатотах
+			//усиление по шагу в Средних чатотах
 			double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
 
 			//усиление от оборотов выше 10000
