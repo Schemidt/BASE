@@ -684,13 +684,16 @@ int main(int argc, char *argv[])
 					{
 						double p1 = 1, p2 = 1;
 						//Если включено ВУ, то высота тона повышается на 1.5%
-						if (localdata.p_vu1 && "mi_26" == helicopter.modelName)
+						if (helicopter.modelName == "mi_26")
 						{
-							p1 = 1.015;
-						}
-						if (!localdata.p_vu1 && "mi_26" == helicopter.modelName)
-						{
-							p1 = 1;
+							if (localdata.p_vu1)
+							{
+								p1 = 1.015;
+							}
+							else
+							{
+								p1 = 1;
+							}
 						}
 						//Прокрутка и запуск ВСУ просаживают НИП по тону
 						if (localdata.p_vsu_hp || localdata.p_vsu_zap)
@@ -716,7 +719,7 @@ int main(int argc, char *argv[])
 							p2 = 1;
 						}
 
-						nip->pitch = 1 * p1 * p2;//
+						nip->pitch = 1 * p1 * p2;//Вычисляем результирующий тон
 					}
 
 				}
@@ -760,8 +763,7 @@ int main(int argc, char *argv[])
 						podk1 = new Sound;//Создаем объект
 				if (podk1)//Если объект создан - используем его
 				{
-					//podk1->position = PosLeft;
-					podk1->channel[0] = 1;
+					podk1->channel[0] = 1;//L
 					podk1->channel[1] = 0;
 					if ("ka_226" == helicopter.modelName)
 					{
@@ -788,9 +790,8 @@ int main(int argc, char *argv[])
 						podk2 = new Sound;//Создаем объект
 				if (podk2)//Если объект создан - используем его
 				{
-					//podk2->position = PosRight;
 					podk2->channel[0] = 0;
-					podk2->channel[1] = 1;
+					podk2->channel[1] = 1;//R
 					if ("ka_226" == helicopter.modelName)
 					{
 						if (localdata.p_eng1_zap | localdata.p_eng1_hp | localdata.p_eng2_hp | localdata.p_eng2_zap)
@@ -819,7 +820,6 @@ int main(int argc, char *argv[])
 						kranKolc = new Sound;//Создаем объект
 				if (kranKolc)//Если объект создан - используем его
 				{
-					//perek1->position = PosLeft;
 					kranKolc->channel[0] = 1;
 					kranKolc->channel[1] = 1;
 					kranKolc->play(localdata.p_kran_kolcev, helicopter.fullName["kran_circle"], "NULL", "NULL", helicopter.circlingCraneFactor);//Воспроизводим звук - записываем состояние звука в play
@@ -835,8 +835,7 @@ int main(int argc, char *argv[])
 						perek1 = new Sound;//Создаем объект
 				if (perek1)//Если объект создан - используем его
 				{
-					//perek1->position = PosLeft;
-					perek1->channel[0] = 1;
+					perek1->channel[0] = 1;//L
 					perek1->channel[1] = 0;
 					perek1->play(localdata.p_kran_perekr_1, helicopter.fullName["perekr_l"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (perek1->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_1)//Условие удаления объекта
@@ -848,9 +847,8 @@ int main(int argc, char *argv[])
 						perek2 = new Sound;//Создаем объект
 				if (perek2)//Если объект создан - используем его
 				{
-					//perek2->position = PosRight;
 					perek2->channel[0] = 0;
-					perek2->channel[1] = 1;
+					perek2->channel[1] = 1;//R
 					perek2->play(localdata.p_kran_perekr_2, helicopter.fullName["perekr_r"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (perek2->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_2)//Условие удаления объекта
 						Free(perek2);//Удаляем объект
@@ -921,8 +919,7 @@ int main(int argc, char *argv[])
 						fire1 = new Sound;//Создаем объект
 				if (fire1)//Если объект создан - используем его
 				{
-					//fire1->position = PosLeft;
-					fire1->channel[0] = 1;
+					fire1->channel[0] = 1;//L
 					fire1->channel[1] = 0;
 					fire1->play(localdata.p_kran_poj_l, helicopter.fullName["kran_fire_l"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (fire1->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_poj_l)//Условие удаления объекта
@@ -934,9 +931,8 @@ int main(int argc, char *argv[])
 						fire2 = new Sound;//Создаем объект
 				if (fire2)//Если объект создан - используем его
 				{
-					//fire2->position = PosRight;
 					fire2->channel[0] = 0;
-					fire2->channel[1] = 1;
+					fire2->channel[1] = 1;//R
 					fire2->play(localdata.p_kran_poj_r, helicopter.fullName["kran_fire_r"], "NULL", "NULL", helicopter.fireCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (fire2->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_poj_r)//Условие удаления объекта
 						Free(fire2);//Удаляем объект
@@ -1336,8 +1332,7 @@ int main(int argc, char *argv[])
 				}
 				if (engHp[0])//Если объект создан - используем его
 				{
-					//eng_hp[0]->position = PosLeft;
-					engHp[0]->channel[0] = 1;
+					engHp[0]->channel[0] = 1;//L
 					engHp[0]->channel[1] = 0;
 					if (localdata.p_eng1_zap | localdata.p_eng1_ostanov)
 					{
@@ -1358,9 +1353,8 @@ int main(int argc, char *argv[])
 				}
 				if (engHp[1])//Если объект создан - используем его
 				{
-					//eng_hp[1]->position = PosRight;
 					engHp[1]->channel[0] = 0;
-					engHp[1]->channel[1] = 1;
+					engHp[1]->channel[1] = 1;//R
 					if (localdata.p_eng2_zap | localdata.p_eng2_ostanov)
 					{
 						engHp[1]->play(localdata.p_eng2_hp & localdata.eng2_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
@@ -1380,8 +1374,7 @@ int main(int argc, char *argv[])
 				}
 				if (engPomp[0])//Если объект создан - используем его
 				{
-					//eng_pomp[0]->position = PosLeft;
-					engPomp[0]->channel[0] = 1;
+					engPomp[0]->channel[0] = 1;//L
 					engPomp[0]->channel[1] = 0;
 					engPomp[0]->play(localdata.p_eng1_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (engPomp[0]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng1_pomp)//Условие удаления объекта
@@ -1397,9 +1390,8 @@ int main(int argc, char *argv[])
 				}
 				if (engPomp[1])//Если объект создан - используем его
 				{
-					//eng_pomp[1]->position = PosRight;
 					engPomp[1]->channel[0] = 0;
-					engPomp[1]->channel[1] = 1;
+					engPomp[1]->channel[1] = 1;//R
 					engPomp[1]->play(localdata.p_eng2_pomp, helicopter.fullName["eng_pomp_on"], helicopter.fullName["eng_pomp_w"], "NULL", helicopter.engFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (engPomp[1]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng2_pomp)//Условие удаления объекта
 						Free(engPomp[1]);//Удаляем объект
@@ -1414,8 +1406,7 @@ int main(int argc, char *argv[])
 				}
 				if (eng[0])//Если объект создан - используем его
 				{
-					//eng[0]->position = PosLeft;
-					eng[0]->channel[0] = 1;//magic numbers//1
+					eng[0]->channel[0] = 1;//magic numbers//1//L
 					eng[0]->channel[1] = 1;//-1
 					eng[0]->play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, helicopter);
 
@@ -1433,9 +1424,8 @@ int main(int argc, char *argv[])
 				}
 				if (eng[1])//Если объект создан - используем его
 				{
-					//eng[1]->position = PosRight;
-					eng[1]->channel[0] = 1;//magic numbers0
-					eng[1]->channel[1] = 1;//2
+					eng[1]->channel[0] = 1;//magic numbers//0
+					eng[1]->channel[1] = 1;//2//R
 					eng[1]->play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.eng2_obor, helicopter);
 
 
@@ -2169,25 +2159,27 @@ int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount
 	fclose(check);
 	alutLoadWAVFile((ALbyte*)path.c_str(), &format, &iData, &size, &freq, &loop);
 
+	//Если файл стерео - просто загружаем буфер
 	if (format == AL_FORMAT_STEREO8 || format == AL_FORMAT_STEREO16)
 	{
 		alBufferData(Buffer, format, iData, size, freq);
 		alutUnloadWAV(format, iData, size, freq);
 		return 1;
 	}
+	//Если файл моно - загружаем буфер в соответствии с конфигурацией динамиков
 	if (channelsCount != 0)//
 	{
 		if (format == AL_FORMAT_MONO8)//8бит
 		{
 			bitsPerSample = 8;
 			unsigned char *monodata0 = ((unsigned char*)iData);
-			ok = mono2channels(monodata0, size, channelsCount, channels.data(), &rData, &rSize);//преобразовываем в данные с семплами только для 1го выхода в 4рех выходной системе (передний левый)
+			ok = mono2channels(monodata0, size, channelsCount, channels.data(), &rData, &rSize);
 		}
 		if (format == AL_FORMAT_MONO16)//16бит
 		{
 			bitsPerSample = 16;
 			short *monodata1 = ((short*)iData);
-			ok = mono2channels(monodata1, size, channelsCount, channels.data(), &rData, &rSize);//преобразовываем в данные с семплами только для 1го выхода в 4рех выходной системе (передний левый)
+			ok = mono2channels(monodata1, size, channelsCount, channels.data(), &rData, &rSize);
 		}
 		if (format != AL_FORMAT_MONO16 && format != AL_FORMAT_MONO8)//неподдерживаемый формат
 			return 0;
@@ -2196,10 +2188,12 @@ int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount
 		alBufferData(Buffer, format, rData, rSize, freq);
 		free(rData);
 	}
+	//Если конфигурация с 1им динамиком
 	else
 	{
 		alBufferData(Buffer, format, iData, size, freq);
 	}
+	//Высвобождаем память
 	alutUnloadWAV(format, iData, size, freq);
 	return 1;
 }
