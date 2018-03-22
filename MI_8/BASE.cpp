@@ -2641,14 +2641,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			}
 			printf("turnGain = %10.3f stepGain = %10.3f velocityGain = %10.3f atkGain = %10.3f\r", turnGain, stepGain, velocityGain, atkGain);
-			outputPeriod += deltaTime;
-			if (outputPeriod >= 0.3)
-			{
-				fred = fopen("red.txt", "at");
-				fprintf(fred, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", velocityY, accelerationX, accelerationVy, calcA, dash, derivStep, soundread.time);
-				fclose(fred);
-				outputPeriod = 0;
-			}
 		}
 	}
 	//Полеты 8 мтв5, 8 амтш
@@ -2778,14 +2770,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
 
 				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-			}
-			outputPeriod += deltaTime;
-			if (outputPeriod >= 0.1)
-			{
-				fred = fopen("red.txt", "at");
-				fprintf(fred, "%f\t%f\t%f\n", flapCGain, stalkingGain, soundread.time);
-				fclose(fred);
-				outputPeriod = 0;
 			}
 		}
 	}
@@ -2919,15 +2903,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 																					   //alSource3i(source[i], AL_AUXILIARY_SEND_FILTER, effectSlot[i], 0, filterWet[i]);
 			}
-			outputPeriod += deltaTime;
-			if (outputPeriod >= 0.01)
-			{
-				fred = fopen("red.txt", "at");
-				fprintf(fred, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%i\t%f\t%f\t%i\t%f\t%f\t%f\n", sr.reduktor_gl_obor, averangeTurn, turnGain, highFreqTurnGain, stepGain, velocityGain, pitch, pinkNoiseGain, hovering, velocityX, accelerationX, 1, dash, flapCGain, soundread.time);
-				fclose(fred);
-				outputPeriod = 0;
-			}
-			//printf("hovering = %i dash = %10.3f velocityY = %10.3f accelerationX = %10.3f tay = %10.3f flapCGain = %10.3f\r", hovering, dash, velocityY, accelerationX, tay, flapCGain);
 		}
 	}
 	//Полеты ка 27
@@ -3067,14 +3042,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 																					   //alSource3i(source[i], AL_AUXILIARY_SEND_FILTER, effectSlot[i], 0, filterWet[i]);
-			}
-			outputPeriod += deltaTime;
-			if (outputPeriod >= 1)
-			{
-				fred = fopen("red.txt", "at");
-				fprintf(fred, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", sr.reduktor_gl_obor, averangeTurn, turnGain, highFreqTurnGain, stepGain, velocityGain, accelerationX, pinkNoiseGain, mid2FreqStepGain, 1, lowFreqGain, mid1FreqGain, mid2FreqGain, flapCGain, soundread.time);
-				fclose(fred);
-				outputPeriod = 0;
 			}
 		}
 	}
@@ -3435,13 +3402,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			key[0] = h.fullName["vint_flap"];
 			
 		}
-		//if (key[1] != h.fullName["vint_flap_low"])
-		//{
-		//	sourceStatus[1] = setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_low"]);//////
-		//	alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		//	key[1] = h.fullName["vint_flap_low"];
-		//	
-		//}
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
 
@@ -3488,38 +3448,11 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX * offsetOn;
 
-		//double flap_h = 0;
-		//double flap_lo = 0;
-		//if(h.modelName == "mi_8_amtsh")
-		//	crossFade(&flap_lo, &flap_h, step, 4, 5, 1);
-		//if(h.modelName == "mi_8_mtv5")
-		//	crossFade(&flap_lo, &flap_h, step, 3, 4, 1);
-		//double flap_hv = 0;
-		//double flap_lov = 0;
-		//crossFade(&flap_lov, &flap_hv, abs(velocityX), 14, 16.67, 1);
-		//double low = (flap_lo > flap_lov) ? flap_lo : flap_lov;
-		//alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain * (1 - low));
-		////alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low);
-		//if (h.modelName == "mi_8_amtsh")
-		//	alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low);
-		//if (h.modelName == "mi_8_mtv5")
-		//	alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low * ((step < 3) ? ((3 - step) * 0.794) : 1));
-
 		//Уменьшаем громкость хлопков на 6дб за каждый градус шага ниже 6
 		double stepDamping = pow(10, ((step < 3.5) ? ((3.5 - step) * -6) : 0)*0.05);
 
 		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain * stepDamping);
 
-		//cout <<" "<< sourceStatus[0] << " " << sourceStatus[1] << " " << gain * h.vintFlapFactor * masterGain * stepDamping <<" "<< atkXvel << "\r";
-		
-		outputPeriod += deltaTime;
-		if (outputPeriod >= 0.1)
-		{
-			fderiv = fopen("der.txt", "at");
-			fprintf(fderiv, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", gain * h.vintFlapFactor * masterGain * stepDamping, stepDamping, interpolation(-0.25, 1, 0.25, 0, velocityY), interpolation(0, 1, 16.67, 0, velocityX), atkXvel, soundread.time);
-			fclose(fderiv);
-			outputPeriod = 0;
-		}
 	}
 	//Полеты 8 амтш
 	if (h.modelName == "mi_8_amtsh")
@@ -3856,22 +3789,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[1], AL_GAIN, flapBGain);//неравномерные
 		alSourcef(source[2], AL_GAIN, flapCGain);//тупые
 
-												 //Выводим данные в файлы раз в установленный период
-		outputPeriod += deltaTime;
-		if (outputPeriod >= 0.1)
-		{
-			fflaps = fopen("flap.txt", "at");
-			fprintf(fflaps, "%i\t%lf\t%lf\t%lf\t%lf\t%lf\n", flapIndicator, flapAGain, flapBGain, flapCGain, calcA, soundread.time);
-			fclose(fflaps);
-			fderiv = fopen("der.txt", "at");
-			fprintf(fderiv, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", accelerationX, dash, velocityY, accelerationVy, derivStep, calcA, soundread.time);
-			fclose(fderiv);
-			ffront = fopen("front.txt", "at");
-			fprintf(ffront, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", accelerationX, vectorVx.front(),velocityX,periodCalc,vectorTime.front(),currentTime,soundread.time);
-			fclose(ffront);
-			outputPeriod = 0;
-		}
-		//printf(" Acc = %8.3f AccVy = %8.3f calcA = %8.3f vY = %8.3f vX = %8.3f tangaz = %8.3f Dash = %8.3f flapI = %i flap_a = %1.3f flap_b= %1.3f flap_c = %1.3f offset = %1.3f \r", accelerationX, accelerationVy, calcA, velocityY, velocityX, tangaz, dash, flapIndicator, flapAGain, flapBGain, flapCGain, offsetOn);
 	}
 	//Полеты ми 26
 	if (h.modelName == "mi_26")

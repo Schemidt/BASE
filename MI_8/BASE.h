@@ -193,32 +193,23 @@ class Reductor : public Sound
 {
 public:
 
-	FILE *fred = nullptr;
-
 	bool hovering = 0;/*!< Переменная для статуса полета на висении */
 
-	string pinkNoise;
-
-	double outputPeriod = 0;
-	double calcPeriod = 0;
-
 	double averangeCalcPeriod = 0;
-
 	double averangeCalcPeriodAtk = 0;
-	
 	double averangeCalcPeriodStep = 0;
 
 	vector<double> vector, vectorStep, vectorAtk;
 
-	string eq[2];
-
-	string filetoBuffer[2];
-	string fileBuffered[2];
+	string eq[2];/*!< Переменная для однократной загрузки буфера */
+	string pinkNoise;/*!< Переменная для однократной загрузки буфера */
+	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
+	string fileBuffered[2];/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = {0};
 
 	Reductor() : Sound(3, 3, 2)
 	{
-		remove("red.txt");
+	
 	}
 	~Reductor()
 	{
@@ -252,15 +243,12 @@ public:
 
 	double averangeCalcPeriod = 0;
 
-	double outputPeriod = 0;
-
 	vector<double> vector;
 
-	string filetoBuffer[2];
-	string fileBuffered[2];
+	string eq[2];/*!< Переменная для однократной загрузки буфера */
+	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
+	string fileBuffered[2];/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = { 0 };
-
-	string eq[2];
 
 	Engine() : Sound(2, 2, 2)
 	{
@@ -293,9 +281,9 @@ class Runway : public Sound
 {
 public:
 
-	string eq;
-	string filetoBuffer[2];
-	string fileBuffered[2];
+	string eq;/*!< Переменная для однократной загрузки буфера */
+	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
+	string fileBuffered[2];/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = { 0 };
 
 	Runway() : Sound(2, 2, 1)
@@ -325,23 +313,15 @@ class VintFlap : public Sound
 {
 public:
 
-	FILE *fflaps = nullptr;
-	FILE *fderiv = nullptr;
-	FILE *ffront = nullptr;
-
-	double outputPeriod = 0;
-
 	double averangeCalcPeriod = 0;
 
 	vector<double> vector;
 
-	string key[3];
+	string key[3];/*!< Переменная для однократной загрузки буфера */
 
 	VintFlap() : Sound(3, 3, 2) 
 	{
-		remove("flap.txt");
-		remove("der.txt");
-		remove("front.txt");
+		
 	}
 
 	~VintFlap()
@@ -371,8 +351,8 @@ class VintSwish : public Sound
 {
 public:
 
-	string filetoBuffer[2];
-	string fileBuffered[2];
+	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
+	string fileBuffered[2];/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = { 0 };
 
 	VintSwish() : Sound(2, 2, 0)
@@ -407,10 +387,9 @@ class SKV : public Sound
 {
 public:
 
-	string eq;
+	string eq;/*!< Переменная для однократной загрузки буфера */
 
 	double averangeCalcPeriod = 0;
-
 	double averangeCalcPeriodStep = 0;
 
 	vector<double> vector, vectorStep;
