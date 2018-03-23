@@ -11,6 +11,7 @@
 Эта документация разделена на следующие разделы:
 - \subpage intro
 - \subpage advanced
+- \subpage todo
 */
 
 /*! \page intro Введение
@@ -116,7 +117,7 @@ if (helicopter.ptsFactor)
 <tr><th>Комбинация Фаз<th>Изображение сигнала (Амплитуда/время)<th>Пояснение
 <tr>
 <td>Все Фазы присутствуют
-<td>\image html 111.png width=250 height=150 
+<td>\image html 111.png width=250 height=150
 <td>Последовательная отработка фаз при изменении признака работы.
 (Трансформаторы 36 и 115, ПТС)
 <tr>
@@ -220,6 +221,34 @@ if (model == "mi_8_mtv5")
 </pre>
 */
 
+/*! \page todo TODO
+<pre>
+Сюда добавляется информация по предлагаемым нововведениям в будущих версиях программы
+
+	1.	DLL основанная структура программного комплекса.
+	*	Позволит добавлять логику новых бортов без перекомпиляции всего проекта
+	*	Позволит разрабатывать проект одновременно большому количеству сотрудников
+	*	Позволит динамически подгружать необходимый код - снизит потребление памяти
+
+	2.	Использовать Alure вместо Alute.
+	*	Более современная, поддерживаемая версия Alute
+	*	Упрощает менеджмент Параметров объектов OpenAL
+	*	Позволит упростить код, и отказаться от некоторых функций
+
+	3.	Организовать массив объектов - устройств.
+	*	Все созданные объекты звуков добавляются в данный массив,
+	*	что позволяет в любой момент оценивать количество и качество
+	*	используемых объектов - агрегатов, а также использовать глобальные стратегии по управлению
+	*	vector<Sound *> Sounds;
+
+	4.	Организовать параллельную обработку функций вывода звука "play"
+	*	Улучшит производительность системы
+	*	Устранит возможные задержки - Улучшит отзывчивость системы
+
+</pre>
+
+*/
+
 #include "conio.h"
 #include "stdlib.h"
 #include "iostream"
@@ -286,7 +315,7 @@ int main(int argc, char *argv[])
 {
 	//Получаем указатели на функции EFX
 	setEFXPointers();
-	vector <string> helicoptersNames = { "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29"};
+	vector <string> helicoptersNames = { "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29" };
 	string model;
 	Helicopter helicopter;//Переменная класса Helicopter для хранения параметров выбранного вертолета
 	if (argc > 1)// если передаем аргументы, то argc будет больше 1(в зависимости от кол-ва аргументов)
@@ -318,14 +347,14 @@ int main(int argc, char *argv[])
 	cout << " " << Sound::maxSources << " - Sources avaliable" << endl;
 	Sound::maxSlots = MAX_AUX_SLOTS;
 
-	device = alcOpenDevice(NULL);
-	if (device == NULL)
+	device = alcOpenDevice(0);
+	if (device == 0)
 	{
 		cout << alcGetString(device, alcGetError(device)) << endl;
 		return AL_FALSE;
 	}
 	context = alcCreateContext(device, attribs);
-	if (context == NULL)
+	if (context == 0)
 	{
 		cout << alcGetString(device, alcGetError(device)) << endl;
 		alcCloseDevice(device);
@@ -397,12 +426,6 @@ int main(int argc, char *argv[])
 	Sound *kranKolc = nullptr;
 	Sound *vpryam = nullptr;
 
-	//Вектор для объектов Sound [WIP]
-	//Все созданные объекты звуков добавляются в данный вектор, 
-	//что позволяет в любой момент оценивать количество и качество
-	//используемых объектов - агрегатов, а также использовать глобальные стратегии по управлению
-	//vector<Sound *> Sounds;
-
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
 	Sound::vectorTime.push_back(Sound::currentTime);
@@ -421,8 +444,8 @@ int main(int argc, char *argv[])
 	double vsuDownTimer = 0;
 	double vsuUpTimer = 0;
 	//Опрашиваем все блоки программы в бесконечном цикле
-	while (1)
-	{	
+	while (true)
+	{
 		//Копируем данные из общей памяти во временное хранилище
 		localdata = soundread;
 		if (IsProcessPresent(L"USPO.exe") && !localdata.p_model_stop)
@@ -494,7 +517,7 @@ int main(int argc, char *argv[])
 					vsu->lengthOn = vsu->getLengthWAV(helicopter.fullName["vsu_on"]);
 					vsu->offsetOff = vsu->lengthOff * (1 - localdata.vsu_obor / 100.);//Включаем запись с текущего уровня оборотов
 					vsu->offsetOn = vsu->lengthOn * localdata.vsu_obor / 100.;//Включаем запись с текущего уровня оборотов
-					
+
 					//Для 27 29 и 8
 					if (helicopter.modelName == "ka_27" || helicopter.modelName == "ka_29" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_8_amtsh")
 					{
@@ -562,28 +585,40 @@ int main(int argc, char *argv[])
 			//Аккумулятор
 			if (helicopter.accumFactor)
 			{
-				if ("ansat" != helicopter.modelName)//226
+				if (helicopter.modelName != "ansat")//226
 				{
 					if (localdata.rez_2)//Условие создания объекта
+					{
 						if (!accum)//Если объект не создан 
+						{
 							accum = new Sound;//Создаем объект
+						}
+					}
 					if (accum)//Если объект создан - используем его
 					{
 						accum->play(localdata.rez_2, "NULL", helicopter.fullName["accum"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (accum->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+						{
 							Free(accum);//Удаляем объект
+						}
 					}
 				}
-				if ("ka_226" == helicopter.modelName || "ansat" == helicopter.modelName)//226
+				if (helicopter.modelName == "ka_226" || helicopter.modelName == "ansat")//226
 				{
 					if (localdata.rez_2)//Условие создания объекта
+					{
 						if (!accumTr)//Если объект не создан 
+						{
 							accumTr = new Sound;//Создаем объект
+						}
+					}
 					if (accumTr)//Если объект создан - используем его
 					{
 						accumTr->play(localdata.rez_2, "NULL", helicopter.fullName["accum_tr"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (accumTr->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+						{
 							Free(accumTr);//Удаляем объект
+						}
 					}
 				}
 			}
@@ -591,10 +626,12 @@ int main(int argc, char *argv[])
 			if (helicopter.ptsFactor)
 			{
 				if (localdata.p_pts)//Условие создания объекта
+				{
 					if (!pts)//Если объект не создан 
 					{
 						pts = new Sound;
 					}
+				}
 				if (pts)//Если объект создан - используем его
 				{
 					pts->play(localdata.p_pts, helicopter.fullName["pts_on"], helicopter.fullName["pts_w"], helicopter.fullName["pts_off"], helicopter.ptsFactor);//Воспроизводим звук - записываем состояние звука в play
@@ -602,7 +639,6 @@ int main(int argc, char *argv[])
 					{
 						Free(pts);//Удаляем объект
 					}
-						
 				}
 			}
 			//ПТС тон
@@ -610,13 +646,19 @@ int main(int argc, char *argv[])
 			{
 				//ПТС Тон
 				if (localdata.p_pts)//Условие создания объекта
+				{
 					if (!ptsTone)//Если объект не создан 
+					{
 						ptsTone = new Sound;//Создаем объект
+					}
+				}
 				if (ptsTone)//Если объект создан - используем его
 				{
 					ptsTone->play(localdata.p_pts, "NULL", helicopter.fullName["pts_tone"], "NULL", helicopter.ptsToneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (ptsTone->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+					{
 						Free(ptsTone);//Удаляем объект
+					}
 				}
 			}
 			//ВУ
@@ -629,7 +671,7 @@ int main(int argc, char *argv[])
 					{
 						vpryam = new Sound;//Создаем объект
 					}
-				}		
+				}
 				if (vpryam)//Если объект создан - используем его
 				{
 					vpryam->play(localdata.p_vu1, "NULL", helicopter.fullName["vpryam"], "NULL", helicopter.vpryam);//Воспроизводим звук - записываем состояние звука в play
@@ -653,33 +695,47 @@ int main(int argc, char *argv[])
 				{
 					tr36->play(localdata.p_trans_36_osn || localdata.p_trans_36_rez, helicopter.fullName["tr36_on"], helicopter.fullName["tr36_w"], helicopter.fullName["tr36_off"], helicopter.tr36Factor);//Воспроизводим звук - записываем состояние звука в play
 					if (tr36->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+					{
 						Free(tr36);//Удаляем объект
+					}
 				}
 			}
 			//Если Трансформатор 115В присутствует на Борту
 			if (helicopter.tr115Factor)
 			{
 				if (localdata.p_po500)//Условие создания объекта
+				{
 					if (!tr115)//Если объект не создан 
+					{
 						tr115 = new Sound;//Создаем объект
+					}
+				}
 				if (tr115)//Если объект создан - используем его
 				{
 					tr115->play(localdata.p_po500, helicopter.fullName["tr115_on"], helicopter.fullName["tr115_w"], helicopter.fullName["tr115_off"], helicopter.tr115Factor);//Воспроизводим звук - записываем состояние звука в play
 					if (tr115->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+					{
 						Free(tr115);//Удаляем объект
+					}
 				}
 			}
 			//НИП
 			if (helicopter.nipFactor)
 			{
 				if (localdata.rez_3)//Условие создания объекта
+				{
 					if (!nip)//Если объект не создан 
+					{
 						nip = new Sound;//Создаем объект
+					}
+				}
 				if (nip)//Если объект создан - используем его
 				{
 					nip->play(localdata.rez_3, "NULL", helicopter.fullName["nip_tone"], "NULL", helicopter.nipFactor);
 					if (nip->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+					{
 						Free(nip);//Удаляем объект
+					}
 					else
 					{
 						double p1 = 1, p2 = 1;
@@ -728,20 +784,30 @@ int main(int argc, char *argv[])
 			if (helicopter.girovertFactor)
 			{
 				if (localdata.rez_3)//Условие создания объекта
+				{
 					if (!girovert)//Если объект не создан 
+					{
 						girovert = new Sound;//Создаем объект
+					}
+				}
 				if (girovert)//Если объект создан - используем его
 				{
 					girovert->lengthOn = girovert->getLengthWAV(helicopter.fullName["girovert_on"]);
 					if (girovert->pitch < 1)
+					{
 						girovert->offsetOn = girovert->lengthOn * girovert->pitch;//Включаем запись с текущего уровня оборотов
+					}
 					girovert->play(localdata.rez_3, helicopter.fullName["girovert_on"], helicopter.fullName["girovert_w"], helicopter.fullName["girovert_w"], helicopter.ptsFactor);
 					if (girovert->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+					{
 						Free(girovert);//Удаляем объект
+					}
 					else
 					{
 						if (girovert->soundOn)
+						{
 							girovert->pitch = 1;
+						}
 						if (girovert->soundOff)
 						{
 							alSourcei(girovert->source[0], AL_LOOPING, AL_TRUE);
@@ -756,11 +822,15 @@ int main(int argc, char *argv[])
 			}
 			//Топливна система
 			//Если насосы подкачки присутствуют на Борту
-			if (helicopter.pumpLeftFactor || helicopter.pumpRightFactor)
+			if (helicopter.pumpLeftFactor)
 			{
 				if (localdata.p_nasos_podk_1)//Условие создания объекта
+				{
 					if (!podk1)//Если объект не создан 
+					{
 						podk1 = new Sound;//Создаем объект
+					}
+				}
 				if (podk1)//Если объект создан - используем его
 				{
 					podk1->channel[0] = 1;//L
@@ -780,14 +850,24 @@ int main(int argc, char *argv[])
 						podk1->play(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], helicopter.fullName["podk_l_off"], helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					else
+					{
 						podk1->play(localdata.p_nasos_podk_1, helicopter.fullName["podk_l_on"], helicopter.fullName["podk_l_w"], "NULL", helicopter.pumpLeftFactor);//Воспроизводим звук - записываем состояние звука в play
+					}
 					if (podk1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+					{
 						Free(podk1);//Удаляем объект
+					}
 				}
-
+			}
+			if (helicopter.pumpRightFactor)
+			{
 				if (localdata.p_nasos_podk_2)//Условие создания объекта
+				{
 					if (!podk2)//Если объект не создан 
+					{
 						podk2 = new Sound;//Создаем объект
+					}
+				}
 				if (podk2)//Если объект создан - используем его
 				{
 					podk2->channel[0] = 0;
@@ -807,51 +887,73 @@ int main(int argc, char *argv[])
 						podk2->play(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], helicopter.fullName["podk_r_off"], helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					else
+					{
 						podk2->play(localdata.p_nasos_podk_2, helicopter.fullName["podk_r_on"], helicopter.fullName["podk_r_w"], "NULL", helicopter.pumpRightFactor);//Воспроизводим звук - записываем состояние звука в play
+					}
 					if (podk2->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+					{
 						Free(podk2);//Удаляем объект
+					}
 				}
 			}
 			//Если кран кольцевания присутствует на Борту
 			if (helicopter.circlingCraneFactor)
 			{
 				if (localdata.p_kran_kolcev)//Условие создания объекта
+				{
 					if (!kranKolc)//Если объект не создан 
+					{
 						kranKolc = new Sound;//Создаем объект
+					}
+				}
 				if (kranKolc)//Если объект создан - используем его
 				{
 					kranKolc->channel[0] = 1;
 					kranKolc->channel[1] = 1;
 					kranKolc->play(localdata.p_kran_kolcev, helicopter.fullName["kran_circle"], "NULL", "NULL", helicopter.circlingCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (kranKolc->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_kolcev)//Условие удаления объекта
+					{
 						Free(kranKolc);//Удаляем объект
+					}
 				}
 			}
 			//Если перекрывные краны присутствуют на Борту
 			if (helicopter.cutoffCraneFactor)
 			{
 				if (localdata.p_kran_perekr_1)//Условие создания объекта
+				{
 					if (!perek1)//Если объект не создан 
+					{
 						perek1 = new Sound;//Создаем объект
+					}
+				}
 				if (perek1)//Если объект создан - используем его
 				{
 					perek1->channel[0] = 1;//L
 					perek1->channel[1] = 0;
 					perek1->play(localdata.p_kran_perekr_1, helicopter.fullName["perekr_l"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (perek1->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_1)//Условие удаления объекта
+					{
 						Free(perek1);//Удаляем объект
+					}
 				}
 
 				if (localdata.p_kran_perekr_2)//Условие создания объекта
+				{
 					if (!perek2)//Если объект не создан 
+					{
 						perek2 = new Sound;//Создаем объект
+					}
+				}
 				if (perek2)//Если объект создан - используем его
 				{
 					perek2->channel[0] = 0;
 					perek2->channel[1] = 1;//R
 					perek2->play(localdata.p_kran_perekr_2, helicopter.fullName["perekr_r"], "NULL", "NULL", helicopter.cutoffCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (perek2->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_2)//Условие удаления объекта
+					{
 						Free(perek2);//Удаляем объект
+					}
 				}
 			}
 			//Если СКВ присутствует на Борту
@@ -882,8 +984,6 @@ int main(int argc, char *argv[])
 							Free(skvUni);//Удаляем объект
 					}
 				}
-
-
 			}
 			//Если КО-50 присутствует на Борту
 			if (helicopter.ko50Factor)
@@ -1518,7 +1618,7 @@ int main(int argc, char *argv[])
 			Sound::vectorTime.clear();
 			Sound::vectorRedTurn.clear();
 			Sound::vectorTime.push_back(Sound::currentTime);
-			
+
 			if (eng[0])
 			{
 				Free(eng[0]);
@@ -1537,13 +1637,6 @@ int main(int argc, char *argv[])
 			}
 			periodCalc = 0;
 			Sound::currentTime = localdata.time;
-
-			//printf(" Waiting for USPO to initializate.\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\r");
-			//alutSleep(0.5);
-			//printf(" Waiting for USPO to initializate..\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\r");
-			//alutSleep(0.5);
-			//printf(" Waiting for USPO to initializate...\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\r");
-			//alutSleep(0.5);
 		}
 	}
 	atexit(freeOpenAL);//Выполнение функции KillALData на завершении программы
@@ -1557,15 +1650,15 @@ double interpolation(double x0, double fx0, double x1, double fx1, double x)
 	{
 		return fx1;
 	}
-	if (x0<x1 && x<x0)
+	if (x0 < x1 && x < x0)
 	{
 		return fx0;
 	}
-	if (x0>x1 && x<x1)
+	if (x0 > x1 && x < x1)
 	{
 		return fx1;
 	}
-	if (x0>x1 && x>x0)
+	if (x0 > x1 && x > x0)
 	{
 		return fx0;
 	}
@@ -1575,20 +1668,20 @@ double interpolation(double x0, double fx0, double x1, double fx1, double x)
 
 double interpolation(double x0, double fx0, double x1, double fx1, double x2, double fx2, double x)
 {
-	
+
 	if (x0<x2 && x>x2)
 	{
 		return fx2;
 	}
-	if (x0<x2 && x<x0)
+	if (x0 < x2 && x < x0)
 	{
 		return fx0;
 	}
-	if (x0>x2 && x<x2)
+	if (x0 > x2 && x < x2)
 	{
 		return fx2;
 	}
-	if (x0>x2 && x>x0)
+	if (x0 > x2 && x > x0)
 	{
 		return fx0;
 	}
@@ -1596,7 +1689,7 @@ double interpolation(double x0, double fx0, double x1, double fx1, double x2, do
 	//если квадратичная интерполяция не работает - берем линейную
 	if (x1 == x0 | x2 == x1)
 	{
-		return	interpolation(x0,fx0,x1,fx1,x);
+		return	interpolation(x0, fx0, x1, fx1, x);
 	}
 	else
 	{
@@ -1817,7 +1910,7 @@ double getOffset(double pitch, string filename, double parameter)
 
 }
 
-int crossFade(double *gf, double *gr, double parameter, double limit1,double limit2,double mult)//source - fade , source2 - rise
+int crossFade(double *gf, double *gr, double parameter, double limit1, double limit2, double mult)//source - fade , source2 - rise
 {
 	//limit1 - значение параметра в начале кросс-фэйда
 	//limit2 - значение параметра в конце
@@ -1825,16 +1918,16 @@ int crossFade(double *gf, double *gr, double parameter, double limit1,double lim
 	//source - источник, громкость которого убывает
 	//source2 - источник, громкость которого нарастает
 	//double gf, gr;
-	
+
 	if ((limit2 > limit1 && parameter < limit1) || (limit2 < limit1 && parameter > limit1))
-	{	
+	{
 		*gf = 1 * mult;
 		*gr = 0;
-	}	
+	}
 	if ((limit2 > limit1 && parameter > limit2) || (limit2 < limit1 && parameter < limit2))
 	{
 		*gf = 0;
-		*gr = 1* mult;
+		*gr = 1 * mult;
 	}
 	if ((limit2 > limit1 && parameter <= limit2 && parameter >= limit1) || (limit2 < limit1 && parameter >= limit2 && parameter <= limit1))
 	{
@@ -1858,10 +1951,10 @@ int crossFade(double *gf, double *gr, double parameter, double limit1,double lim
 
 	if (limit2 > limit1 && parameter > limit2)
 		return 1;//возвращаем 1 когда кроссфэйд закончен
-	
+
 	if (limit2 < limit1 && parameter < limit2)
 		return 1;
-	
+
 	return 0;//возвращаем 0 когда кроссфэйд не закончен
 }
 
@@ -1929,15 +2022,15 @@ int getMaxAvaliableSources()
 
 	int maxmono = 0, maxstereo = 0;
 
-	device = alcOpenDevice(NULL);
-	if (device == NULL)
+	device = alcOpenDevice(0);
+	if (device == 0)
 	{
 		cout << alcGetString(device, alcGetError(device)) << endl;
 		return AL_FALSE;
 	}
 
-	context = alcCreateContext(device, NULL);
-	if (context == NULL)
+	context = alcCreateContext(device, 0);
+	if (context == 0)
 	{
 		cout << alcGetString(device, alcGetError(device)) << endl;
 		alcCloseDevice(device);
@@ -1957,7 +2050,7 @@ int getMaxAvaliableSources()
 	attrs = new ALCint[size];
 	alcGetIntegerv(device, ALC_ALL_ATTRIBUTES, size, attrs);
 
-	for (size_t i = 0; i<size; ++i)
+	for (size_t i = 0; i < size; ++i)
 	{
 		if (attrs[i] == ALC_SYNC)
 		{
@@ -1984,7 +2077,7 @@ int getMaxAvaliableSources()
 	}
 	alcDestroyContext(context);
 	alcCloseDevice(device);
-	return maxmono + maxstereo;	
+	return maxmono + maxstereo;
 }
 
 int Sound::play(bool status, string path_on, string path_w, string path_off, double gain_mult)
@@ -2153,7 +2246,7 @@ int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount
 	check = fopen(path.c_str(), "r");
 	if (!check)
 	{
-		cout <<"\n file [" << path << "] is missing\t\t\t\t\t\t\r" << endl;
+		cout << "\n file [" << path << "] is missing\t\t\t\t\t\t\r" << endl;
 		return 0;
 	}
 	fclose(check);
@@ -2655,7 +2748,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				alSourcei(source[2], AL_LOOPING, AL_TRUE);
 				pinkNoise = "set";
 			}
-			
+
 			double pinkNoiseGain = interpolation(0, 0, 42, 0.125, 70, 1, abs(velocityX));
 			alSourcef(source[2], AL_GAIN, pinkNoiseGain);
 
@@ -2681,8 +2774,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			{
 				velocityGain = (abs(velocityX) - 28)* 0.1;//0.15дб на 1 м/с
 			}
-				
-			
+
+
 			//Усиление от шага
 			double averangeStep = 0;
 			if (high > 0)
@@ -2700,7 +2793,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				vectorStep.clear();
 			}
 			double stepGain = 0.75 * (step - averangeStep) * interpolation(0, 0, 1, 1, high);//
-			
+
 			//усиление по шагу в НЧ
 			double mid2FreqStepGain = step * 0.6 * interpolation(0, 1, 10, 0, high);
 
@@ -2816,7 +2909,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			{
 				velocityGain = (abs(velocityX) - 50)* 0.2;//0.1дб на 1 м/с
 			}
-		
+
 			//Набираем массив для рассчета усиления от среднего значения шага за 50с
 			double averangeStep = 0;
 			if (high > 0)
@@ -2870,7 +2963,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			{
 				flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
 				flapCGain = (flapCGain > 4) ? 4 : flapCGain;
-				
+
 			}
 
 			double lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain * 0.3 + flapCGain + velocityGain)*0.05); //0.15 -> 0.15
@@ -2933,7 +3026,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			//регулируем громкость шума
 			double pinkNoiseGain = pow(10, ((69.4 - abs(velocityX)) * (-0.86)) * 0.05);
 			alSourcef(source[2], AL_GAIN, pinkNoiseGain);
-			
+
 			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 			double averangeTurn = 0;
 			if (averangeCalcPeriod >= 30 && !vector.empty())
@@ -3067,7 +3160,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 			alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			alFilteri(filter[i], AL_FILTER_TYPE, AL_FILTER_LOWPASS);//определяем фильтр как НЧ
 			alFilterf(filter[i], AL_LOWPASS_GAIN, 0);//убираем звук чистого источника
-			alSource3i(source[i], AL_AUXILIARY_SEND_FILTER, effectSlot[i], 0, NULL);//посылаем выход источника через слот с эффектом
+			alSource3i(source[i], AL_AUXILIARY_SEND_FILTER, effectSlot[i], 0, 0);//посылаем выход источника через слот с эффектом
 			alSourcei(source[i], AL_DIRECT_FILTER, filter[i]);//подключаем фильтр к источнику
 			eq[i] = "set";
 		}
@@ -3177,9 +3270,9 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 			double fade = 0;
 			double rise = 0;
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-			
+
 			//Если запуск проигрывается - плавно переходим на цикл
-			if(sourceStatus[0] == AL_PLAYING)
+			if (sourceStatus[0] == AL_PLAYING)
 			{
 				//Оцениваем выходную громкость источников по параметрам оборотов и громкости,
 				//чтобы обеспечить нормальное звучание, если обороты по какимто причинам не вышли на малый газ,
@@ -3202,7 +3295,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 				fade = 0;
 				rise = 1;
 			}
-			
+
 			alSourcef(source[0], AL_GAIN, fade);
 			alSourcef(source[1], AL_GAIN, rise);
 
@@ -3400,7 +3493,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			sourceStatus[0] = setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap"]);
 			alSourcei(source[0], AL_LOOPING, AL_TRUE);
 			key[0] = h.fullName["vint_flap"];
-			
+
 		}
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
@@ -3425,7 +3518,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Хлопки плавно появляются
 		double h_g = interpolation(0, 0, 0.5, 0.5, 1, 1, high);//К 1 метру по высоте
 		double v_g = interpolation(10, 0, 14, 0.25, 28, 1, abs(velocityX));//К 28 м/с
-		
+
 		//Громкость хлопков зависит от атаки
 		double gain_a = interpolation(-1, -15, 1, -9, 3, -3, atkXvel);
 
@@ -3434,7 +3527,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		//При а = 6 м/с^2 громкость хлопков номинальная, при условии, что вертолет летит вниз, а скорость ниже 60 км/ч (16.67)
 		double flapCGainAccX = interpolation(0.56, 0, 6, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
-		
+
 		if (flapIndicator == 2)//хлопаем
 		{
 			offsetOn += deltaTime;
@@ -3469,7 +3562,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			sourceStatus[1] = setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_low"]);
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
 			key[1] = h.fullName["vint_flap_low"];
-			
+
 		}
 
 		double averangeTurn = 0;
@@ -3543,10 +3636,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		//переходит в усиление НЧ редуктора по vy
 		double flapCGainAccX = interpolation(0.56, 0, 3, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * offsetOn  * interpolation(0, 1, 16.67, 0, velocityX);
-		
+
 		//Из 2х видов хлопков выбираем более громкие
 		double gain = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX;
-		
+
 		//Устанавливаем громкость НЧ и ВЧ хлопков
 		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain * (1 - low));
 		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor * masterGain * low);
@@ -3581,7 +3674,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double v_g = 0;
 		const double floor = 5;//сдвигаем передаточную функцию атаки на floor вправо
 
-		//
+		//Игнорируем некорректные значения атаки, при маленьких значениях скоростей
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
 
 		h_g = interpolation(0, 0, 0.5, 0.5, 1, 1, high);
@@ -3622,7 +3715,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor *masterGain *(h.vintFlapFactor*masterGain - low));
 		alSourcef(source[1], AL_GAIN, gain * h.vintFlapFactor *masterGain * low);
 
-		
+
 	}
 	//Полеты ка 27 - 29
 	if (h.modelName == "ka_27" || h.modelName == "ka_29")
@@ -3640,7 +3733,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[1]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			alFilteri(filter[1], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 			alFilterf(filter[1], AL_LOWPASS_GAIN, 0);
-			alSource3i(source[1], AL_AUXILIARY_SEND_FILTER, effectSlot[1], 0, NULL);
+			alSource3i(source[1], AL_AUXILIARY_SEND_FILTER, effectSlot[1], 0, 0);
 			alSourcei(source[1], AL_DIRECT_FILTER, filter[1]);
 			//загружаем равномерные ВЧ хлопки
 			setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap_A"]);
@@ -3650,7 +3743,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 			alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
-			alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, NULL);
+			alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
 			alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
 
 			alSourceStop(source[0]);
@@ -3667,8 +3760,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			key[1] = h.fullName["vint_flap_B"];
 			key[2] = h.fullName["vint_flap_C"];
 		}
-		
-		
+
+
 		//Управляем частотой среза хлопков от оборотов редуктора
 		double lowerFreqLimit = log10(1000);//переходим в линейную шкалу
 		double highterFreqLimit = log10(6000);
@@ -3727,7 +3820,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		accelerationGain = pow(10, accelerationGain * 0.05);//коэф
 
 		double hiSpeedGain = 0;
-		if (abs(velocityX)<= 61.6)
+		if (abs(velocityX) <= 61.6)
 		{
 			hiSpeedGain = interpolation(50, 0, 61.6, 0.67, abs(velocityX));
 		}
@@ -3758,7 +3851,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			flapA = (accelerationX <= accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
 			flapB = (accelerationX > accelerationXBorder) ? 1 : 0;//условие неравномерных хлопков
 		}
-															
+
 		//Плавный переход между НЧ и ВЧ хлопками по шагу
 		double flapABStep = 0;
 		double flapCStep = 0;
@@ -3773,7 +3866,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double flapABVX = 0;
 		double flapCVX = 0;
 		crossFade(&flapCVX, &flapABVX, abs(velocityX), 15.28, 16.67, 1);
-		
+
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		double flapCGainAccX = 1;
 		if (flapIndicator == 2 && abs(velocityX) < 16.67)
@@ -3902,7 +3995,7 @@ int SKV::play(Helicopter h, SOUNDREAD sr)
 		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 		alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 		alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
-		alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, NULL);
+		alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
 		alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
 		eq = "set";
 	}
@@ -3929,7 +4022,7 @@ int SKV::play(Helicopter h, SOUNDREAD sr)
 
 	double avrTurngain = (-5) + (sr.reduktor_gl_obor - averangeTurn) * 4;
 	avrTurngain = (avrTurngain > 0) ? 0 : avrTurngain;
-	
+
 	double highFreqGain = pow(10, avrTurngain * 0.05);
 
 	double highCutoffFreq = 4000;//ВЧ 4000-16000
@@ -3953,7 +4046,7 @@ int Runway::play(Helicopter h, double obj)
 		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 		alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 		alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
-		alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, NULL);
+		alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
 		alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
 		eq = "set";
 	}

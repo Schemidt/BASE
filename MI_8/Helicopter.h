@@ -2,7 +2,7 @@
 \file
 \brief Класс Helicopter / объявление
 
-Данный файл объявляет класс Helicopter 
+Данный файл объявляет класс Helicopter
 */
 #pragma once
 #pragma pack ( push, 1 )

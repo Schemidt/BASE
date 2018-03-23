@@ -175,7 +175,7 @@ void Helicopter::setParam(string model)
 		redTurnoverMg1 = 50;
 		redTurnoverMg2 = 63;
 		redTurnoverAvt = 96;
-	   //Множители громкости		
+		//Множители громкости		
 		vsuFactor = 1/*всу*/;
 		vsuHpFactor = 0.06/*всу хп*/;
 		engFactor = 1/*дв*/;
@@ -320,7 +320,7 @@ void Helicopter::setParam(string model)
 		engTurnoverAvt = 79;
 		redTurnoverMg1 = 49;
 		redTurnoverMg2 = 62;
-		redTurnoverAvt = 99; 
+		redTurnoverAvt = 99;
 		//Множители громкости
 		engFactor = 0.398/*дв*/;
 		engHpFactor = 0.141/*дв хп*/;
@@ -444,6 +444,6 @@ Helicopter::Helicopter()
 
 Helicopter::~Helicopter()
 {
-	
+
 }
 
