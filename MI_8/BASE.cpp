@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
 	Sound *perek1 = nullptr;
 	Sound *perek2 = nullptr;
 	Sound *ko50 = nullptr;
-	SKV *skv = nullptr;
+	Skv *skv = nullptr;
 	Sound *skvUni = nullptr;
 	Sound *fire1 = nullptr;
 	Sound *fire2 = nullptr;
@@ -964,7 +964,7 @@ int main(int argc, char *argv[])
 				{
 					if (localdata.p_skv_on)//Условие создания объекта
 						if (!skv)//Если объект не создан 
-							skv = new SKV;//Создаем объект
+							skv = new Skv;//Создаем объект
 					if (skv)//Если объект создан - используем его
 					{
 						skv->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
@@ -1107,7 +1107,7 @@ int main(int argc, char *argv[])
 			}
 			//Крушение
 			//Если звук столкновения с препятствием включен в проект
-			if (1)
+			if (true)
 			{
 				if (localdata.p_crash)//Условие создания объекта
 					if (!crash)//Если объект не создан 
@@ -1224,7 +1224,7 @@ int main(int argc, char *argv[])
 				}
 			}
 			//Дождь
-			if (1)
+			if (true)
 			{
 				if (localdata.p_rain)//Условие создания объекта
 					if (!rain)//Если объект не создан 
@@ -1261,7 +1261,7 @@ int main(int argc, char *argv[])
 						//каждые 20 выпусков процесс можно повторить без потери заднего фронта
 						//количество необходимых каналов равно количеству пусков, которое в свою очередь
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
-						if (timerNar8 >= 0.05*i & counterNar8 < 20 & i >= counterNar8)
+						if (timerNar8 >= 0.05 * i & counterNar8 < 20 & i >= counterNar8)
 						{
 							if (!nar8[i])//Если объект не создан 
 								nar8[i] = new Sound;//Создаем объект
@@ -1302,11 +1302,11 @@ int main(int argc, char *argv[])
 					timerNar13 += Sound::deltaTime;
 					for (int i = 0; i < 5; i++)
 					{
-						//воспроизводим звук выстрела 1го НАР13 каждые 0.05с - 20 раз
-						//каждые 20 выпусков процесс можно повторить без потери заднего фронта
+						//воспроизводим звук выстрела 1го НАР13 каждые 0.12с - 5 раз
+						//каждые 5 выпусков процесс можно повторить без потери заднего фронта
 						//количество необходимых каналов равно количеству пусков, которое в свою очередь
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР13
-						if (timerNar13 >= 0.12*i & counterNar13 < 5 & i >= counterNar13)
+						if (timerNar13 >= 0.12 * i & counterNar13 < 5 & i >= counterNar13)
 						{
 							if (!nar13[i])//Если объект не создан 
 								nar13[i] = new Sound;//Создаем объект
@@ -1404,7 +1404,7 @@ int main(int argc, char *argv[])
 					if (redCrash->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(redCrash);//Удаляем объект
 					else
-						redCrash->pitch = localdata.reduktor_gl_obor / helicopter.redTurnoverAvt / 2.;
+						redCrash->pitch = localdata.reduktor_gl_obor / helicopter.redTurnoverAvt / 2.0;
 				}
 
 				if (localdata.p_eng1_zap | localdata.p_eng2_zap | localdata.reduktor_gl_obor > 0)//условие создания объекта редуктора
@@ -1566,19 +1566,6 @@ int main(int argc, char *argv[])
 						Free(beep);//Удаляем объект
 				}
 			}
-			////Вентилятор
-			//if (helicopter.fenFactor)
-			//{
-			//	if (localdata.rez_5)//Условие создания объекта
-			//		if (!undefined0)//Если объект не создан 
-			//			undefined0 = new Sound;//Создаем объект
-			//	if (undefined0)//Если объект создан - используем его
-			//	{
-			//		undefined0->initializeSound(localdata.rez_5, helicopter.fullName["undefined0_on"], helicopter.fullName["undefined0_w"], "NULL", helicopter.fenFactor);//Воспроизводим звук - записываем состояние звука в play
-			//		if (undefined0->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-			//			Free(undefined0);//Удаляем объект
-			//	}
-			//}
 			//Неопределенный 1
 			if (helicopter.undefinedFactor)
 			{
@@ -1668,7 +1655,6 @@ double interpolation(double x0, double fx0, double x1, double fx1, double x)
 
 double interpolation(double x0, double fx0, double x1, double fx1, double x2, double fx2, double x)
 {
-
 	if (x0<x2 && x>x2)
 	{
 		return fx2;
@@ -1705,11 +1691,9 @@ double interpolation(double x0, double fx0, double x1, double fx1, double x2, do
 
 double getPitch(double offset, string filename, double parameter)
 {
-	double new_pitch;
 	double turn = 0;
 	double t = 0;
 	double v = 0;
-	int i = 0;
 	vector <double> time, value;
 
 	//данные в базе должны храниться в строках парами, по паре в каждой строке (не больше)
@@ -1727,7 +1711,7 @@ double getPitch(double offset, string filename, double parameter)
 	double x, x0, x1, x2, fx, fx0, fx1, fx2, a0, a1, a2;
 	int n = time.size();
 
-	for (i = 0; i < n; i++)
+	for (int i = 0; i < n; i++)
 	{
 		if (offset < time[0])
 		{
@@ -1774,25 +1758,24 @@ double getPitch(double offset, string filename, double parameter)
 			}
 		}
 	}
+	double new_pitch = 0;
 	if (turn <= 0)
+	{
 		new_pitch = 1;
+	}
 	else
+	{
 		new_pitch = parameter / turn;	//вычисляем результирующий Pitch на основе отношениz настоящего уровня оборотов к базовому (получен при записи аудио-файла)
-
+	}
 	return new_pitch;
 }
 
 double getOffset(double pitch, string filename, double parameter)
 {
-	double new_offset = 0;
-	double turn = 0;
-	int i = 0;
-
+	//данные в базе должны храниться в строках парами, по паре в каждой строке (не больше)
 	double t = 0;
 	double v = 0;
 	vector <double> time, value;
-
-	//данные в базе должны храниться в строках парами, по паре в каждой строке (не больше)
 	string str;
 	ifstream base(filename);
 	while (!base.eof())
@@ -1805,30 +1788,32 @@ double getOffset(double pitch, string filename, double parameter)
 	base.close();
 	int n = time.size();
 
+	double turn = 0;
 	if (parameter < 0)
 		turn = 0;
 	else
 		turn = parameter / pitch;
 
 	double x, x0, x1, x2, fx, fx0, fx1, fx2, a0, a1, a2;
+	double newOffset = 0;
 
 	if (value[0] <= value[n - 1])
 	{
-		for (i = 0; i < n; i++)
+		for (int i = 0; i < n; i++)
 		{
 			if (turn < value[i] && i == 0)
 			{
-				new_offset = time[i];//достаем обороты из базы
+				newOffset = time[i];//достаем обороты из базы
 				break;
 			}
 			if (turn == value[i])//реальная отметка времени совпала с отметкой из бд
 			{
-				new_offset = time[i];//достаем обороты из базы
+				newOffset = time[i];//достаем обороты из базы
 				break;
 			}
 			if (turn > value[i] && i == n - 1)//отметка не совпала с базой
 			{
-				new_offset = time[i];//достаем обороты из базы
+				newOffset = time[i];//достаем обороты из базы
 				break;
 			}
 			if (turn > value[i] && turn < value[i + 1])//отметка не совпала с базой
@@ -1851,7 +1836,7 @@ double getOffset(double pitch, string filename, double parameter)
 					x = turn; x0 = value[i]; fx0 = time[i]; x1 = value[i + 1]; fx1 = time[i + 1]; x2 = value[i + 2]; fx2 = time[i + 2];
 				}
 
-				new_offset = interpolation(x0, fx0, x1, fx1, x2, fx2, x);
+				newOffset = interpolation(x0, fx0, x1, fx1, x2, fx2, x);
 			}
 
 		}
@@ -1860,21 +1845,21 @@ double getOffset(double pitch, string filename, double parameter)
 	else
 	{
 
-		for (i = 0; i < n; i++)
+		for (int i = 0; i < n; i++)
 		{
 			if (turn > value[0])
 			{
-				new_offset = time[0];//достаем обороты из базы
+				newOffset = time[0];//достаем обороты из базы
 				break;
 			}
 			if (turn == value[i])//реальная отметка времени совпала с отметкой из бд
 			{
-				new_offset = time[i];//достаем обороты из базы
+				newOffset = time[i];//достаем обороты из базы
 				break;
 			}
 			if (turn < value[n - 1])//отметка не совпала с базой
 			{
-				new_offset = time[n - 1];//достаем обороты из базы
+				newOffset = time[n - 1];//достаем обороты из базы
 				break;
 			}
 			if (turn < value[i] && turn > value[i + 1])//отметка не совпала с базой
@@ -1897,16 +1882,16 @@ double getOffset(double pitch, string filename, double parameter)
 					x = turn; x0 = value[i]; fx0 = time[i]; x1 = value[i + 1]; fx1 = time[i + 1]; x2 = value[i + 2]; fx2 = time[i + 2];
 				}
 
-				new_offset = interpolation(x0, fx0, x1, fx1, x2, fx2, x);
+				newOffset = interpolation(x0, fx0, x1, fx1, x2, fx2, x);
 			}
 
 		}
 	}
 
-	if (new_offset <= 0)
-		new_offset = 0;
+	if (newOffset <= 0)
+		newOffset = 0;
 
-	return new_offset;
+	return newOffset;
 
 }
 
@@ -2020,8 +2005,6 @@ int getMaxAvaliableSources()
 	ALCdevice *device;
 	ALCcontext *context;
 
-	int maxmono = 0, maxstereo = 0;
-
 	device = alcOpenDevice(0);
 	if (device == 0)
 	{
@@ -2050,9 +2033,11 @@ int getMaxAvaliableSources()
 	attrs = new ALCint[size];
 	alcGetIntegerv(device, ALC_ALL_ATTRIBUTES, size, attrs);
 
+	int maxmono = 0;
+	int maxstereo = 0;
 	for (size_t i = 0; i < size; ++i)
 	{
-		if (attrs[i] == ALC_SYNC)
+		/*if (attrs[i] == ALC_SYNC)
 		{
 			std::cout << " Flag, indicating a synchronous context : " << attrs[i + 1] << std::endl;
 		}
@@ -2063,15 +2048,15 @@ int getMaxAvaliableSources()
 		if (attrs[i] == ALC_FREQUENCY)
 		{
 			std::cout << " Frequency for mixing output buffer, in units of Hz : " << attrs[i + 1] << std::endl;
-		}
+		}*/
 		if (attrs[i] == ALC_MONO_SOURCES)
 		{
-			std::cout << " A hint indicating how many sources should be capable of supporting mono data: " << attrs[i + 1] << std::endl;
+			//std::cout << " A hint indicating how many sources should be capable of supporting mono data: " << attrs[i + 1] << std::endl;
 			maxmono = attrs[i + 1];
 		}
 		if (attrs[i] == ALC_STEREO_SOURCES)
 		{
-			std::cout << " A hint indicating how many sources should be capable of supporting stereo data: " << attrs[i + 1] << std::endl;
+		//	std::cout << " A hint indicating how many sources should be capable of supporting stereo data: " << attrs[i + 1] << std::endl;
 			maxstereo = attrs[i + 1];
 		}
 	}
@@ -2087,6 +2072,7 @@ int Sound::play(bool status, string path_on, string path_w, string path_off, dou
 	bool end;
 	bool free;
 
+	//Заполняем все 3 буфера файлами, сразу
 	if (load != "set")
 	{
 		if (path_on != "NULL")
@@ -2100,7 +2086,7 @@ int Sound::play(bool status, string path_on, string path_w, string path_off, dou
 				return 0;
 		load = "set";
 	}
-
+	//Узнаем длинну файлов запуска и остановки
 	if (path_on != "NULL")
 		lengthOn = getLengthWAV(path_on);
 	if (path_off != "NULL")
@@ -2216,11 +2202,13 @@ int Sound::play(bool status, string path_on, string path_w, string path_off, dou
 	{
 		alSourcef(source[0], AL_PITCH, pitch);
 		alSourcef(source[0], AL_GAIN, gain*gain_mult*masterGain);
+		//Пока идет запуск - высчитываем точку остановки
 		if (soundOn)
 		{
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
 			offsetOff = lengthOff * (1 - (offsetOn / lengthOn));
 		}
+		//Пока идет остановка - высчитываем точку запуска
 		if (soundOff)
 		{
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOff);
@@ -2238,7 +2226,6 @@ int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount
 	void *iData;
 	void *rData;
 	int rSize;
-	bool ok = 0;
 	int bitsPerSample = 0;
 	ALboolean loop;
 	FILE *check;
@@ -2266,13 +2253,13 @@ int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount
 		{
 			bitsPerSample = 8;
 			unsigned char *monodata0 = ((unsigned char*)iData);
-			ok = mono2channels(monodata0, size, channelsCount, channels.data(), &rData, &rSize);
+			mono2channels(monodata0, size, channelsCount, channels.data(), &rData, &rSize);
 		}
 		if (format == AL_FORMAT_MONO16)//16бит
 		{
 			bitsPerSample = 16;
 			short *monodata1 = ((short*)iData);
-			ok = mono2channels(monodata1, size, channelsCount, channels.data(), &rData, &rSize);
+			mono2channels(monodata1, size, channelsCount, channels.data(), &rData, &rSize);
 		}
 		if (format != AL_FORMAT_MONO16 && format != AL_FORMAT_MONO8)//неподдерживаемый формат
 			return 0;
@@ -2317,6 +2304,11 @@ int Sound::switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset)
 	alSourcePlay(*Source);
 	alGetSourcei(*Source, AL_SOURCE_STATE, &play);
 	return play;
+}
+
+Reductor::Reductor() : Sound(3, 3, 2)
+{
+
 }
 
 int Reductor::play(Helicopter h, SOUNDREAD sr)
@@ -3148,6 +3140,19 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
+Engine::Engine() : Sound(2, 2, 2)
+{
+	//При одновременном запуске двигателей возможен эффект наложения, дающий искажение звука
+	//Поэтому каждый объект двигателя имеет свой параметр фазы запуска
+	engNum++;
+	phase = (engNum - 1) * 0.33;
+}
+
+Engine::~Engine()
+{
+	engNum--;
+}
+
 int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h)
 {
 	for (size_t i = 0; i < 2; i++)
@@ -3402,6 +3407,11 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 		}
 	}
 	return 1;
+}
+
+VintFlap::VintFlap() : Sound(3, 3, 2)
+{
+
 }
 
 int VintFlap::play(Helicopter h, SOUNDREAD sr)
@@ -3891,6 +3901,11 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
+VintSwish::VintSwish() : Sound(2, 2, 0)
+{
+
+}
+
 int VintSwish::play(Helicopter h, SOUNDREAD sr)
 {
 
@@ -3987,7 +4002,12 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
-int SKV::play(Helicopter h, SOUNDREAD sr)
+Skv::Skv() : Sound(1, 3, 1)
+{
+
+}
+
+int Skv::play(Helicopter h, SOUNDREAD sr)
 {
 	if (eq != "set")
 	{
@@ -4034,6 +4054,11 @@ int SKV::play(Helicopter h, SOUNDREAD sr)
 	alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
 	return 1;
+}
+
+Runway::Runway() : Sound(2, 2, 1)
+{
+
 }
 
 int Runway::play(Helicopter h, double obj)
