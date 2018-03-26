@@ -121,6 +121,8 @@ void Helicopter::setPath(string pathToFile)
 	shortName["vint_swish_w"] = "vint_hi_1eng.wav";//!<имя файла звука свиста винта
 	shortName["vint_swish_w_mg"] = "vint_hi_mg.wav";//!<имя файла звука свиста винта
 	shortName["vint_swish_w_avt"] = "vint_hi_avt.wav";//!<имя файла звука свиста винта
+	shortName["beats"] = "beats.wav";//!<имя файла звука биения
+	shortName["flapping"] = "flapping.wav";//!<имя файла звука ???
 											//Тормоз шасси
 	shortName["brake"] = "brake_on.wav";//!<имя файла звука тормоза шасси
 	shortName["poff"] = "check_brake.wav";//!<имя файла звука сброса давления
@@ -260,9 +262,9 @@ void Helicopter::setParam(string model)
 		runwayFactor = 0.708/*ВПП*/;
 		//airNoiseFactor = 1/*шум*/;
 		rocketHitFactor = 0.8/*Попадание ракеты*/;
-		vintSwishFactor = 1/*ВИНТ Верх*/;
+		vintSwishFactor = 0.708/*ВИНТ Верх*/;
 		vintBrakeFactor = 0.16/*Винт тормоз*/;
-		vintFlapFactor = 1/*Винт хлопки*/;
+		vintFlapFactor = 0.4/*Винт хлопки*/;
 		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
 		nipFactor = 0.0875/*НИП*/;

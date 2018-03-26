@@ -310,8 +310,6 @@ double Sound::globalWindow = 50;//!<Переменная времени для набора значений в мас
 
 
 AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_2;//Конфигурация каналов звука
-double window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
-double periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
 
 /*!\brief Основная функция программы*/
 int main(int argc, char *argv[])
@@ -447,6 +445,8 @@ int main(int argc, char *argv[])
 	double vsuDownTimer = 0;
 	double vsuUpTimer = 0;
 	double timerAvr = 0;
+	const double window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
+	double periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (true)
 	{
@@ -1651,6 +1651,7 @@ int main(int argc, char *argv[])
 			{
 				Free(vintFlap);
 			}
+			timerAvr = 0;
 			periodCalc = 0;
 			Sound::currentTime = localdata.time;
 		}
@@ -2085,7 +2086,7 @@ int getMaxAvaliableSources()
 		}
 		if (attrs[i] == ALC_STEREO_SOURCES)
 		{
-		//	std::cout << " A hint indicating how many sources should be capable of supporting stereo data: " << attrs[i + 1] << std::endl;
+			//	std::cout << " A hint indicating how many sources should be capable of supporting stereo data: " << attrs[i + 1] << std::endl;
 			maxstereo = attrs[i + 1];
 		}
 	}
@@ -2852,12 +2853,12 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			double velocityGain = 0;
 			if (abs(velocityX) >= 28)
 			{
-				velocityGain = (abs(velocityX) - 28)* 0.1;//0.15дб на 1 м/с
+				velocityGain = (abs(velocityX) - 28)* 0.1;//0.1дб на 1 м/с
 			}
 
 
 			//Усиление от шага
-			double averangeStep = getAverange("step",35);
+			double averangeStep = getAverange("step", 35);
 			/*double averangeStep = 0;
 			if (high > 0)
 			{
@@ -2906,16 +2907,9 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			}
 
 			//Страгивание
-			//Усиление редуктора в НЧ в начале движения
-			double stalkingGain = 0;
-			if (accelerationX > 0)
-			{
-				stalkingGain = accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high;
-			}
-			else
-			{
-				stalkingGain = 0;
-			}
+			//Усиление редуктора в НЧ в начале движения по ВПП
+			double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high : 0;
+			
 
 			double lowFreqGain = pow(10, (mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
 			double mid1FreqGain = pow(10, (turnGain + stepGain + velocityGain + mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
@@ -2981,9 +2975,9 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			for (auto& x : vector)
 				averangeTurn += x / vector.size();*/
 
-			//Общее усиление от скорости выше 50м/с
-			double velocityGain = (abs(velocityX) >= 50)?(abs(velocityX) - 50)* 0.2 : 0;//0.1дб на 1 м/с
-			
+				//Общее усиление от скорости выше 50м/с
+			double velocityGain = (abs(velocityX) >= 50) ? (abs(velocityX) - 50)* 0.2 : 0;//0.1дб на 1 м/с
+
 			//Набираем массив для рассчета усиления от среднего значения шага за 50с
 			double averangeStep = getAverange("step", 50);
 			//double averangeStep = 0;
@@ -3038,7 +3032,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			{
 				flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
 				flapCGain = (flapCGain > 4) ? 4 : flapCGain;
-
 			}
 
 			double lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain * 0.3 + flapCGain + velocityGain)*0.05); //0.15 -> 0.15
@@ -3111,7 +3104,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			for (auto& x : vector)
 				averangeTurn += x / vector.size();*/
 
-			//усиление от скорости выше 50км/ч (14м/c)
+				//усиление от скорости выше 50км/ч (14м/c)
 			double velocityGain = 0;
 			if (abs(velocityX) < 42)
 			{
@@ -3455,7 +3448,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 			{
 				averangeTurn = getAverange("eng2Turns", 25);
 			}
-			
+
 			/*double averangeTurn = 0;
 			averangeCalcPeriod += deltaTime;
 			if (averangeCalcPeriod >= 25 && !vector.empty())
@@ -3464,7 +3457,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 			for (auto& x : vector)
 				averangeTurn += x / vector.size();*/
 
-			//усиление от оборотов выше 10000
+				//усиление от оборотов выше 10000
 			double highFreqTurnGain = (parameter - averangeTurn) * 0.35;
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 			//усиление от оборотов
@@ -3614,9 +3607,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		for (auto& x : vector)
 			averangeTurn += x / vector.size();*/
 
-		//Усиление от оборотов
-		//только если атака больше 2х
-		//делает огибающую атаки более динамичной
+			//Усиление от оборотов
+			//только если атака больше 2х
+			//делает огибающую атаки более динамичной
 		double turnsGain = 0;
 		if (atkXvel >= 2)
 		{
