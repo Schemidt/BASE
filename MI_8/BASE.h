@@ -77,7 +77,9 @@ public:
 	static double calcA;/*!< Атака винта */
 	static double RedTurnAcc;/*!< Ускорение оборотов редуктора (dturn/dt) */
 
-	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime, vectorRedTurn;//Массивы для хранения значений переменных за некоторое время (определено условием в main), для расчета производных
+	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime, vectorRedTurn;//!<Массивы для хранения значений переменных за некоторое время (определено условием в main), для расчета производных
+	static vector<double> vectorAvrEng1Turn, vectorAvrEng2Turn, vectorAvrRedTurn, vectorAvrStep, vectorAvrAtk;//!<Массивы для рассчета среднего методом скользящего среднего
+	static double globalWindow;//!<Переменная времени для набора значений в массивы для рассчета среднего
 
 	unique_ptr<int[]> sourceStatus;/*!< Переменная для статуса источника */
 	unique_ptr<ALuint[]> source;/*!< Переменная для источника */
@@ -179,6 +181,8 @@ public:
 	*/
 	int switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset);
 
+	double getAverange(string parameter,double seconds);
+
 };
 
 /*!
@@ -195,11 +199,11 @@ public:
 
 	bool hovering = 0;/*!< Переменная для статуса полета на висении */
 
-	double averangeCalcPeriod = 0;
-	double averangeCalcPeriodAtk = 0;
-	double averangeCalcPeriodStep = 0;
+	//double averangeCalcPeriod = 0;
+	//double averangeCalcPeriodAtk = 0;
+	//double averangeCalcPeriodStep = 0;
 
-	vector<double> vector, vectorStep, vectorAtk;
+	//vector<double> vector, vectorStep, vectorAtk;
 
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
 	string pinkNoise;/*!< Переменная для однократной загрузки буфера */
@@ -231,12 +235,13 @@ class Engine : public Sound
 {
 public:
 
-	static int engNum;/*!< Переменная для количества инициализированных двигателей в программе */
+	static int engCount;/*!< Переменная для количества инициализированных двигателей в программе */
 	double phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
+	int engNum;//!<Номер двигателя
 
 	double averangeCalcPeriod = 0;
 
-	vector<double> vector;
+	//vector<double> vector;
 
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
 	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
@@ -299,9 +304,9 @@ class VintFlap : public Sound
 {
 public:
 
-	double averangeCalcPeriod = 0;
+	//double averangeCalcPeriod = 0;
 
-	vector<double> vector;
+	//vector<double> vector;
 
 	string key[3];/*!< Переменная для однократной загрузки буфера */
 
@@ -359,10 +364,10 @@ public:
 
 	string eq;/*!< Переменная для однократной загрузки буфера */
 
-	double averangeCalcPeriod = 0;
-	double averangeCalcPeriodStep = 0;
+	//double averangeCalcPeriod = 0;
+	//double averangeCalcPeriodStep = 0;
 
-	vector<double> vector, vectorStep;
+	//vector<double> vector, vectorStep;
 
 	Skv();
 

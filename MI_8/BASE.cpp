@@ -302,9 +302,12 @@ double Sound::accelerationVy = 0;
 double Sound::derivStep = 0;
 double Sound::calcA = 0;
 double Sound::RedTurnAcc = 0;
-int Engine::engNum = 0;
+int Engine::engCount = 0;
 
 vector<double> Sound::vectorHigh, Sound::vectorVy, Sound::vectorVx, Sound::vectorAcc, Sound::vectorStep, Sound::vectorTime, Sound::vectorRedTurn;
+vector<double> Sound::vectorAvrEng1Turn, Sound::vectorAvrEng2Turn, Sound::vectorAvrRedTurn, Sound::vectorAvrStep, Sound::vectorAvrAtk;//!<Массивы для рассчета среднего методом скользящего среднего
+double Sound::globalWindow = 50;//!<Переменная времени для набора значений в массивы для рассчета среднего
+
 
 AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_2;//Конфигурация каналов звука
 double window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
@@ -443,6 +446,7 @@ int main(int argc, char *argv[])
 	int counterNar13 = 0;
 	double vsuDownTimer = 0;
 	double vsuUpTimer = 0;
+	double timerAvr = 0;
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (true)
 	{
@@ -460,6 +464,7 @@ int main(int argc, char *argv[])
 			Sound::velocityX = localdata.v;//приборная скорость
 			Sound::high = localdata.styk_hv;
 			Sound::step = localdata.ny; //шаг (временно используем параметр перегрузки)
+
 			//Если не пришел признак остановки модели - вычисляем переменные
 			while (periodCalc >= window && Sound::vectorTime.size() > 2)
 			{
@@ -500,6 +505,25 @@ int main(int argc, char *argv[])
 					Sound::RedTurnAcc = (localdata.reduktor_gl_obor - Sound::vectorRedTurn.front()) / periodCalc;
 				}
 			}
+
+			//Набираем массивы для среднего
+			timerAvr += Sound::deltaTime;
+			if (timerAvr > Sound::globalWindow && !Sound::vectorAvrEng1Turn.empty())
+			{
+				Sound::vectorAvrEng1Turn.erase(Sound::vectorAvrEng1Turn.begin());
+				Sound::vectorAvrEng2Turn.erase(Sound::vectorAvrEng2Turn.begin());
+				Sound::vectorAvrRedTurn.erase(Sound::vectorAvrRedTurn.begin());
+				Sound::vectorAvrStep.erase(Sound::vectorAvrStep.begin());
+				Sound::vectorAvrAtk.erase(Sound::vectorAvrAtk.begin());
+			}
+			Sound::vectorAvrEng1Turn.push_back(localdata.eng1_obor);
+			Sound::vectorAvrEng2Turn.push_back(localdata.eng2_obor);
+			Sound::vectorAvrRedTurn.push_back(localdata.reduktor_gl_obor);
+			Sound::vectorAvrStep.push_back(Sound::step);
+			Sound::vectorAvrAtk.push_back(Sound::calcA);
+
+			Sound a;
+			printf(" %lf\t%lf\t%lf\t%lf\t%lf\r", a.getAverange("eng1Turns", 20), a.getAverange("eng2Turns", 20), a.getAverange("redTurns", 20), a.getAverange("step", 20), a.getAverange("attack", 20));
 
 			//ВСУ
 			if (helicopter.vsuFactor)//Если ВСУ включено в проект
@@ -1605,6 +1629,11 @@ int main(int argc, char *argv[])
 			Sound::vectorTime.clear();
 			Sound::vectorRedTurn.clear();
 			Sound::vectorTime.push_back(Sound::currentTime);
+			Sound::vectorAvrAtk.clear();
+			Sound::vectorAvrEng1Turn.clear();
+			Sound::vectorAvrEng2Turn.clear();
+			Sound::vectorAvrRedTurn.clear();
+			Sound::vectorAvrStep.clear();
 
 			if (eng[0])
 			{
@@ -2306,6 +2335,62 @@ int Sound::switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset)
 	return play;
 }
 
+double Sound::getAverange(string parameter, double seconds)
+{
+	double averange = 0;
+	if (parameter == "step")
+	{
+		int size = vectorAvrStep.size();
+		double window = size / globalWindow * seconds;
+		for (size_t i = size - window; i < size; i++)
+		{
+			averange += vectorAvrStep[i] / window;
+		}
+	}
+	else if (parameter == "eng1Turns")
+	{
+		int size = vectorAvrEng1Turn.size();
+		double window = size / globalWindow * seconds;
+		for (size_t i = size - window; i < size; i++)
+		{
+			averange += vectorAvrEng1Turn[i] / window;
+		}
+	}
+	else if (parameter == "eng2Turns")
+	{
+		int size = vectorAvrEng1Turn.size();
+		double window = size / globalWindow * seconds;
+		for (size_t i = size - window; i < size; i++)
+		{
+			averange += vectorAvrEng2Turn[i] / window;
+		}
+	}
+	else if (parameter == "redTurns")
+	{
+		int size = vectorAvrRedTurn.size();
+		double window = size / globalWindow * seconds;
+		for (size_t i = size - window; i < size; i++)
+		{
+			averange += vectorAvrRedTurn[i] / window;
+		}
+	}
+	else if (parameter == "attack")
+	{
+		int size = vectorAvrAtk.size();
+		double window = size / globalWindow * seconds;
+		for (size_t i = size - window; i < size; i++)
+		{
+			averange += vectorAvrAtk[i] / window;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+
+	return averange;
+}
+
 Reductor::Reductor() : Sound(3, 3, 2)
 {
 
@@ -2613,24 +2698,26 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			}
 			alSourcef(source[2], AL_GAIN, pow(10, pinkNoiseGain*0.05)*h.redFactor);//230км.ч
 
-			double averangeTurn = 0;
-			averangeCalcPeriod += deltaTime;
-			if (averangeCalcPeriod >= 30 && !vector.empty())
-				vector.erase(vector.begin());
-			vector.push_back(sr.reduktor_gl_obor);
-			for (auto& x : vector)
-				averangeTurn += x / vector.size();
+			double averangeTurn = getAverange("redTurns", 30);
+			//double averangeTurn = 0;//30
+			//averangeCalcPeriod += deltaTime;
+			//if (averangeCalcPeriod >= 30 && !vector.empty())
+			//	vector.erase(vector.begin());
+			//vector.push_back(sr.reduktor_gl_obor);
+			//for (auto& x : vector)
+			//	averangeTurn += x / vector.size();
 
 			//Усиление по атаке
 			double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
 
-			double averangeAtk = 0;
+			double averangeAtk = getAverange("attack", 20) * interpolation(0, 0, 16.67, 1, abs(velocityX));
+			/*double averangeAtk = 0;
 			averangeCalcPeriodAtk += deltaTime;
 			if (averangeCalcPeriodAtk >= 20 && !vectorAtk.empty())
 				vectorAtk.erase(vectorAtk.begin());
 			vectorAtk.push_back(atkXvel);
 			for (auto& x : vectorAtk)
-				averangeAtk += x / vectorAtk.size();
+				averangeAtk += x / vectorAtk.size();*/
 
 			double atkGain = (atkXvel - averangeAtk) * -0.4;
 			atkGain = (atkGain < -2) ? -2 : atkGain;
@@ -2659,8 +2746,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			}
 
 			//усиление от оборотов выше 10000
-			double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
-			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
+			//double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+			//highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 
 			//усиление от оборотов
 			double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
@@ -2744,14 +2831,15 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			double pinkNoiseGain = interpolation(0, 0, 42, 0.125, 70, 1, abs(velocityX));
 			alSourcef(source[2], AL_GAIN, pinkNoiseGain);
 
+			double averangeTurn = getAverange("redTurns", 30);
 			//Усиление при разнице оборотов от среднего
-			double averangeTurn = 0;
-			averangeCalcPeriod += deltaTime;
-			if (averangeCalcPeriod >= 30 && !vector.empty())
-				vector.erase(vector.begin());
-			vector.push_back(sr.reduktor_gl_obor);
-			for (auto& x : vector)
-				averangeTurn += x / vector.size();
+			//double averangeTurn = 0;
+			//averangeCalcPeriod += deltaTime;
+			//if (averangeCalcPeriod >= 30 && !vector.empty())
+			//	vector.erase(vector.begin());
+			//vector.push_back(sr.reduktor_gl_obor);
+			//for (auto& x : vector)
+			//	averangeTurn += x / vector.size();
 
 			//усиление от оборотов выше 10000
 			double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1.5;
@@ -2769,7 +2857,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 
 			//Усиление от шага
-			double averangeStep = 0;
+			double averangeStep = getAverange("step",35);
+			/*double averangeStep = 0;
 			if (high > 0)
 			{
 				averangeCalcPeriodStep += deltaTime;
@@ -2778,12 +2867,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				vectorStep.push_back(step);
 				for (auto& x : vectorStep)
 					averangeStep += x / vectorStep.size();
-			}
-			else
-			{
-				averangeCalcPeriodStep = 0;
-				vectorStep.clear();
-			}
+			}*/
+
 			double stepGain = 0.75 * (step - averangeStep) * interpolation(0, 0, 1, 1, high);//
 
 			//усиление по шагу в НЧ
@@ -2871,47 +2956,45 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				pinkNoise = "set";
 			}
 
-			averangeCalcPeriod += deltaTime;
-			//Набираем массив для рассчета усиления от среднего шага, пока находимся в воздухе, очищаем массив на земле
-			if (high > 0)
-			{
-				averangeCalcPeriodStep += deltaTime;
-			}
-			else
-			{
-				averangeCalcPeriodStep = 0;
-				vectorStep.clear();
-			}
+			//averangeCalcPeriod += deltaTime;
+			////Набираем массив для рассчета усиления от среднего шага, пока находимся в воздухе, очищаем массив на земле
+			//if (high > 0)
+			//{
+			//	averangeCalcPeriodStep += deltaTime;
+			//}
+			//else
+			//{
+			//	averangeCalcPeriodStep = 0;
+			//	vectorStep.clear();
+			//}
 
 			//регулируем громкость шума
 			double pinkNoiseGain = pow(10, ((69.4 - abs(velocityX)) * (-0.86)) * 0.05);
 			alSourcef(source[2], AL_GAIN, pinkNoiseGain);//230км.ч
 
 			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-			double averangeTurn = 0;
+			double averangeTurn = getAverange("redTurns", 30);
+			/*double averangeTurn = 0;
 			if (averangeCalcPeriod >= 30 && !vector.empty())
 				vector.erase(vector.begin());
 			vector.push_back(sr.reduktor_gl_obor);
 			for (auto& x : vector)
-				averangeTurn += x / vector.size();
+				averangeTurn += x / vector.size();*/
 
 			//Общее усиление от скорости выше 50м/с
-			double velocityGain = 0;
-			if (abs(velocityX) >= 50)
-			{
-				velocityGain = (abs(velocityX) - 50)* 0.2;//0.1дб на 1 м/с
-			}
-
+			double velocityGain = (abs(velocityX) >= 50)?(abs(velocityX) - 50)* 0.2 : 0;//0.1дб на 1 м/с
+			
 			//Набираем массив для рассчета усиления от среднего значения шага за 50с
-			double averangeStep = 0;
-			if (high > 0)
-			{
-				if (averangeCalcPeriodStep >= 50 && !vectorStep.empty())// 20 -> 50
-					vectorStep.erase(vectorStep.begin());
-				vectorStep.push_back(step);
-				for (auto& x : vectorStep)
-					averangeStep += x / vectorStep.size();
-			}
+			double averangeStep = getAverange("step", 50);
+			//double averangeStep = 0;
+			//if (high > 0)
+			//{
+			//	if (averangeCalcPeriodStep >= 50 && !vectorStep.empty())// 20 -> 50
+			//		vectorStep.erase(vectorStep.begin());
+			//	vectorStep.push_back(step);
+			//	for (auto& x : vectorStep)
+			//		averangeStep += x / vectorStep.size();
+			//}
 			//рассчитываем усиление от среднего
 			double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);
 
@@ -3003,29 +3086,30 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				pinkNoise = "set";
 			}
 
-			averangeCalcPeriod += deltaTime;
-			//Набираем массив для рассчета усиления от среднего шага, пока находимся в воздухе, очищаем массив на земле
-			if (high > 0)
-			{
-				averangeCalcPeriodStep += deltaTime;
-			}
-			else
-			{
-				averangeCalcPeriodStep = 0;
-				vectorStep.clear();
-			}
+			//averangeCalcPeriod += deltaTime;
+			////Набираем массив для рассчета усиления от среднего шага, пока находимся в воздухе, очищаем массив на земле
+			//if (high > 0)
+			//{
+			//	averangeCalcPeriodStep += deltaTime;
+			//}
+			//else
+			//{
+			//	averangeCalcPeriodStep = 0;
+			//	vectorStep.clear();
+			//}
 
 			//регулируем громкость шума
 			double pinkNoiseGain = pow(10, ((69.4 - abs(velocityX)) * (-0.86)) * 0.05);
 			alSourcef(source[2], AL_GAIN, pinkNoiseGain);
 
 			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-			double averangeTurn = 0;
+			double averangeTurn = getAverange("redTurns", 30);
+			/*double averangeTurn = 0;
 			if (averangeCalcPeriod >= 30 && !vector.empty())
 				vector.erase(vector.begin());
 			vector.push_back(sr.reduktor_gl_obor);
 			for (auto& x : vector)
-				averangeTurn += x / vector.size();
+				averangeTurn += x / vector.size();*/
 
 			//усиление от скорости выше 50км/ч (14м/c)
 			double velocityGain = 0;
@@ -3044,15 +3128,16 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			}
 
 			//Набираем массив для рассчета усиления от среднего значения шага за 50с
-			double averangeStep = 0;
-			if (high > 0)
-			{
-				if (averangeCalcPeriodStep >= 50 && !vectorStep.empty())// 20 -> 50
-					vectorStep.erase(vectorStep.begin());
-				vectorStep.push_back(step);
-				for (auto& x : vectorStep)
-					averangeStep += x / vectorStep.size();
-			}
+			double averangeStep = getAverange("step", 50);
+			//double averangeStep = 0;
+			//if (high > 0)
+			//{
+			//	if (averangeCalcPeriodStep >= 50 && !vectorStep.empty())// 20 -> 50
+			//		vectorStep.erase(vectorStep.begin());
+			//	vectorStep.push_back(step);
+			//	for (auto& x : vectorStep)
+			//		averangeStep += x / vectorStep.size();
+			//}
 			//рассчитываем усиление от среднего
 			double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);
 
@@ -3135,6 +3220,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	{
 		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 		{
+
 		}
 	}
 	return 1;
@@ -3144,13 +3230,14 @@ Engine::Engine() : Sound(2, 2, 2)
 {
 	//При одновременном запуске двигателей возможен эффект наложения, дающий искажение звука
 	//Поэтому каждый объект двигателя имеет свой параметр фазы запуска
-	engNum++;
-	phase = (engNum - 1) * 0.33;
+	engCount++;
+	phase = (engCount - 1) * 0.33;
+	engNum = engCount;
 }
 
 Engine::~Engine()
 {
-	engNum--;
+	engCount--;
 }
 
 int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h)
@@ -3360,12 +3447,22 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 		if (parameter > h.engTurnoverAvt - 2)
 		{
 			double averangeTurn = 0;
+			if (engNum == 1)
+			{
+				averangeTurn = getAverange("eng1Turns", 25);
+			}
+			else
+			{
+				averangeTurn = getAverange("eng2Turns", 25);
+			}
+			
+			/*double averangeTurn = 0;
 			averangeCalcPeriod += deltaTime;
 			if (averangeCalcPeriod >= 25 && !vector.empty())
 				vector.erase(vector.begin());
 			vector.push_back(parameter);
 			for (auto& x : vector)
-				averangeTurn += x / vector.size();
+				averangeTurn += x / vector.size();*/
 
 			//усиление от оборотов выше 10000
 			double highFreqTurnGain = (parameter - averangeTurn) * 0.35;
@@ -3508,13 +3605,14 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
 
-		double averangeTurn = 0;
+		double averangeTurn = getAverange("redTurns", 30);
+		/*double averangeTurn = 0;
 		averangeCalcPeriod += deltaTime;
 		if (averangeCalcPeriod >= 30 && !vector.empty())
 			vector.erase(vector.begin());
 		vector.push_back(sr.reduktor_gl_obor);
 		for (auto& x : vector)
-			averangeTurn += x / vector.size();
+			averangeTurn += x / vector.size();*/
 
 		//Усиление от оборотов
 		//только если атака больше 2х
@@ -3575,13 +3673,14 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		}
 
-		double averangeTurn = 0;
+		double averangeTurn = getAverange("redTurns", 30);
+		/*double averangeTurn = 0;
 		averangeCalcPeriod += deltaTime;
 		if (averangeCalcPeriod >= 30 && !vector.empty())
 			vector.erase(vector.begin());
 		vector.push_back(sr.reduktor_gl_obor);
 		for (auto& x : vector)
-			averangeTurn += x / vector.size();
+			averangeTurn += x / vector.size();*/
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
 
@@ -3671,13 +3770,14 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			key[1] = h.fullName["vint_flap_low"];
 		}
 
-		double averangeTurn = 0;
+		double averangeTurn = getAverange("redTurns", 30);
+		/*double averangeTurn = 0;
 		averangeCalcPeriod += deltaTime;
 		if (averangeCalcPeriod >= 30 && !vector.empty())
 			vector.erase(vector.begin());
 		vector.push_back(sr.reduktor_gl_obor);
 		for (auto& x : vector)
-			averangeTurn += x / vector.size();
+			averangeTurn += x / vector.size();*/
 
 		double gain_a = 0;
 		double h_g = 0;
@@ -4032,13 +4132,14 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 	Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 
 	//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-	double averangeTurn = 0;
+	double averangeTurn = getAverange("redTurns", 25);
+	/*double averangeTurn = 0;
 	averangeCalcPeriod += deltaTime;
 	if (averangeCalcPeriod >= 25 && !vector.empty())
 		vector.erase(vector.begin());
 	vector.push_back(sr.reduktor_gl_obor);
 	for (auto& x : vector)
-		averangeTurn += x / vector.size();
+		averangeTurn += x / vector.size();*/
 
 	double avrTurngain = (-5) + (sr.reduktor_gl_obor - averangeTurn) * 4;
 	avrTurngain = (avrTurngain > 0) ? 0 : avrTurngain;
@@ -4099,18 +4200,9 @@ int Runway::play(Helicopter h, double obj)
 	alSourcei(source[1], AL_LOOPING, AL_TRUE);
 	alSourcei(source[0], AL_LOOPING, AL_TRUE);
 
-	//alSourcef(source[1], AL_GAIN, interpolation(0, 0, 11.2, 1, abs(velocityX)) * sr.obj_l);//
-	//alSourcef(source[0], AL_GAIN, interpolation(0, 0, 16.8, 1, abs(velocityX)) * sr.obj_l);//
-
 	alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.25/*Уменьшаем движение по полосе*/);//
 	//alSourcef(source[1], AL_GAIN, 0);//
 	alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.854);//
-
-	/*float a = 0;
-	alGetSourcef(source[1], AL_GAIN, &a);
-	float b = 0;
-	alGetSourcef(source[0], AL_GAIN, &b);
-	printf("%f\t%f\r", a, b);*/
 
 	return 1;
 }

@@ -250,27 +250,32 @@ void Helicopter::setParam(string model)
 		redTurnoverMg2 = 47;
 		redTurnoverAvt = 85;
 		//Множители громкости
-		vsuFactor = 1/*всу*/;
-		vsuHpFactor = 0.06/*всу хп*/;
-		engFactor = 1/*дв*/;
-		engHpFactor = 0.35/*дв хп*/;
-		redFactor = 1/*Редуктор*/;
-		tr115Factor = 0.15/*тр115*/;
+		vsuFactor = 0.708/*всу*/;
+		vsuHpFactor = 0.04/*всу хп*/;
+		engFactor = 0.5/*дв*/;//-6
+		engHpFactor = 0.245/*дв хп*/;
+		redFactor = 0.708/*Редуктор*/;//-3
+		tr115Factor = 0.11/*тр115*/;
 		skvFactor = 0.5/*СКВ*/;
-		runwayFactor = 1/*ВПП*/;
-		airNoiseFactor = 1/*шум*/;
+		runwayFactor = 0.708/*ВПП*/;
+		//airNoiseFactor = 1/*шум*/;
 		rocketHitFactor = 0.8/*Попадание ракеты*/;
 		vintSwishFactor = 1/*ВИНТ Верх*/;
-		vintBrakeFactor = 0.2/*Винт тормоз*/;
-		vintFlapFactor = 0.5/*Винт хлопки*/;
+		vintBrakeFactor = 0.16/*Винт тормоз*/;
+		vintFlapFactor = 1/*Винт хлопки*/;
 		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
-		nipFactor = 0.125/*НИП*/;
-		fireCraneFactor = 0.125/*Пожарный кран*/;
-		girovertFactor = 0.15/*Гировертикаль*/;
-		pumpStationFactor = 0.0725/*Насосная станция*/;
-		consumTankFactor = 0.25/*Расходный бак*/;
+		nipFactor = 0.0875/*НИП*/;
+		fireCraneFactor = 0.0875/*Пожарный кран*/;
+		girovertFactor = 0.105/*Гировертикаль*/;
+		pumpStationFactor = 0.05/*Насосная станция*/;
+		consumTankFactor = 0.17/*Расходный бак*/;
 		rainFactor = 0.5/*Дождь*/;
+		//beats -4 
+		//vint_flap -8
+		//flapping 0
+		//vadd (pinknoise) 0 250 (200 -3 190 -6) - прямая вниз
+		//vintSwish -2
 	}
 	else if (model == "mi_28")
 	{
