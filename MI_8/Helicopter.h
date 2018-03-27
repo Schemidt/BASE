@@ -52,7 +52,6 @@ public:
 	double ko50Factor = 0;//!<Множитель громкости KO-50
 	double skvFactor = 0;//!<Множитель громкости СКВ
 	double runwayFactor = 0;//!<Множитель громкости звука движения по ВПП и РД
-	double airNoiseFactor = 0;//!<Множитель громкости аэродинамического шума
 	double rocketSturmFactor = 0;//!<Множитель громкости ракеты штурм
 	double rocketNar8Factor = 0;//!<Множитель громкости НАР 8
 	double rocketNar13Factor = 0;//!<Множитель громкости НАР 13
@@ -76,6 +75,7 @@ public:
 	double circlingCraneFactor = 0;//!<Кран кольцевания
 	double rocketIglaFactor = 0;//!<Игла
 	double vpryam = 0;//!<Выпрямительное устройство
+	double vadd;//!<Скоростная добавка
 
 	//!<Ассоциативный массив с именами файлов - звуков
 	map<string, string> shortName;

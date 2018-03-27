@@ -403,7 +403,6 @@ int main(int argc, char *argv[])
 	Sound *pstat = nullptr;
 	Sound *runway = nullptr;
 	Runway *runwayMi8 = nullptr;
-	Sound *airNoise = nullptr;
 	Sound *crash = nullptr;
 	VintSwish *vintSwish = nullptr;
 	Sound *vintSwishUni = nullptr;
@@ -426,6 +425,7 @@ int main(int argc, char *argv[])
 	Sound *vintFlapUniversal = nullptr;
 	Sound *kranKolc = nullptr;
 	Sound *vpryam = nullptr;
+	Sound *vadd = nullptr;
 
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
@@ -508,14 +508,30 @@ int main(int argc, char *argv[])
 
 			//Набираем массивы для среднего
 			timerAvr += Sound::deltaTime;
-			if (timerAvr > Sound::globalWindow && !Sound::vectorAvrEng1Turn.empty())
+			if (timerAvr > Sound::globalWindow)
 			{
-				Sound::vectorAvrEng1Turn.erase(Sound::vectorAvrEng1Turn.begin());
-				Sound::vectorAvrEng2Turn.erase(Sound::vectorAvrEng2Turn.begin());
-				Sound::vectorAvrRedTurn.erase(Sound::vectorAvrRedTurn.begin());
-				Sound::vectorAvrStep.erase(Sound::vectorAvrStep.begin());
-				Sound::vectorAvrAtk.erase(Sound::vectorAvrAtk.begin());
+				if (!Sound::vectorAvrEng1Turn.empty())
+				{
+					Sound::vectorAvrEng1Turn.erase(Sound::vectorAvrEng1Turn.begin());
+				}
+				if (!Sound::vectorAvrEng2Turn.empty())
+				{
+					Sound::vectorAvrEng2Turn.erase(Sound::vectorAvrEng2Turn.begin());
+				}
+				if (!Sound::vectorAvrRedTurn.empty())
+				{
+					Sound::vectorAvrRedTurn.erase(Sound::vectorAvrRedTurn.begin());
+				}
+				if (!Sound::vectorAvrStep.empty())
+				{
+					Sound::vectorAvrStep.erase(Sound::vectorAvrStep.begin());
+				}
+				if (!Sound::vectorAvrAtk.empty())
+				{
+					Sound::vectorAvrAtk.erase(Sound::vectorAvrAtk.begin());
+				}
 			}
+
 			Sound::vectorAvrEng1Turn.push_back(localdata.eng1_obor);
 			Sound::vectorAvrEng2Turn.push_back(localdata.eng2_obor);
 			Sound::vectorAvrRedTurn.push_back(localdata.reduktor_gl_obor);
@@ -1079,7 +1095,7 @@ int main(int argc, char *argv[])
 			//Если звуки движения по ВПП включены в проект борта
 			if (helicopter.runwayFactor)
 			{
-				if (helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "mi_8_mtv5")
+				if (helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_26")
 				{
 					if (localdata.v != 0 && Sound::high <= 1)//Условие создания объекта
 						if (!runwayMi8)//Если объект не создан 
@@ -1105,27 +1121,6 @@ int main(int argc, char *argv[])
 						{
 							runway->gain = Sound::masterGain * interpolation(0, 0, 13.8, 1, abs(localdata.v)) * helicopter.runwayFactor;
 						}
-					}
-				}
-			}
-			//Аэродинамический шум
-			//Звуки аэродинамических шумов включены в проект
-			if (helicopter.airNoiseFactor)
-			{
-				if (localdata.v > 20)//Условие создания объекта
-					if (!airNoise)//Если объект не создан 
-						airNoise = new Sound;//Создаем объект
-				if (airNoise)//Если объект создан - используем его
-				{
-					airNoise->play(localdata.v > 20, "NULL", helicopter.fullName["air"], "NULL", helicopter.airNoiseFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (airNoise->sourceStatus[0] != AL_PLAYING && localdata.v <= 20)//Условие удаления объекта
-						Free(airNoise);//Удаляем объект
-					else
-					{
-						if (localdata.v > 20 && localdata.v < 70)
-							airNoise->gain = Sound::masterGain * helicopter.airNoiseFactor * ((localdata.v / 50.) - .4);
-						else
-							airNoise->gain = Sound::masterGain * helicopter.airNoiseFactor;
 					}
 				}
 			}
@@ -1443,6 +1438,60 @@ int main(int argc, char *argv[])
 						Free(red);//Удаляем объект
 				}
 
+			}
+			//Скоростная добавка
+			if (helicopter.vadd)
+			{
+				if (localdata.v != 0)//Условие создания объекта
+				{
+					if (!vadd)//Если объект не создан 
+					{
+						vadd = new Sound;
+					}
+				}
+				if (vadd)//Если объект создан - используем его
+				{
+					vadd->play(localdata.v != 0, "NULL", helicopter.fullName["pinkNoise"], "NULL", helicopter.vadd);//Воспроизводим звук - записываем состояние звука в play
+					if (localdata.v == 0)//Условие удаления объекта
+					{
+						Free(vadd);//Удаляем объект
+					}
+					else
+					{
+						if (helicopter.modelName == "mi_28")
+						{
+							if (abs(localdata.v) < 60)
+							{
+								vadd->gain = interpolation(0, -60, 50, -14, 60, -6, abs(localdata.v));
+							}
+							else
+							{
+								vadd->gain = interpolation(60, -6, 70, -3, 80, 0, abs(localdata.v));
+							}
+						}
+						else if (helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "mi_8_mtv5")
+						{
+							vadd->gain = interpolation(0, 0, 42, 0.125, 70, 1, abs(localdata.v));
+						}
+						else if (helicopter.modelName == "ka_29")
+						{
+							vadd->gain = pow(10, ((69.4 - abs(localdata.v)) * (-0.86)) * 0.05);
+						}
+						else if (helicopter.modelName == "ka_27")
+						{
+							vadd->gain = pow(10, ((69.4 - abs(localdata.v)) * (-0.86)) * 0.05);
+						}
+						else if (helicopter.modelName == "mi_26")
+						{
+							vadd->gain = abs(localdata.v) * 0.428 - 36;
+						}
+						else
+						{
+							vadd->gain = 0;
+						}
+						vadd->gain = (vadd->gain < 0) ? 0 : vadd->gain;
+					}
+				}
 			}
 			//Двигатель
 			if (helicopter.engFactor)
@@ -2392,9 +2441,12 @@ double Sound::getAverange(string parameter, double seconds)
 	return averange;
 }
 
-Reductor::Reductor() : Sound(3, 3, 2)
+Reductor::Reductor() : Sound(3, 3, 3)
 {
-
+	//Не самый умный ход менять конструктор по 
+	//наибольшему количеству требуемых источников
+	//при условии что редуктор просто вызывает конструктор Sound
+	//можно писать так if(modelName == mi_26){reductor = new Sound(4,4,2)}else{reductor = new Sound(3,3,2)}
 }
 
 int Reductor::play(Helicopter h, SOUNDREAD sr)
@@ -2680,25 +2732,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	{
 		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 		{
-			//добавляем шум для усиления средних частот
-			if (pinkNoise != "set")
-			{
-				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["pinkNoise"]);
-				alSourcei(source[2], AL_LOOPING, AL_TRUE);
-				pinkNoise = "set";
-			}
-			//регулируем громкость шума
-			double pinkNoiseGain = 0;
-			if (abs(velocityX) < 60)
-			{
-				pinkNoiseGain = interpolation(0, -60, 50, -14, 60, -6, abs(velocityX));
-			}
-			else
-			{
-				pinkNoiseGain = interpolation(60, -6, 70, -3, 80, 0, abs(velocityX));
-			}
-			alSourcef(source[2], AL_GAIN, pow(10, pinkNoiseGain*0.05)*h.redFactor);//230км.ч
-
 			double averangeTurn = getAverange("redTurns", 30);
 			//double averangeTurn = 0;//30
 			//averangeCalcPeriod += deltaTime;
@@ -2746,12 +2779,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				stepGain = (step * 0.4 - 1.4) / 3;
 			}
 
-			//усиление от оборотов выше 10000
-			//double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
-			//highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
-
 			//усиление от оборотов
-			double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
 
 			//усиление НЧ когда нет хлопков на границе 2го условия
 			if (abs(velocityX) <= 16.67) //ниже 60ти висение
@@ -2821,17 +2850,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	{
 		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 		{
-			//добавляем шум для усиления средних частот
-			if (pinkNoise != "set")
-			{
-				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["pinkNoise"]);
-				alSourcei(source[2], AL_LOOPING, AL_TRUE);
-				pinkNoise = "set";
-			}
-
-			double pinkNoiseGain = interpolation(0, 0, 42, 0.125, 70, 1, abs(velocityX));
-			alSourcef(source[2], AL_GAIN, pinkNoiseGain);
-
 			double averangeTurn = getAverange("redTurns", 30);
 			//Усиление при разнице оборотов от среднего
 			//double averangeTurn = 0;
@@ -2843,19 +2861,13 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			//	averangeTurn += x / vector.size();
 
 			//усиление от оборотов выше 10000
-			double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1.5;
+			double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1.5 : 0;
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
-
 			//усиление от оборотов
-			double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
 
 			//Общее усиление от скорости выше 28м/с
-			double velocityGain = 0;
-			if (abs(velocityX) >= 28)
-			{
-				velocityGain = (abs(velocityX) - 28)* 0.1;//0.1дб на 1 м/с
-			}
-
+			double velocityGain = (abs(velocityX) >= 28) ? (abs(velocityX) - 28)* 0.1 : 0;//0.1дб на 1 м/с
 
 			//Усиление от шага
 			double averangeStep = getAverange("step", 35);
@@ -2909,7 +2921,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			//Страгивание
 			//Усиление редуктора в НЧ в начале движения по ВПП
 			double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high : 0;
-			
+
 
 			double lowFreqGain = pow(10, (mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
 			double mid1FreqGain = pow(10, (turnGain + stepGain + velocityGain + mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
@@ -2942,14 +2954,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	{
 		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 		{
-			//добавляем шум для усиления средних частот
-			if (pinkNoise != "set")
-			{
-				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["pinkNoise"]);
-				alSourcei(source[2], AL_LOOPING, AL_TRUE);
-				pinkNoise = "set";
-			}
-
 			//averangeCalcPeriod += deltaTime;
 			////Набираем массив для рассчета усиления от среднего шага, пока находимся в воздухе, очищаем массив на земле
 			//if (high > 0)
@@ -2961,10 +2965,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			//	averangeCalcPeriodStep = 0;
 			//	vectorStep.clear();
 			//}
-
-			//регулируем громкость шума
-			double pinkNoiseGain = pow(10, ((69.4 - abs(velocityX)) * (-0.86)) * 0.05);
-			alSourcef(source[2], AL_GAIN, pinkNoiseGain);//230км.ч
 
 			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 			double averangeTurn = getAverange("redTurns", 30);
@@ -2999,10 +2999,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
 
 			//усиление от оборотов выше 10000
-			double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1;
+			double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1 : 0;
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 			//усиление от оборотов
-			double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
 
 			//усиление НЧ когда нет хлопков на границе 2го условия
 			if (abs(velocityX) <= 16.67) //ниже 60ти висение
@@ -3071,14 +3071,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	{
 		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 		{
-			//добавляем шум для усиления средних частот
-			if (pinkNoise != "set")
-			{
-				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["pinkNoise"]);
-				alSourcei(source[2], AL_LOOPING, AL_TRUE);
-				pinkNoise = "set";
-			}
-
 			//averangeCalcPeriod += deltaTime;
 			////Набираем массив для рассчета усиления от среднего шага, пока находимся в воздухе, очищаем массив на земле
 			//if (high > 0)
@@ -3090,10 +3082,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			//	averangeCalcPeriodStep = 0;
 			//	vectorStep.clear();
 			//}
-
-			//регулируем громкость шума
-			double pinkNoiseGain = pow(10, ((69.4 - abs(velocityX)) * (-0.86)) * 0.05);
-			alSourcef(source[2], AL_GAIN, pinkNoiseGain);
 
 			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 			double averangeTurn = getAverange("redTurns", 30);
@@ -3141,10 +3129,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
 
 			//усиление от оборотов выше 10000
-			double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1;
+			double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1 : 0;
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 			//усиление от оборотов
-			double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
 
 			//усиление НЧ когда нет хлопков на границе 2го условия
 			if (abs(velocityX) <= 16.67) //ниже 60ти висение
@@ -3213,7 +3201,84 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	{
 		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
 		{
+			//добавляем шум биений
+			if (beats != h.fullName["beats"])
+			{
+				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["beats"]);
+				alSourcei(source[2], AL_LOOPING, AL_TRUE);
+				beats = h.fullName["beats"];
 
+				alEffecti(effect[2], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
+				alAuxiliaryEffectSloti(effectSlot[2], AL_EFFECTSLOT_EFFECT, effect[2]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+				alFilteri(filter[2], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+				alFilterf(filter[2], AL_LOWPASS_GAIN, 0);
+				alSource3i(source[2], AL_AUXILIARY_SEND_FILTER, effectSlot[2], 0, NULL);
+				alSourcei(source[2], AL_DIRECT_FILTER, filter[2]);
+			}
+
+			//регулируем громкость шума
+			double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
+			alSourcef(source[2], AL_GAIN, beatsGain);
+
+			double averangeTurn = getAverange("redTurns", 30);
+
+			//усиление от оборотов выше 10000
+			double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1.5 : 0;
+			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
+			//усиление от оборотов
+			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
+
+			double averangeStep = getAverange("step", 35);
+
+			//Усиление от шага
+			double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);//
+
+			//Усиление по Vy
+			double velocityYGain = -velocityY * interpolation(0, 1, 22.4, 0, abs(velocityX));
+
+			//Страгивание
+			//Усиление редуктора в НЧ в начале движения по ВПП
+			double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high : 0;
+
+			double lowFreqGain = pow(10, (velocityYGain + stepGain * 0.25 + stalkingGain)*0.05);
+			double mid1FreqGain = pow(10, (turnGain + stepGain * 0.75 + stalkingGain)*0.05);
+			double mid2FreqGain = pow(10, (turnGain + stepGain * 0.75)*0.05);
+			double highFreqGain = pow(10, (turnGain + stepGain * 0.75 + highFreqTurnGain)*0.05);
+
+			lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
+			mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
+			mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
+			highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
+
+			double lowCutoffFreq = 200;//НЧ 50-800
+			double mid1CutoffFreq = 1000;//купол 1 200-3000
+			double mid2CutoffFreq = 3000;//купол 2 1000-8000
+			double highCutoffFreq = 10000;//ВЧ 4000-16000
+
+			for (size_t i = 0; i < 2; i++)
+			{
+				alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
+				alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
+				alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
+				alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
+
+				alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
+				alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
+				alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
+				alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
+
+				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+			}
+
+			//Усиление биений
+			alEffectf(effect[2], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
+			alEffectf(effect[2], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
+			alEffectf(effect[2], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
+			alEffectf(effect[2], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
+
+			alEffectf(effect[2], AL_EQUALIZER_LOW_GAIN, pow(10, (stepGain * 0.25)*0.05));//
+
+			alAuxiliaryEffectSloti(effectSlot[2], AL_EFFECTSLOT_EFFECT, effect[2]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 		}
 	}
 	return 1;
@@ -3435,7 +3500,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 	}
 
 	//Полеты 8 мтв5, 8 амтш, ка 27м, ка 29
-	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "ka_27" || h.modelName == "ka_29")
+	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "mi_26" || h.modelName == "ka_27" || h.modelName == "ka_29")
 	{
 		if (parameter > h.engTurnoverAvt - 2)
 		{
@@ -3458,10 +3523,10 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 				averangeTurn += x / vector.size();*/
 
 				//усиление от оборотов выше 10000
-			double highFreqTurnGain = (parameter - averangeTurn) * 0.35;
+			double highFreqTurnGain = (averangeTurn > h.engTurnoverAvt - 2) ? (parameter - averangeTurn) * 0.35 : 0;
 			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 			//усиление от оборотов
-			double turnGain = (parameter - averangeTurn) * 0.35;
+			double turnGain = (averangeTurn > h.engTurnoverAvt - 2) ? (parameter - averangeTurn) * 0.35 : 0;
 
 			double lowFreqGain = pow(10, (turnGain)*0.05);
 			double mid1FreqGain = pow(10, (turnGain)*0.05);
@@ -3487,13 +3552,6 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 
 				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			}
-		}
-	}
-	//Полеты ми 26
-	if (h.modelName == "mi_26")
-	{
-		if (parameter > h.engTurnoverAvt - 2)
-		{
 		}
 	}
 	return 1;
@@ -3613,7 +3671,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double turnsGain = 0;
 		if (atkXvel >= 2)
 		{
-			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
+			//усиление от оборотов
+			turnsGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 2 : 0;
 		}
 
 		//Хлопки плавно появляются
@@ -3696,7 +3755,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double turnsGain = 0;
 		if (atkXvel >= 2)
 		{
-			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
+			//усиление от оборотов
+			turnsGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 2 : 0;
 		}
 
 		double hG = interpolation(0, 0, 0.5, 0.5, 1, 1, high);
@@ -3802,7 +3862,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double turnsGain = 0;
 		if (atkXvel >= 2)
 		{
-			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
+			//усиление от оборотов
+			turnsGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 2 : 0;
 		}
 		double atkFls = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
 
@@ -3989,7 +4050,97 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 	//Полеты ми 26
 	if (h.modelName == "mi_26")
 	{
+		if (key[0] != h.fullName["vint_flap"])
+		{
+			setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap"]);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			key[0] = h.fullName["vint_flap"];
+		}
+		if (key[1] != h.fullName["flapping"])
+		{
+			setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["flapping"]);
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			key[1] = h.fullName["flapping"];
+		}
 
+		//Используем модифицированную атаку
+		double attack = (calcA * interpolation(0, 0, 22.4, 1, abs(velocityX)) + (step - getAverange("step", 25)) * 5) * interpolation(0, 1, 1, 0, velocityY);
+
+		//Передаточная финкция усиления хлопков от атаки
+		double atkGain = interpolation(12, 0, 2, -7, attack);
+
+		//Усиление хлопков при малом шаге
+		double flapStepGain = interpolation(2, 2, 4, 0, step);
+
+		//Ослабление хлопк(ания)(ования)(очения)(???) при малом шаге
+		double flappingStepGain = interpolation(2, -3, 4, 0, step);
+
+		//Усиление по Vy при низких скоростях
+		double flappingVyGain = interpolation(-3, 0, 0, -10, step) * interpolation(0, 1, 22.4, 0, abs(velocityX));
+
+		//Усиление по Vx
+		double flappingVxGain = 0;
+		if (abs(velocityX) > 56)
+		{
+			flappingVxGain = interpolation(56, -3, 70, 0, abs(velocityX));
+		}
+		else
+		{
+			flappingVxGain = abs(velocityX) * 1.07 - 66.924;
+		}
+
+		//Берем большее из 3х показателей для flapping
+		double flappingGainUnhover = 0;
+		if (flappingVyGain > atkGain)
+		{
+			if (flappingVyGain > flappingVxGain)
+			{
+				flappingGainUnhover = flappingVyGain;
+			}
+			else
+			{
+				flappingGainUnhover = flappingVxGain;
+			}
+		}
+		else
+		{
+			if (atkGain > flappingVxGain)
+			{
+				flappingGainUnhover = atkGain;
+			}
+			else
+			{
+				flappingGainUnhover = flappingVxGain;
+			}
+		}
+
+		if (flapIndicator == 2)//хлопаем
+		{
+			offsetOn += deltaTime;
+			offsetOn = (offsetOn > 1) ? 1 : offsetOn;//плавно наводим громкость за 1с
+		}
+		else
+		{
+			offsetOn -= deltaTime;
+			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
+		}
+
+		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
+		double hoveringGain = (abs(accelerationX) * 5.35 - 5.992) * interpolation(0, 1, 22.4, 0, velocityX) * offsetOn;//переходит в усиление нч по vy
+
+		//Выбираем между хлопками на висении и нет
+		double flappingFinalGain = (hoveringGain > flappingGainUnhover + flappingStepGain) ? hoveringGain : flappingGainUnhover + flappingStepGain;
+		double flapFinalGain = (hoveringGain > atkGain + flapStepGain) ? hoveringGain : atkGain + flapStepGain;
+
+		//Переход между хлопками по Vy
+		double transfer = interpolation(0.25, 1, -0.25, 0, velocityY);
+
+		//Рассчитываем результирующее усиление
+		double flapGain = pow(10, (flapFinalGain)*0.05) * transfer;
+		double flappingGain = pow(10, (flappingFinalGain)*0.05) * (1 - transfer);
+
+		alSourcef(source[0], AL_GAIN, flapGain * h.vintFlapFactor * masterGain);
+		alSourcef(source[1], AL_GAIN, flappingGain * masterGain);
 	}
 	return 1;
 }
@@ -4001,7 +4152,6 @@ VintSwish::VintSwish() : Sound(2, 2, 0)
 
 int VintSwish::play(Helicopter h, SOUNDREAD sr)
 {
-
 	for (size_t i = 0; i < 2; i++)
 	{
 		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
@@ -4157,45 +4307,90 @@ Runway::Runway() : Sound(2, 2, 1)
 
 int Runway::play(Helicopter h, double obj)
 {
-	//Блок настройки эффекта эквалайзер
-	//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
-	if (eq != "set")
+	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
-		alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
-		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-		alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-		alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
-		alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
-		alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
-		eq = "set";
-	}
-
-	for (size_t i = 0; i < 2; i++)
-	{
-		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
-
-		//Загружаем буферы и запускам источники
-		if (fileBuffered[i] != filetoBuffer[i])
+		//Блок настройки эффекта эквалайзер
+		//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
+		if (eq != "set")
 		{
-			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
-			fileBuffered[i] = filetoBuffer[i];
+			alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
+			alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+			alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+			alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
+			alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
+			alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
+			eq = "set";
 		}
+
+		for (size_t i = 0; i < 2; i++)
+		{
+			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+
+			//Загружаем буферы и запускам источники
+			if (fileBuffered[i] != filetoBuffer[i])
+			{
+				setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
+				fileBuffered[i] = filetoBuffer[i];
+			}
+		}
+
+		alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
+
+		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(11.2, 0.126, 14, 1, velocityX));//
+
+		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+
+		filetoBuffer[1] = h.fullName["runway"];
+		filetoBuffer[0] = h.fullName["landing"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		alSourcei(source[0], AL_LOOPING, AL_TRUE);
+
+		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.25/*Уменьшаем движение по полосе*/);//
+																																													  //alSourcef(source[1], AL_GAIN, 0);//
+		alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.854);//
 	}
+	else if (h.modelName == "mi_26")
+	{
+		//Блок настройки эффекта эквалайзер
+		//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
+		if (eq != "set")
+		{
+			alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
+			alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+			alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+			alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
+			alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
+			alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
+			eq = "set";
+		}
 
-	alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
+		for (size_t i = 0; i < 2; i++)
+		{
+			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
 
-	alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(11.2, 0.126, 14, 1, velocityX));//
+			//Загружаем буферы и запускам источники
+			if (fileBuffered[i] != filetoBuffer[i])
+			{
+				setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
+				fileBuffered[i] = filetoBuffer[i];
+			}
+		}
 
-	alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+		alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
 
-	filetoBuffer[1] = h.fullName["runway"];
-	filetoBuffer[0] = h.fullName["landing"];
-	alSourcei(source[1], AL_LOOPING, AL_TRUE);
-	alSourcei(source[0], AL_LOOPING, AL_TRUE);
+		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(8.3, 0.126, 11.2, 1, velocityX));//
 
-	alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.25/*Уменьшаем движение по полосе*/);//
-	//alSourcef(source[1], AL_GAIN, 0);//
-	alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.854);//
+		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+
+		filetoBuffer[1] = h.fullName["flapping"];
+		filetoBuffer[0] = h.fullName["landing"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		alSourcei(source[0], AL_LOOPING, AL_TRUE);
+
+		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.25/*Уменьшаем движение по полосе*/);//
+																																													  //alSourcef(source[1], AL_GAIN, 0);//
+		alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.854);//
+	}
 
 	return 1;
 }

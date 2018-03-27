@@ -98,8 +98,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["skv_off"] = "skv_off.wav";//!<имя файла звука СКВ
 										 //Движение по ВПП и РД
 	shortName["runway"] = "driving.wav";//!<имя файла звука звука движения по ВПП и РД
-										//Шум
-	shortName["air"] = "air.wav";//!<имя файла звука аэродинамического шума
+										
 								 //Вооружение
 	shortName["sturm"] = "sturm.wav";//!<имя файла звука ракеты штурм
 	shortName["nar8"] = "s8.wav";//!<имя файла звука НАР 8
@@ -136,7 +135,7 @@ void Helicopter::setPath(string pathToFile)
 	//Гировертикаль
 	shortName["girovert_on"] = "girovert_on.wav";//
 	shortName["girovert_w"] = "girovert_w.wav";
-	shortName["girovert"] = "girovert_on.txt";
+	//shortName["girovert"] = "girovert_on.txt";
 	//Насосная станция
 	shortName["pstat_on"] = "pstat_on.wav";//
 	shortName["pstat_w"] = "pstat_w.wav";//
@@ -153,6 +152,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["undefined1_on"] = "undefined1_on.wav";//
 	shortName["undefined1_w"] = "undefined1_w.wav";//
 											   //Другое
+											   //Шум
 	shortName["pinkNoise"] = "vadd.wav";//
 	shortName["landing"] = "landing.wav";//
 
@@ -204,6 +204,7 @@ void Helicopter::setParam(string model)
 		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
 		consumTankFactor = 0.25/*Расходный бак*/;
 		rainFactor = 0.5/*Дождь*/;
+		vadd = 1/*Скоростная добавка*/;
 	}
 	else if (model == "mi_8_amtsh")
 	{
@@ -241,6 +242,7 @@ void Helicopter::setParam(string model)
 		chassisBrakeReleaseFactor = 0.03/*Сброс давления*/;
 		consumTankFactor = 0.25/*Расходный бак*/;
 		rainFactor = 0.5/*Дождь*/;
+		vadd = 1/*Скоростная добавка*/;
 	}
 	else if (model == "mi_26")
 	{
@@ -260,8 +262,7 @@ void Helicopter::setParam(string model)
 		tr115Factor = 0.11/*тр115*/;
 		skvFactor = 0.5/*СКВ*/;
 		runwayFactor = 0.708/*ВПП*/;
-		//airNoiseFactor = 1/*шум*/;
-		rocketHitFactor = 0.8/*Попадание ракеты*/;
+		//rocketHitFactor = 0.8/*Попадание ракеты*/;
 		vintSwishFactor = 0.708/*ВИНТ Верх*/;
 		vintBrakeFactor = 0.16/*Винт тормоз*/;
 		vintFlapFactor = 0.4/*Винт хлопки*/;
@@ -273,11 +274,7 @@ void Helicopter::setParam(string model)
 		pumpStationFactor = 0.05/*Насосная станция*/;
 		consumTankFactor = 0.17/*Расходный бак*/;
 		rainFactor = 0.5/*Дождь*/;
-		//beats -4 
-		//vint_flap -8
-		//flapping 0
-		//vadd (pinknoise) 0 250 (200 -3 190 -6) - прямая вниз
-		//vintSwish -2
+		vadd = 1/*Скоростная добавка*/;
 	}
 	else if (model == "mi_28")
 	{
@@ -300,7 +297,6 @@ void Helicopter::setParam(string model)
 		tr115Factor = 0.15/*тр115*/;
 		skvFactor = 0.708/*СКВ*/;
 		runwayFactor = 1/*ВПП*/;
-		//airNoiseFactor = 1/*шум*/;
 		rocketSturmFactor = 1/*ШТУРМ*/;
 		rocketNar8Factor = 1/*НАР8*/;
 		rocketNar13Factor = 1/*НАР13*/;
@@ -318,6 +314,7 @@ void Helicopter::setParam(string model)
 		fenFactor = 0.1 /*undefined0*/;
 		undefinedFactor = 0.2 /*undefined1*/;
 		rocketIglaFactor = 1 /*ИГЛА*/;
+		vadd = 1/*Скоростная добавка*/;
 	}
 	else if (model == "ka_226")
 	{
@@ -337,13 +334,13 @@ void Helicopter::setParam(string model)
 		pumpRightFactor = 0.100/*подк р*/;
 		cutoffCraneFactor = 0.126/*перекр*/;
 		runwayFactor = 1/*ВПП*/;
-		airNoiseFactor = 1/*шум*/;
 		vintBrakeFactor = 1/*Винт тормоз*/;
 		vintFlapFactor = 0.5/*Винт хлопки*/;
 		chassisBrakePumpFactor = 0.178/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.178/*Сброс давления*/;
 		rainFactor = 1/*Дождь*/;
 		circlingCraneFactor = 0.126 /*Кран кольцевания*/;
+		vadd = 1/*Скоростная добавка*/;
 	}
 	else if (model == "ansat")
 	{
@@ -359,12 +356,12 @@ void Helicopter::setParam(string model)
 		engHpFactor = 0.141/*дв хп*/;
 		redFactor = 0.398/*Редуктор*/;
 		accumFactor = 0.100/*аккум*/;
-		airNoiseFactor = 1/*шум*/;
 		vintBrakeFactor = 1/*Винт тормоз*/;
 		vintFlapFactor = 0.5/*Винт хлопки*/;
 		chassisBrakePumpFactor = 0.178/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.178/*Сброс давления*/;
 		rainFactor = 1/*Дождь*/;
+		vadd = 1/*Скоростная добавка*/;
 	}
 	else if (model == "ka_27")
 	{
@@ -390,7 +387,7 @@ void Helicopter::setParam(string model)
 		chassisBrakeReleaseFactor = 0.1/*Сброс давления*/;
 		undefinedFactor = 0.25; /*хз1*///-12
 		runwayFactor = 0.63/*ВПП*/;
-		//airNoiseFactor = 1/*шум*/;
+		vadd = 1/*Скоростная добавка*/;
 
 		rainFactor = 0.5/*Дождь*/;
 
@@ -422,7 +419,7 @@ void Helicopter::setParam(string model)
 		chassisBrakeReleaseFactor = 0.1/*Сброс давления*/;
 		undefinedFactor = 0.25; /*хз1*///-12
 		runwayFactor = 0.63/*ВПП*/;
-		//airNoiseFactor = 1/*шум*/;
+		vadd = 1/*Скоростная добавка*/;
 
 		rocketSturmFactor = 1/*ШТУРМ*/;
 		rocketNar8Factor = 1/*НАР8*/;
