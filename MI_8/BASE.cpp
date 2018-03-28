@@ -2727,560 +2727,416 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 	}
 
+	//Переменная для поправки усиления сигнала на обороты редуктора
+	double gainControl = interpolation(h.redTurnoverAvt - 6, 0.33, h.redTurnoverAvt - 4, 0.66, h.redTurnoverAvt - 2, 1, sr.reduktor_gl_obor);
+
+	double lowFreqGain = AL_EQUALIZER_DEFAULT_LOW_GAIN;
+	double mid1FreqGain = AL_EQUALIZER_DEFAULT_MID1_GAIN;
+	double mid2FreqGain = AL_EQUALIZER_DEFAULT_MID2_GAIN;
+	double highFreqGain = AL_EQUALIZER_DEFAULT_HIGH_GAIN;
+
+	double lowCutoffFreq = AL_EQUALIZER_DEFAULT_LOW_CUTOFF;//НЧ 50-800
+	double mid1CutoffFreq = AL_EQUALIZER_DEFAULT_MID1_CENTER;//купол 1 200-3000
+	double mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;//купол 2 1000-8000
+	double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;//ВЧ 4000-16000
+
 	//Полеты ми 28
 	if (h.modelName == "mi_28")
 	{
-		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
+		//Вычисляем средние обороты за последние 30с
+		double averangeTurn = getAverange("redTurns", 30);
+
+		//Усиление по атаке
+		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+
+		double averangeAtk = getAverange("attack", 20) * interpolation(0, 0, 16.67, 1, abs(velocityX));
+
+		double atkGain = (atkXvel - averangeAtk) * -0.4;
+		atkGain = (atkGain < -2) ? -2 : atkGain;
+		atkGain = (atkGain > 3) ? 3 : atkGain;
+
+		//Общее усиление от скорости 
+		double velocityGain = 0;
+		if (velocityX < 70)
 		{
-			double averangeTurn = getAverange("redTurns", 30);
-			//double averangeTurn = 0;//30
-			//averangeCalcPeriod += deltaTime;
-			//if (averangeCalcPeriod >= 30 && !vector.empty())
-			//	vector.erase(vector.begin());
-			//vector.push_back(sr.reduktor_gl_obor);
-			//for (auto& x : vector)
-			//	averangeTurn += x / vector.size();
+			velocityGain = interpolation(20, 0, 50, 2, 70, 5, velocityX) / 5;
+		}
+		else
+		{
+			velocityGain = (velocityX  * 0.15 - 5.5) / 5;
+		}
 
-			//Усиление по атаке
-			double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+		//Общее усиление от шага
+		double stepGain = 0;
+		if (step < 16)
+		{
+			stepGain = interpolation(0, 0, 11, 3, 16, 5, step) / 3;
+		}
+		else
+		{
+			stepGain = (step * 0.4 - 1.4) / 3;
+		}
 
-			double averangeAtk = getAverange("attack", 20) * interpolation(0, 0, 16.67, 1, abs(velocityX));
-			/*double averangeAtk = 0;
-			averangeCalcPeriodAtk += deltaTime;
-			if (averangeCalcPeriodAtk >= 20 && !vectorAtk.empty())
-				vectorAtk.erase(vectorAtk.begin());
-			vectorAtk.push_back(atkXvel);
-			for (auto& x : vectorAtk)
-				averangeAtk += x / vectorAtk.size();*/
+		//усиление от оборотов
+		double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
 
-			double atkGain = (atkXvel - averangeAtk) * -0.4;
-			atkGain = (atkGain < -2) ? -2 : atkGain;
-			atkGain = (atkGain > 3) ? 3 : atkGain;
-
-			//Общее усиление от скорости 
-			double velocityGain = 0;
-			if (velocityX < 70)
+		//усиление НЧ когда нет хлопков на границе 2го условия
+		if (abs(velocityX) <= 16.67) //ниже 60ти висение
+		{
+			if (vectorVx.size() > 2)
 			{
-				velocityGain = interpolation(20, 0, 50, 2, 70, 5, velocityX) / 5;
-			}
-			else
-			{
-				velocityGain = (velocityX  * 0.15 - 5.5) / 5;
-			}
-
-			//Общее усиление от шага
-			double stepGain = 0;
-			if (step < 16)
-			{
-				stepGain = interpolation(0, 0, 11, 3, 16, 5, step) / 3;
-			}
-			else
-			{
-				stepGain = (step * 0.4 - 1.4) / 3;
-			}
-
-			//усиление от оборотов
-			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
-
-			//усиление НЧ когда нет хлопков на границе 2го условия
-			if (abs(velocityX) <= 16.67) //ниже 60ти висение
-			{
-				if (vectorVx.size() > 2)
+				if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
 				{
-					if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
+					hovering = 0;
+				}
+				else //предыдущая точка была на висениии - висение
+				{
+					if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
 					{
-						hovering = 0;
-					}
-					else //предыдущая точка была на висениии - висение
-					{
-						if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
-						{
-							hovering = 1;
-						}
+						hovering = 1;
 					}
 				}
 			}
-			else //выше 60ти не висение
-			{
-				hovering = 0;
-			}
-
-			//Если рывок слишком большой и бьет по ушам
-			double flapCGain = 0;
-			if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
-			{
-				flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
-				flapCGain = (flapCGain > 4) ? 4 : flapCGain;
-			}
-
-			double lowFreqGain = pow(10, (turnGain /*+ stepGain * 1 */ + velocityGain * 3 + atkGain + flapCGain/*+ lowFreqVelocityGain + highGain + mid2FreqStepGain*/ /*+ accelerationGain*/)*0.05);
-			double mid1FreqGain = pow(10, (turnGain + stepGain * 2 + velocityGain * 5 /*+ flapCGain*//*+ mid2FreqStepGain*//*+ lowFreqVelocityGain*/)*0.05);
-			double mid2FreqGain = pow(10, (turnGain + stepGain * 4 /*+ velocityGain*/ /*+ lowFreqVelocityGain*/)*0.05);
-			double highFreqGain = pow(10, (turnGain + stepGain * 4 /*+ velocityGain *//*+ highFreqTurnGain*/)*0.05);
-
-			lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
-			mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
-			mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
-			highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
-
-			double lowCutoffFreq = 200;//НЧ 50-800
-			double mid1CutoffFreq = 1000;//купол 1 200-3000
-			double mid2CutoffFreq = 3000;//купол 2 1000-8000
-			double highCutoffFreq = 10000;//ВЧ 4000-16000
-
-			for (size_t i = 0; i < 2; i++)
-			{
-				alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
-
-				alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
-
-				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-			}
-			printf("turnGain = %10.3f stepGain = %10.3f velocityGain = %10.3f atkGain = %10.3f\r", turnGain, stepGain, velocityGain, atkGain);
 		}
+		else //выше 60ти не висение
+		{
+			hovering = 0;
+		}
+
+		//Если рывок слишком большой и бьет по ушам
+		double flapCGain = 0;
+		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
+		{
+			flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
+			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
+		}
+
+		lowFreqGain = pow(10, (turnGain + velocityGain * 3 + atkGain + flapCGain)*0.05 * gainControl);
+		mid1FreqGain = pow(10, (turnGain + stepGain * 2 + velocityGain * 5)*0.05 * gainControl);
+		mid2FreqGain = pow(10, (turnGain + stepGain * 4)*0.05 * gainControl);
+		highFreqGain = pow(10, (turnGain + stepGain * 4)*0.05 * gainControl);
+
+		lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
+		mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
+		mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
+		highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
+
+		lowCutoffFreq = 200;//НЧ 50-800
+		mid1CutoffFreq = 1000;//купол 1 200-3000
+		mid2CutoffFreq = 3000;//купол 2 1000-8000
+		highCutoffFreq = 10000;//ВЧ 4000-16000
 	}
 	//Полеты 8 мтв5, 8 амтш
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
-		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
+		//Вычисляем средние обороты за последние 30с
+		double averangeTurn = getAverange("redTurns", 30);
+
+		//усиление от оборотов выше 10000
+		double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1.5 : 0;
+		highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
+
+		//усиление от оборотов
+		double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
+
+		//Общее усиление от скорости выше 28м/с
+		double velocityGain = (abs(velocityX) >= 28) ? (abs(velocityX) - 28)* 0.1 : 0;//0.1дб на 1 м/с
+
+		//Вычисляем средний шаг за 35с
+		double averangeStep = getAverange("step", 35);
+
+		//Усиление от шага
+		double stepGain = 0.75 * (step - averangeStep) * interpolation(0, 0, 1, 1, high);//
+
+		//усиление по шагу в НЧ
+		double mid2FreqStepGain = step * 0.6 * interpolation(0, 1, 10, 0, high);
+
+		//Висение
+		//усиление НЧ когда нет хлопков на границе 2го условия
+		if (abs(velocityX) <= 16.67) //ниже 60ти висение
 		{
-			double averangeTurn = getAverange("redTurns", 30);
-			//Усиление при разнице оборотов от среднего
-			//double averangeTurn = 0;
-			//averangeCalcPeriod += deltaTime;
-			//if (averangeCalcPeriod >= 30 && !vector.empty())
-			//	vector.erase(vector.begin());
-			//vector.push_back(sr.reduktor_gl_obor);
-			//for (auto& x : vector)
-			//	averangeTurn += x / vector.size();
-
-			//усиление от оборотов выше 10000
-			double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1.5 : 0;
-			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
-			//усиление от оборотов
-			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
-
-			//Общее усиление от скорости выше 28м/с
-			double velocityGain = (abs(velocityX) >= 28) ? (abs(velocityX) - 28)* 0.1 : 0;//0.1дб на 1 м/с
-
-			//Усиление от шага
-			double averangeStep = getAverange("step", 35);
-			/*double averangeStep = 0;
-			if (high > 0)
+			if (vectorVx.size() > 2)
 			{
-				averangeCalcPeriodStep += deltaTime;
-				if (averangeCalcPeriodStep >= 35 && !vectorStep.empty())
-					vectorStep.erase(vectorStep.begin());
-				vectorStep.push_back(step);
-				for (auto& x : vectorStep)
-					averangeStep += x / vectorStep.size();
-			}*/
-
-			double stepGain = 0.75 * (step - averangeStep) * interpolation(0, 0, 1, 1, high);//
-
-			//усиление по шагу в НЧ
-			double mid2FreqStepGain = step * 0.6 * interpolation(0, 1, 10, 0, high);
-
-			//Висение
-			//усиление НЧ когда нет хлопков на границе 2го условия
-			if (abs(velocityX) <= 16.67) //ниже 60ти висение
-			{
-				if (vectorVx.size() > 2)
+				if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
 				{
-					if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
+					hovering = 0;
+				}
+				else //предыдущая точка была на висениии - висение
+				{
+					if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
 					{
-						hovering = 0;
-					}
-					else //предыдущая точка была на висениии - висение
-					{
-						if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
-						{
-							hovering = 1;
-						}
+						hovering = 1;
 					}
 				}
 			}
-			else //выше 60ти не висение
-			{
-				hovering = 0;
-			}
-			//Если рывок слишком большой и бьет по ушам
-			double flapCGain = 0;
-			if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
-			{
-				flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
-				flapCGain = (flapCGain > 4) ? 4 : flapCGain;
-			}
-
-			//Страгивание
-			//Усиление редуктора в НЧ в начале движения по ВПП
-			double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high : 0;
-
-
-			double lowFreqGain = pow(10, (mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
-			double mid1FreqGain = pow(10, (turnGain + stepGain + velocityGain + mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
-			double mid2FreqGain = pow(10, (turnGain + stepGain + velocityGain)*0.05);
-			double highFreqGain = pow(10, (turnGain + stepGain + velocityGain + highFreqTurnGain)*0.05);
-
-			double lowCutoffFreq = 250;//НЧ 50-800
-			double mid1CutoffFreq = 400;//купол 1 200-3000
-			double mid2CutoffFreq = 3000;//купол 2 1000-8000
-			double highCutoffFreq = 10000;//ВЧ 4000-16000
-
-			for (size_t i = 0; i < 2; i++)
-			{
-				alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
-
-				alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
-
-				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-			}
 		}
+		else //выше 60ти не висение
+		{
+			hovering = 0;
+		}
+		//Если рывок слишком большой и бьет по ушам
+		double flapCGain = 0;
+		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
+		{
+			flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
+			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
+		}
+
+		//Страгивание
+		//Усиление редуктора в НЧ в начале движения по ВПП
+		double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high : 0;
+
+		lowFreqGain = pow(10, (mid2FreqStepGain + flapCGain + stalkingGain)*0.05 * gainControl);
+		mid1FreqGain = pow(10, (turnGain + stepGain + velocityGain + mid2FreqStepGain + flapCGain + stalkingGain)*0.05 * gainControl);
+		mid2FreqGain = pow(10, (turnGain + stepGain + velocityGain)*0.05 * gainControl);
+		highFreqGain = pow(10, (turnGain + stepGain + velocityGain + highFreqTurnGain)*0.05 * gainControl);
+
+		lowCutoffFreq = 250;//НЧ 50-800
+		mid1CutoffFreq = 400;//купол 1 200-3000
+		mid2CutoffFreq = 3000;//купол 2 1000-8000
+		highCutoffFreq = 10000;//ВЧ 4000-16000
 	}
 	//Полеты ка 29
 	if (h.modelName == "ka_29")
 	{
-		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
+		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
+		double averangeTurn = getAverange("redTurns", 30);
+
+		//Общее усиление от скорости выше 50м/с
+		double velocityGain = (abs(velocityX) >= 50) ? (abs(velocityX) - 50)* 0.2 : 0;//0.1дб на 1 м/с
+
+		//Набираем массив для рассчета усиления от среднего значения шага за 50с
+		double averangeStep = getAverange("step", 50);
+
+		//Рассчитываем усиление от среднего
+		double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);
+
+		//усиление по шагу в НЧ
+		double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, high);
+
+		//усиление по шагу в Средних чатотах
+		double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
+
+		//усиление от оборотов выше 10000
+		double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1 : 0;
+		highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
+		//усиление от оборотов
+		double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
+
+		//усиление НЧ когда нет хлопков на границе 2го условия
+		if (abs(velocityX) <= 16.67) //ниже 60ти висение
 		{
-			//averangeCalcPeriod += deltaTime;
-			////Набираем массив для рассчета усиления от среднего шага, пока находимся в воздухе, очищаем массив на земле
-			//if (high > 0)
-			//{
-			//	averangeCalcPeriodStep += deltaTime;
-			//}
-			//else
-			//{
-			//	averangeCalcPeriodStep = 0;
-			//	vectorStep.clear();
-			//}
-
-			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-			double averangeTurn = getAverange("redTurns", 30);
-			/*double averangeTurn = 0;
-			if (averangeCalcPeriod >= 30 && !vector.empty())
-				vector.erase(vector.begin());
-			vector.push_back(sr.reduktor_gl_obor);
-			for (auto& x : vector)
-				averangeTurn += x / vector.size();*/
-
-				//Общее усиление от скорости выше 50м/с
-			double velocityGain = (abs(velocityX) >= 50) ? (abs(velocityX) - 50)* 0.2 : 0;//0.1дб на 1 м/с
-
-			//Набираем массив для рассчета усиления от среднего значения шага за 50с
-			double averangeStep = getAverange("step", 50);
-			//double averangeStep = 0;
-			//if (high > 0)
-			//{
-			//	if (averangeCalcPeriodStep >= 50 && !vectorStep.empty())// 20 -> 50
-			//		vectorStep.erase(vectorStep.begin());
-			//	vectorStep.push_back(step);
-			//	for (auto& x : vectorStep)
-			//		averangeStep += x / vectorStep.size();
-			//}
-			//рассчитываем усиление от среднего
-			double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);
-
-			//усиление по шагу в НЧ
-			double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, high);//0.3 -> 0.2
-
-			//усиление по шагу в Средних чатотах
-			double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
-
-			//усиление от оборотов выше 10000
-			double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1 : 0;
-			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
-			//усиление от оборотов
-			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
-
-			//усиление НЧ когда нет хлопков на границе 2го условия
-			if (abs(velocityX) <= 16.67) //ниже 60ти висение
+			if (vectorVx.size() > 2)
 			{
-				if (vectorVx.size() > 2)
+				if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
 				{
-					if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
+					hovering = 0;
+				}
+				else //предыдущая точка была на висениии - висение
+				{
+					if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
 					{
-						hovering = 0;
-					}
-					else //предыдущая точка была на висениии - висение
-					{
-						if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
-						{
-							hovering = 1;
-						}
+						hovering = 1;
 					}
 				}
 			}
-			else //выше 60ти не висение
-			{
-				hovering = 0;
-			}
-			//Если рывок слишком большой и бьет по ушам
-			double flapCGain = 0;
-			if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
-			{
-				flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
-				flapCGain = (flapCGain > 4) ? 4 : flapCGain;
-			}
-
-			double lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain * 0.3 + flapCGain + velocityGain)*0.05); //0.15 -> 0.15
-			double mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.1 + mid2FreqStepGain * 0.2 + flapCGain)*0.05);//0.3 -> 0.2
-			double mid2FreqGain = pow(10, (turnGain + stepGain * 0.3 + absStepGain * 0.1 + velocityGain * 0.75)*0.05);//0.4 -> 0.3
-			double highFreqGain = pow(10, (turnGain + stepGain * 0.5 + absStepGain * 0.3 + highFreqTurnGain)*0.05);//
-
-			lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
-			mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
-			mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
-			highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
-
-			double lowCutoffFreq = 400;//НЧ 50-800
-			double mid1CutoffFreq = 1000;//купол 1 200-3000
-			double mid2CutoffFreq = 3000;//купол 2 1000-8000
-			double highCutoffFreq = 10000;//ВЧ 4000-16000
-
-			for (size_t i = 0; i < 2; i++)
-			{
-				alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
-
-				alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
-
-				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-																					   //alSource3i(source[i], AL_AUXILIARY_SEND_FILTER, effectSlot[i], 0, filterWet[i]);
-			}
 		}
+		else //выше 60ти не висение
+		{
+			hovering = 0;
+		}
+		//Если рывок слишком большой и бьет по ушам
+		double flapCGain = 0;
+		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
+		{
+			flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
+			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
+		}
+
+		lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain * 0.3 + flapCGain + velocityGain) * 0.05); //0.15 -> 0.15
+		mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.1 + mid2FreqStepGain * 0.2 + flapCGain) * 0.05 * gainControl);//0.3 -> 0.2
+		mid2FreqGain = pow(10, (turnGain + stepGain * 0.3 + absStepGain * 0.1 + velocityGain * 0.75) * 0.05 * gainControl);//0.4 -> 0.3
+		highFreqGain = pow(10, (turnGain + stepGain * 0.5 + absStepGain * 0.3 + highFreqTurnGain) * 0.05 * gainControl);//
+
+		lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
+		mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
+		mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
+		highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
+
+		lowCutoffFreq = 400;//НЧ 50-800
+		mid1CutoffFreq = 1000;//купол 1 200-3000
+		mid2CutoffFreq = 3000;//купол 2 1000-8000
+		highCutoffFreq = 10000;//ВЧ 4000-16000
 	}
 	//Полеты ка 27
 	if (h.modelName == "ka_27")
 	{
-		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
+		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
+		double averangeTurn = getAverange("redTurns", 30);
+
+		//усиление от скорости выше 50км/ч (14м/c)
+		double velocityGain = 0;
+		if (abs(velocityX) < 42)
 		{
-			//averangeCalcPeriod += deltaTime;
-			////Набираем массив для рассчета усиления от среднего шага, пока находимся в воздухе, очищаем массив на земле
-			//if (high > 0)
-			//{
-			//	averangeCalcPeriodStep += deltaTime;
-			//}
-			//else
-			//{
-			//	averangeCalcPeriodStep = 0;
-			//	vectorStep.clear();
-			//}
+			velocityGain = interpolation(14, 0, 42, 3, abs(velocityX));
+		}
+		else if (abs(velocityX) >= 42 && abs(velocityX) < 56)
+		{
+			velocityGain = interpolation(42, 3, 56, 7, abs(velocityX));
+		}
+		else
+		{
+			velocityGain = 7 + (abs(velocityX) - 56) * 0.071;
+			velocityGain = (velocityGain > 9) ? 9 : velocityGain;
+		}
 
-			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-			double averangeTurn = getAverange("redTurns", 30);
-			/*double averangeTurn = 0;
-			if (averangeCalcPeriod >= 30 && !vector.empty())
-				vector.erase(vector.begin());
-			vector.push_back(sr.reduktor_gl_obor);
-			for (auto& x : vector)
-				averangeTurn += x / vector.size();*/
+		//Набираем массив для рассчета усиления от среднего значения шага за 50с
+		double averangeStep = getAverange("step", 50);
 
-				//усиление от скорости выше 50км/ч (14м/c)
-			double velocityGain = 0;
-			if (abs(velocityX) < 42)
+		//Рассчитываем усиление от среднего
+		double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);
+
+		//усиление по шагу в НЧ
+		double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, high);
+
+		//усиление по шагу в Средних чатотах
+		double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
+
+		//усиление от оборотов выше 10000
+		double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1 : 0;
+		highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
+		//усиление от оборотов
+		double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
+
+		//усиление НЧ когда нет хлопков на границе 2го условия
+		if (abs(velocityX) <= 16.67) //ниже 60ти висение
+		{
+			if (vectorVx.size() > 2)
 			{
-				velocityGain = interpolation(14, 0, 42, 3, abs(velocityX));
-			}
-			else if (abs(velocityX) >= 42 && abs(velocityX) < 56)
-			{
-				velocityGain = interpolation(42, 3, 56, 7, abs(velocityX));
-			}
-			else
-			{
-				velocityGain = 7 + (abs(velocityX) - 56) * 0.071;
-				velocityGain = (velocityGain > 9) ? 9 : velocityGain;
-			}
-
-			//Набираем массив для рассчета усиления от среднего значения шага за 50с
-			double averangeStep = getAverange("step", 50);
-			//double averangeStep = 0;
-			//if (high > 0)
-			//{
-			//	if (averangeCalcPeriodStep >= 50 && !vectorStep.empty())// 20 -> 50
-			//		vectorStep.erase(vectorStep.begin());
-			//	vectorStep.push_back(step);
-			//	for (auto& x : vectorStep)
-			//		averangeStep += x / vectorStep.size();
-			//}
-			//рассчитываем усиление от среднего
-			double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);
-
-			//усиление по шагу в НЧ
-			double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, high);//0.3 -> 0.2
-
-																		  //усиление по шагу в Средних чатотах
-			double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
-
-			//усиление от оборотов выше 10000
-			double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1 : 0;
-			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
-			//усиление от оборотов
-			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
-
-			//усиление НЧ когда нет хлопков на границе 2го условия
-			if (abs(velocityX) <= 16.67) //ниже 60ти висение
-			{
-				if (vectorVx.size() > 2)
+				if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
 				{
-					if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
+					hovering = 0;
+				}
+				else //предыдущая точка была на висениии - висение
+				{
+					if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
 					{
-						hovering = 0;
-					}
-					else //предыдущая точка была на висениии - висение
-					{
-						if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
-						{
-							hovering = 1;
-						}
+						hovering = 1;
 					}
 				}
 			}
-			else //выше 60ти не висение
-			{
-				hovering = 0;
-			}
-			//Если рывок слишком большой и бьет по ушам
-			double flapCGain = 0;
-			if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
-			{
-				flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
-				flapCGain = (flapCGain > 4) ? 4 : flapCGain;
-			}
-
-			double lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain * 0.3 + flapCGain + velocityGain)*0.05); //0.15 -> 0.15
-			double mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.1 + mid2FreqStepGain * 0.2 + flapCGain)*0.05);//0.3 -> 0.2
-			double mid2FreqGain = pow(10, (turnGain + stepGain * 0.3 + absStepGain * 0.1 + velocityGain * 0.75)*0.05);//0.4 -> 0.3
-			double highFreqGain = pow(10, (turnGain + stepGain * 0.5 + absStepGain * 0.3 + highFreqTurnGain)*0.05);//
-
-			lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
-			mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
-			mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
-			highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
-
-			double lowCutoffFreq = 400;//НЧ 50-800
-			double mid1CutoffFreq = 1000;//купол 1 200-3000
-			double mid2CutoffFreq = 3000;//купол 2 1000-8000
-			double highCutoffFreq = 10000;//ВЧ 4000-16000
-
-			for (size_t i = 0; i < 2; i++)
-			{
-				alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
-
-				alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
-
-				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-																					   //alSource3i(source[i], AL_AUXILIARY_SEND_FILTER, effectSlot[i], 0, filterWet[i]);
-			}
 		}
+		else //выше 60ти не висение
+		{
+			hovering = 0;
+		}
+		//Если рывок слишком большой и бьет по ушам
+		double flapCGain = 0;
+		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
+		{
+			flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
+			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
+		}
+
+		lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain * 0.3 + flapCGain + velocityGain) * 0.05 * gainControl); //0.15 -> 0.15
+		mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.1 + mid2FreqStepGain * 0.2 + flapCGain) * 0.05 * gainControl);//0.3 -> 0.2
+		mid2FreqGain = pow(10, (turnGain + stepGain * 0.3 + absStepGain * 0.1 + velocityGain * 0.75) * 0.05 * gainControl);//0.4 -> 0.3
+		highFreqGain = pow(10, (turnGain + stepGain * 0.5 + absStepGain * 0.3 + highFreqTurnGain) * 0.05 * gainControl);//
+
+		lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
+		mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
+		mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
+		highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
+
+		lowCutoffFreq = 400;//НЧ 50-800
+		mid1CutoffFreq = 1000;//купол 1 200-3000
+		mid2CutoffFreq = 3000;//купол 2 1000-8000
+		highCutoffFreq = 10000;//ВЧ 4000-16000
 	}
 	//Полеты ми 26
 	if (h.modelName == "mi_26")
 	{
-		if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
+		//добавляем шум биений
+		if (beats != h.fullName["beats"])
 		{
-			//добавляем шум биений
-			if (beats != h.fullName["beats"])
-			{
-				setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["beats"]);
-				alSourcei(source[2], AL_LOOPING, AL_TRUE);
-				beats = h.fullName["beats"];
+			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["beats"]);
+			alSourcei(source[2], AL_LOOPING, AL_TRUE);
+			beats = h.fullName["beats"];
 
-				alEffecti(effect[2], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
-				alAuxiliaryEffectSloti(effectSlot[2], AL_EFFECTSLOT_EFFECT, effect[2]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-				alFilteri(filter[2], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-				alFilterf(filter[2], AL_LOWPASS_GAIN, 0);
-				alSource3i(source[2], AL_AUXILIARY_SEND_FILTER, effectSlot[2], 0, NULL);
-				alSourcei(source[2], AL_DIRECT_FILTER, filter[2]);
-			}
-
-			//регулируем громкость шума
-			double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
-			alSourcef(source[2], AL_GAIN, beatsGain);
-
-			double averangeTurn = getAverange("redTurns", 30);
-
-			//усиление от оборотов выше 10000
-			double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1.5 : 0;
-			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
-			//усиление от оборотов
-			double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
-
-			double averangeStep = getAverange("step", 35);
-
-			//Усиление от шага
-			double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);//
-
-			//Усиление по Vy
-			double velocityYGain = -velocityY * interpolation(0, 1, 22.4, 0, abs(velocityX));
-
-			//Страгивание
-			//Усиление редуктора в НЧ в начале движения по ВПП
-			double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high : 0;
-
-			double lowFreqGain = pow(10, (velocityYGain + stepGain * 0.25 + stalkingGain)*0.05);
-			double mid1FreqGain = pow(10, (turnGain + stepGain * 0.75 + stalkingGain)*0.05);
-			double mid2FreqGain = pow(10, (turnGain + stepGain * 0.75)*0.05);
-			double highFreqGain = pow(10, (turnGain + stepGain * 0.75 + highFreqTurnGain)*0.05);
-
-			lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
-			mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
-			mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
-			highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
-
-			double lowCutoffFreq = 200;//НЧ 50-800
-			double mid1CutoffFreq = 1000;//купол 1 200-3000
-			double mid2CutoffFreq = 3000;//купол 2 1000-8000
-			double highCutoffFreq = 10000;//ВЧ 4000-16000
-
-			for (size_t i = 0; i < 2; i++)
-			{
-				alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
-
-				alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
-
-				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-			}
-
-			//Усиление биений
-			alEffectf(effect[2], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
-			alEffectf(effect[2], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
-			alEffectf(effect[2], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
-			alEffectf(effect[2], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
-
-			alEffectf(effect[2], AL_EQUALIZER_LOW_GAIN, pow(10, (stepGain * 0.25)*0.05));//
-
+			alEffecti(effect[2], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
 			alAuxiliaryEffectSloti(effectSlot[2], AL_EFFECTSLOT_EFFECT, effect[2]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+			alFilteri(filter[2], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+			alFilterf(filter[2], AL_LOWPASS_GAIN, 0);
+			alSource3i(source[2], AL_AUXILIARY_SEND_FILTER, effectSlot[2], 0, NULL);
+			alSourcei(source[2], AL_DIRECT_FILTER, filter[2]);
 		}
+
+		//регулируем громкость шума
+		double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
+		alSourcef(source[2], AL_GAIN, beatsGain);
+
+		double averangeTurn = getAverange("redTurns", 30);
+
+		//усиление от оборотов выше 10000
+		double highFreqTurnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 1.5 : 0;
+		highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
+
+		//усиление от оборотов
+		double turnGain = (averangeTurn > h.redTurnoverAvt - 2) ? (sr.reduktor_gl_obor - averangeTurn) * 0.75 : 0;
+
+		double averangeStep = getAverange("step", 35);
+
+		//Усиление от шага
+		double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);//
+
+		//Усиление по Vy
+		double velocityYGain = -velocityY * interpolation(0, 1, 22.4, 0, abs(velocityX));
+
+		//Страгивание
+		//Усиление редуктора в НЧ в начале движения по ВПП
+		double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high : 0;
+
+		lowFreqGain = pow(10, (velocityYGain + stepGain * 0.25 + stalkingGain) * 0.05 * gainControl);
+		mid1FreqGain = pow(10, (turnGain + stepGain * 0.75 + stalkingGain) * 0.05 * gainControl);
+		mid2FreqGain = pow(10, (turnGain + stepGain * 0.75) * 0.05 * gainControl);
+		highFreqGain = pow(10, (turnGain + stepGain * 0.75 + highFreqTurnGain) * 0.05 * gainControl);
+
+		lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
+		mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
+		mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
+		highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
+
+		lowCutoffFreq = 200;//НЧ 50-800
+		mid1CutoffFreq = 1000;//купол 1 200-3000
+		mid2CutoffFreq = 3000;//купол 2 1000-8000
+		highCutoffFreq = 10000;//ВЧ 4000-16000
+
+		//Усиление биений
+		alEffectf(effect[2], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
+		alEffectf(effect[2], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
+		alEffectf(effect[2], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
+		alEffectf(effect[2], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
+
+		alEffectf(effect[2], AL_EQUALIZER_LOW_GAIN, pow(10, (stepGain * 0.25)*0.05) * gainControl);//
+
+		alAuxiliaryEffectSloti(effectSlot[2], AL_EFFECTSLOT_EFFECT, effect[2]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 	}
+
+	for (size_t i = 0; i < 2; i++)
+	{
+		alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
+		alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
+		alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
+		alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
+
+		alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
+		alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
+		alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
+		alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
+
+		alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+	}
+
 	return 1;
 }
 
@@ -3499,61 +3355,60 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 		}
 	}
 
+	//Переменная для поправки усиления сигнала на обороты двигателя
+	double gainControl = interpolation(h.engTurnoverAvt - 6, 0.33, h.engTurnoverAvt - 4, 0.66, h.engTurnoverAvt - 2, 1, parameter);
+
+	double lowFreqGain = AL_EQUALIZER_DEFAULT_LOW_GAIN;
+	double mid1FreqGain = AL_EQUALIZER_DEFAULT_MID1_GAIN;
+	double mid2FreqGain = AL_EQUALIZER_DEFAULT_MID2_GAIN;
+	double highFreqGain = AL_EQUALIZER_DEFAULT_HIGH_GAIN;
+
+	double lowCutoffFreq = AL_EQUALIZER_DEFAULT_LOW_CUTOFF;//НЧ 50-800
+	double mid1CutoffFreq = AL_EQUALIZER_DEFAULT_MID1_CENTER;//купол 1 200-3000
+	double mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;//купол 2 1000-8000
+	double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;//ВЧ 4000-16000
+
 	//Полеты 8 мтв5, 8 амтш, ка 27м, ка 29
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "mi_26" || h.modelName == "ka_27" || h.modelName == "ka_29")
 	{
-		if (parameter > h.engTurnoverAvt - 2)
+		double averangeTurn = 0;
+		if (engNum == 1)
 		{
-			double averangeTurn = 0;
-			if (engNum == 1)
-			{
-				averangeTurn = getAverange("eng1Turns", 25);
-			}
-			else
-			{
-				averangeTurn = getAverange("eng2Turns", 25);
-			}
-
-			/*double averangeTurn = 0;
-			averangeCalcPeriod += deltaTime;
-			if (averangeCalcPeriod >= 25 && !vector.empty())
-				vector.erase(vector.begin());
-			vector.push_back(parameter);
-			for (auto& x : vector)
-				averangeTurn += x / vector.size();*/
-
-				//усиление от оборотов выше 10000
-			double highFreqTurnGain = (averangeTurn > h.engTurnoverAvt - 2) ? (parameter - averangeTurn) * 0.35 : 0;
-			highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
-			//усиление от оборотов
-			double turnGain = (averangeTurn > h.engTurnoverAvt - 2) ? (parameter - averangeTurn) * 0.35 : 0;
-
-			double lowFreqGain = pow(10, (turnGain)*0.05);
-			double mid1FreqGain = pow(10, (turnGain)*0.05);
-			double mid2FreqGain = pow(10, (turnGain)*0.05);
-			double highFreqGain = pow(10, (turnGain + highFreqTurnGain)*0.05);
-
-			double lowCutoffFreq = AL_EQUALIZER_DEFAULT_LOW_CUTOFF;
-			double mid1CutoffFreq = AL_EQUALIZER_DEFAULT_MID1_CENTER;
-			double mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;
-			double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;
-
-			for (size_t i = 0; i < 2; i++)
-			{
-				alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
-
-				alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
-				alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
-
-				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-			}
+			averangeTurn = getAverange("eng1Turns", 25);
 		}
+		else
+		{
+			averangeTurn = getAverange("eng2Turns", 25);
+		}
+
+		//усиление от оборотов выше 10000
+		double highFreqTurnGain = (averangeTurn > h.engTurnoverAvt - 2) ? (parameter - averangeTurn) * 0.35 : 0;
+		highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
+
+		//усиление от оборотов
+		double turnGain = (averangeTurn > h.engTurnoverAvt - 2) ? (parameter - averangeTurn) * 0.35 : 0;
+
+		double lowFreqGain = pow(10, (turnGain)*0.05 * gainControl);
+		double mid1FreqGain = pow(10, (turnGain)*0.05 * gainControl);
+		double mid2FreqGain = pow(10, (turnGain)*0.05 * gainControl);
+		double highFreqGain = pow(10, (turnGain + highFreqTurnGain)*0.05 * gainControl);
 	}
+
+	for (size_t i = 0; i < 2; i++)
+	{
+		alEffectf(effect[i], AL_EQUALIZER_LOW_CUTOFF, lowCutoffFreq);
+		alEffectf(effect[i], AL_EQUALIZER_MID1_CENTER, mid1CutoffFreq);
+		alEffectf(effect[i], AL_EQUALIZER_MID2_CENTER, mid2CutoffFreq);
+		alEffectf(effect[i], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
+
+		alEffectf(effect[i], AL_EQUALIZER_LOW_GAIN, lowFreqGain);//
+		alEffectf(effect[i], AL_EQUALIZER_MID1_GAIN, mid1FreqGain);//
+		alEffectf(effect[i], AL_EQUALIZER_MID2_GAIN, mid2FreqGain);//
+		alEffectf(effect[i], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
+
+		alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+	}
+
 	return 1;
 }
 
@@ -3657,17 +3512,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
 
 		double averangeTurn = getAverange("redTurns", 30);
-		/*double averangeTurn = 0;
-		averangeCalcPeriod += deltaTime;
-		if (averangeCalcPeriod >= 30 && !vector.empty())
-			vector.erase(vector.begin());
-		vector.push_back(sr.reduktor_gl_obor);
-		for (auto& x : vector)
-			averangeTurn += x / vector.size();*/
 
-			//Усиление от оборотов
-			//только если атака больше 2х
-			//делает огибающую атаки более динамичной
+		//Усиление от оборотов
+		//только если атака больше 2х
+		//делает огибающую атаки более динамичной
 		double turnsGain = 0;
 		if (atkXvel >= 2)
 		{
@@ -3726,13 +3574,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		double averangeTurn = getAverange("redTurns", 30);
-		/*double averangeTurn = 0;
-		averangeCalcPeriod += deltaTime;
-		if (averangeCalcPeriod >= 30 && !vector.empty())
-			vector.erase(vector.begin());
-		vector.push_back(sr.reduktor_gl_obor);
-		for (auto& x : vector)
-			averangeTurn += x / vector.size();*/
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
 
@@ -3824,13 +3665,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		double averangeTurn = getAverange("redTurns", 30);
-		/*double averangeTurn = 0;
-		averangeCalcPeriod += deltaTime;
-		if (averangeCalcPeriod >= 30 && !vector.empty())
-			vector.erase(vector.begin());
-		vector.push_back(sr.reduktor_gl_obor);
-		for (auto& x : vector)
-			averangeTurn += x / vector.size();*/
 
 		double gain_a = 0;
 		double h_g = 0;
@@ -3924,7 +3758,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			key[1] = h.fullName["vint_flap_B"];
 			key[2] = h.fullName["vint_flap_C"];
 		}
-
 
 		//Управляем частотой среза хлопков от оборотов редуктора
 		double lowerFreqLimit = log10(1000);//переходим в линейную шкалу
@@ -4307,33 +4140,33 @@ Runway::Runway() : Sound(2, 2, 1)
 
 int Runway::play(Helicopter h, double obj)
 {
+	//Блок настройки эффекта эквалайзер
+	//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
+	if (eq != "set")
+	{
+		alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
+		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+		alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+		alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
+		alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
+		alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
+		eq = "set";
+	}
+
+	for (size_t i = 0; i < 2; i++)
+	{
+		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+
+		//Загружаем буферы и запускам источники
+		if (fileBuffered[i] != filetoBuffer[i])
+		{
+			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
+			fileBuffered[i] = filetoBuffer[i];
+		}
+	}
+
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
-		//Блок настройки эффекта эквалайзер
-		//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
-		if (eq != "set")
-		{
-			alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
-			alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-			alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-			alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
-			alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
-			alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
-			eq = "set";
-		}
-
-		for (size_t i = 0; i < 2; i++)
-		{
-			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
-
-			//Загружаем буферы и запускам источники
-			if (fileBuffered[i] != filetoBuffer[i])
-			{
-				setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
-				fileBuffered[i] = filetoBuffer[i];
-			}
-		}
-
 		alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
 
 		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(11.2, 0.126, 14, 1, velocityX));//
@@ -4351,31 +4184,6 @@ int Runway::play(Helicopter h, double obj)
 	}
 	else if (h.modelName == "mi_26")
 	{
-		//Блок настройки эффекта эквалайзер
-		//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
-		if (eq != "set")
-		{
-			alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
-			alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-			alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-			alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
-			alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
-			alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
-			eq = "set";
-		}
-
-		for (size_t i = 0; i < 2; i++)
-		{
-			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
-
-			//Загружаем буферы и запускам источники
-			if (fileBuffered[i] != filetoBuffer[i])
-			{
-				setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
-				fileBuffered[i] = filetoBuffer[i];
-			}
-		}
-
 		alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
 
 		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(8.3, 0.126, 11.2, 1, velocityX));//
