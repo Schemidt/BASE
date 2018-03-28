@@ -126,7 +126,6 @@ struct SOUNDREAD {
 	float rez_8;                //!< ÑÊÂ
 	float rez_9;                //!< ÊÎ-50
 	float rez_10;               //!< Õëîïêè
-
 };
 #pragma pack ( pop )
 

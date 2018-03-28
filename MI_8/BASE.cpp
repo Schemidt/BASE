@@ -308,7 +308,6 @@ vector<double> Sound::vectorHigh, Sound::vectorVy, Sound::vectorVx, Sound::vecto
 vector<double> Sound::vectorAvrEng1Turn, Sound::vectorAvrEng2Turn, Sound::vectorAvrRedTurn, Sound::vectorAvrStep, Sound::vectorAvrAtk;//!<Массивы для рассчета среднего методом скользящего среднего
 double Sound::globalWindow = 50;//!<Переменная времени для набора значений в массивы для рассчета среднего
 
-
 AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_2;//Конфигурация каналов звука
 
 /*!\brief Основная функция программы*/
@@ -1102,7 +1101,7 @@ int main(int argc, char *argv[])
 							runwayMi8 = new Runway;//Создаем объект
 					if (runwayMi8)//Если объект создан - используем его
 					{
-						runwayMi8->play(helicopter, localdata.obj_l);//Воспроизводим звук - записываем состояние звука в play
+						runwayMi8->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
 						if (localdata.v == 0 || Sound::high > 1)//Условие удаления объекта
 							Free(runwayMi8);//Удаляем объект
 					}
@@ -4138,7 +4137,7 @@ Runway::Runway() : Sound(2, 2, 1)
 
 }
 
-int Runway::play(Helicopter h, double obj)
+int Runway::play(Helicopter h, SOUNDREAD sr)
 {
 	//Блок настройки эффекта эквалайзер
 	//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
@@ -4186,7 +4185,7 @@ int Runway::play(Helicopter h, double obj)
 	{
 		alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
 
-		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(8.3, 0.126, 11.2, 1, velocityX));//
+		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(11.2, 0.126, 14, 1, velocityX));//
 
 		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
@@ -4195,9 +4194,11 @@ int Runway::play(Helicopter h, double obj)
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 
-		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.25/*Уменьшаем движение по полосе*/);//
+		//78 -3 84 0 поправка на обороты редуктора
+		//180гр - 14 с разворот - нужно усиление при развороте (12гр - 1с -> -3дб; 6гр - 1с -> -6дб) (убавить флаппинг на 3 дб)
+		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 14, 0, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * interpolation(78, 0.71, 84, 1, sr.reduktor_gl_obor) * h.runwayFactor /** 0.25*//*Уменьшаем движение по полосе*/);//
 																																													  //alSourcef(source[1], AL_GAIN, 0);//
-		alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.854);//
+		alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 14, 1, abs(velocityX)) * interpolation(0, 1, 1, 0, high) * h.runwayFactor * 0.854);//
 	}
 
 	return 1;

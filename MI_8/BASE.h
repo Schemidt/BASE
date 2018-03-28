@@ -181,7 +181,7 @@ public:
 	*/
 	int switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset);
 
-	double getAverange(string parameter,double seconds);
+	double getAverange(string parameter, double seconds);
 
 };
 
@@ -198,12 +198,6 @@ class Reductor : public Sound
 public:
 
 	bool hovering = 0;/*!< Переменная для статуса полета на висении */
-
-	//double averangeCalcPeriod = 0;
-	//double averangeCalcPeriodAtk = 0;
-	//double averangeCalcPeriodStep = 0;
-
-	//vector<double> vector, vectorStep, vectorAtk;
 
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
 	string pinkNoise;/*!< Переменная для однократной загрузки буфера */
@@ -241,8 +235,6 @@ public:
 	int engNum;//!<Номер двигателя
 
 	double averangeCalcPeriod = 0;
-
-	//vector<double> vector;
 
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
 	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
@@ -290,7 +282,7 @@ public:
 	\param[in] obj Параметр обжатия стоек шасси
 	\return Статус источника OpenAL
 	*/
-	int play(Helicopter h, double obj);
+	int play(Helicopter h, SOUNDREAD sr);
 };
 
 /*!
@@ -304,10 +296,6 @@ public:
 class VintFlap : public Sound
 {
 public:
-
-	//double averangeCalcPeriod = 0;
-
-	//vector<double> vector;
 
 	string key[3];/*!< Переменная для однократной загрузки буфера */
 
@@ -364,11 +352,6 @@ class Skv : public Sound
 public:
 
 	string eq;/*!< Переменная для однократной загрузки буфера */
-
-	//double averangeCalcPeriod = 0;
-	//double averangeCalcPeriodStep = 0;
-
-	//vector<double> vector, vectorStep;
 
 	Skv();
 
