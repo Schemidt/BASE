@@ -366,6 +366,21 @@ public:
 
 #endif
 
+class point {
+public:
+	double x;
+	double y;
+
+	point(double x, double y)
+	{
+		this->x = x;
+		this->y = y;
+	}
+};
+
+double getValue(point p1, point p2 , double x);
+double getValue(point p1, point p2, double x, double limit, string w);
+double getValue(point p1, point p2, double x, double low_limit, double hi_limit);
 
 /*!\brief Очищает объекты OpenAL*/
 void freeOpenAL();

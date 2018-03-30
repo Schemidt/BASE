@@ -2091,6 +2091,34 @@ void setEFXPointers()
 	alGetAuxiliaryEffectSlotfv = (LPALGETAUXILIARYEFFECTSLOTFV)alGetProcAddress("alGetAuxiliaryEffectSlotfv");
 }
 
+double getValue(point p1, point p2, double x, double low_limit, double hi_limit)
+{
+	double f = ((p1.y - p2.y) / (p1.x - p2.x))*x + (p1.y - ((p1.y - p2.y) / (p1.x - p2.x))*p1.x);
+	f = (f > hi_limit) ? hi_limit : f;
+	f = (f < low_limit) ? low_limit : f;
+	return f;
+}
+
+double getValue(point p1, point p2, double x, double limit, string w)
+{
+	double f = ((p1.y - p2.y) / (p1.x - p2.x))*x + (p1.y - ((p1.y - p2.y) / (p1.x - p2.x))*p1.x);
+	if (w == "L")
+	{
+		f = (f < limit) ? limit : f;
+	}
+	else if (w == "H")
+	{
+		f = (f > limit) ? limit : f;
+	}
+	return f;
+}
+
+double getValue(point p1, point p2, double x)
+{
+	double f = ((p1.y - p2.y) / (p1.x - p2.x))*x + (p1.y - ((p1.y - p2.y) / (p1.x - p2.x))*p1.x);
+	return f;
+}
+
 void freeOpenAL()
 {
 	alutExit();
@@ -2399,6 +2427,7 @@ int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, stri
 		return 0;
 	alSourcei(*Source, AL_BUFFER, *Buffer);
 	alSourcef(*Source, AL_SEC_OFFSET, offset);
+	alSourcef(*Source, AL_GAIN, 0);
 	alSourcePlay(*Source);
 	alGetSourcei(*Source, AL_SOURCE_STATE, &play);
 	return play;
@@ -2411,6 +2440,7 @@ int Sound::switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset)
 	alSourcei(*Source, AL_BUFFER, NULL);
 	alSourcei(*Source, AL_BUFFER, *Buffer);
 	alSourcef(*Source, AL_SEC_OFFSET, offset);
+	alSourcef(*Source, AL_GAIN, 0);
 	alSourcePlay(*Source);
 	alGetSourcei(*Source, AL_SOURCE_STATE, &play);
 	return play;
@@ -3118,10 +3148,12 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, high);
 
 		//усиление по шагу в НЧ
-		double mid2FreqStepGain = step * 2 * interpolation(0, 1, 10, 0, high);
+		double mid2FreqStepGain = step * 1 * interpolation(0, 1, 10, 0, high);
 
 		//Усиление по Vy
-		double velocityYGain = -velocityY * interpolation(0, 1, 22.4, 0, abs(velocityX));
+		double vyG = (velocityY * (-2) - 10) - 4.43;//коэф 0.6
+		vyG = (vyG > 0) ? 0 : vyG;
+		double velocityYGain = vyG * interpolation(0, 1, 22.22, 0, abs(velocityX)) * ((velocityY < 0) ? 1 : 0);
 
 		//Страгивание
 		//Усиление редуктора в НЧ в начале движения по ВПП
@@ -3925,10 +3957,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//Используем модифицированную атаку
-		double attack = calcA * interpolation(0, 0, 22.4, 1, velocityX) + (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0);
+		double attack = calcA * getValue({ 0, 0 }, { 22.22, 1 }, velocityX, 1, "H") + (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0) * getValue({ 0, 0 }, { 13.89, 1 }, velocityX,0,1) * getValue({ 13.89, 1 }, { 22.22, 0 }, velocityX,0,1);
 
 		//Передаточная финкция усиления хлопков от атаки
-		double atkGain = pow(10, (attack - 18) * 0.05);
+		double atkGain = pow(10, (getValue({ 0, -12 }, { 12, 0 }, attack, 0, "H")) * 0.05);
 
 		//Усиление хлопков при малом шаге
 		double flapStepGain = pow(10, interpolation(2, 2, 4, 0, step)*0.05);
@@ -3937,7 +3969,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double flappingStepGain = pow(10, interpolation(2, -3, 4, 0, step)*0.05);
 
 		//Усиление по Vy при низких скоростях
-		double flappingVyGain = pow(10, interpolation(-3, 0, 0, -10, velocityY)*0.05) * interpolation(0, 1, 22.4, 0, abs(velocityX));
+		double vyG = velocityY * (-2) - 10;
+		vyG = (vyG > 0) ? 0 : vyG;
+		double flappingVyGain = pow(10, vyG *0.05) * interpolation(0, 1, 22.22, 0, abs(velocityX)) * ((velocityY < 0) ? 1 : 0);
 
 		//Усиление по Vx
 		double flappingVxGain = 0;
@@ -3953,15 +3987,15 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Берем большее из 3х показателей для flapping
 		double flappingGainUnhover = max(max(flappingVyGain, atkGain), flappingVxGain);
 
-		double accGain = pow(10, (abs(accelerationX) * 8.92 - 10)*0.05);
-		accGain = (accGain > 1) ? 1 : accGain;
+		//Усиление по dvx
+		double accGain = pow(10, (abs(accelerationX) * 5.882 - 10)*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityX));
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		double hoveringGain = ((velocityX * accelerationX < 0) ? accGain : accGain * interpolation(0, 1, 0.5, 0, abs(velocityX))) * interpolation(0, 1, 22.4, 0, velocityX);
+		double hoveringGain = (velocityX * accelerationX < 0) ? accGain : 0;
 
 		//Усиление висения по vy
 		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05);
-		double velocityYGainFlapping = pow(10, velocityY * -2 * 0.05);
+		double velocityYGainFlapping = pow(10, velocityY * -1 * 0.05);
 
 		//Выбираем между хлопками на висении и нет
 		double flappingFinalGain = max(hoveringGain * velocityYGainFlapping, flappingGainUnhover * flappingStepGain);
@@ -3970,13 +4004,13 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[0], AL_GAIN, flapFinalGain * h.vintFlapFactor * masterGain * interpolation(0, 0, 0.3, 1, high));
 		alSourcef(source[1], AL_GAIN, flappingFinalGain * masterGain * interpolation(0, 0, 0.3, 1, high));
 
-		cout << " attack "<< attack <<" = "<< calcA * interpolation(0, 0, 22.4, 1, velocityX) <<" + "<< (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0) <<"\t"<< flappingFinalGain <<"\t\t\t\r";
+		cout << " attack " << attack << " = " << calcA * interpolation(0, 0, 22.4, 1, velocityX) << " + " << (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0) << "\t" << flappingFinalGain << "\t\t\t\r";
 		static double p;
 		p += deltaTime;
-		if (p >0.1)
+		if (p > 0.1)
 		{
 			FILE *f = fopen("test.txt", "at");
-			fprintf(f, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", atkGain, flappingVyGain, flappingVxGain, hoveringGain, flapFinalGain * h.vintFlapFactor * masterGain, flappingFinalGain * masterGain, attack , currentTime);
+			fprintf(f, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", currentTime, atkGain, flappingVyGain, flappingVxGain, hoveringGain, flapFinalGain * h.vintFlapFactor, flappingFinalGain, accelerationX, velocityX, attack);
 			fclose(f);
 			p = 0;
 		}
