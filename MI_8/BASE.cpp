@@ -1461,7 +1461,7 @@ int main(int argc, char *argv[])
 					}
 					else if (helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "mi_8_mtv5")
 					{
-						g = interpolation(0, 0, 42, 0.125, 70, 1, abs(localdata.v));
+						g = interpolation(0, -60, 42, -18, 70, 0, abs(localdata.v));
 					}
 					else if (helicopter.modelName == "ka_29")
 					{
@@ -1799,6 +1799,65 @@ double interpolation(double x0, double fx0, double x1, double fx1, double x2, do
 
 }
 
+double interpolation(point p1, point p2, double x)
+{
+	if (p1.x < p2.x && x > p2.x)
+	{
+		return p2.y;
+	}
+	if (p1.x < p2.x && x < p1.x)
+	{
+		return p1.y;
+	}
+	if (p1.x > p2.x && x < p2.x)
+	{
+		return p2.y;
+	}
+	if (p1.x > p2.x && x > p1.x)
+	{
+		return p1.y;
+	}
+
+	return	p1.y + ((p2.y - p1.y) / (p2.x - p1.x))*(x - p1.x);
+}
+
+double interpolation(point p1, point p2, point p3, double x)
+{
+	if (p1.x < p3.x && x > p3.x)
+	{
+		return p3.y;
+	}
+	if (p1.x < p3.x && x < p1.x)
+	{
+		return p1.y;
+	}
+	if (p1.x > p3.x && x < p3.x)
+	{
+		return p3.y;
+	}
+	if (p1.x > p3.x && x > p1.x)
+	{
+		return p1.y;
+	}
+
+	//если квадратичная интерполяция не работает - берем линейную
+	if (p2.x == p1.x | p3.x == p2.x)
+	{
+		return	interpolation(p1, p2, x);
+
+	}
+	else
+	{
+		double fx, a0, a1, a2;
+		a2 = ((p3.y - p1.y) / ((p3.x - p1.x)*(p3.x - p2.x))) - ((p2.y - p1.y) / ((p2.x - p1.x)*(p3.x - p2.x)));
+		a1 = ((p2.y - p1.y) / (p2.x - p1.x)) - (a2*(p2.x + p1.x));
+		a0 = p1.y - a1 * p1.x - a2 * p1.x*p1.x;
+		return fx = a0 + a1 * x + a2*x*x;
+
+	}
+
+}
+
 double getPitch(double offset, string filename, double parameter)
 {
 	double turn = 0;
@@ -2113,10 +2172,141 @@ double getValue(point p1, point p2, double x, double limit, string w)
 	return f;
 }
 
+double getValue(double parameter, int n, point p, ...)
+{
+	va_list points;
+	va_start(points, n);
+	vector<point> vectPoint;
+	for (size_t i = 0; i < n; i++)
+	{
+		vectPoint.push_back(va_arg(points, point));
+	}
+	va_end(points);
+	return getParameterFromVector(vectPoint, parameter);
+}
+
 double getValue(point p1, point p2, double x)
 {
 	double f = ((p1.y - p2.y) / (p1.x - p2.x))*x + (p1.y - ((p1.y - p2.y) / (p1.x - p2.x))*p1.x);
 	return f;
+}
+
+double getParameterFromVector(vector<double> &value, vector<double> &time, double offset)
+{
+	int n = time.size();
+	point p1, p2, p3;
+	double x, a0, a1, a2;
+
+	if (offset < time[0])
+	{
+		return value[0];//достаем обороты из базы
+	}
+	else if (offset > time[n - 1])//отметка не совпала с базой
+	{
+		return value[n - 1];//достаем обороты из базы
+	}
+	else
+	{
+		n = binSer(time, offset);
+	}
+	//Выбираем 3 точки (вариант -1 0 +1)
+	if (n - 1 == -1)
+	{
+		p1.x = time[n]; p1.y = value[n]; p2.x = time[n + 1]; p2.y = value[n + 1]; p3.x = time[n + 2]; p3.y = value[n + 2];
+	}
+	else if (n + 1 == time.size())
+	{
+		p1.x = time[n - 2]; p1.y = value[n - 2]; p2.x = time[n - 1]; p2.y = value[n - 1]; p3.x = time[n]; p3.y = value[n];
+	}
+	else
+	{
+		p1.x = time[n - 1]; p1.y = value[n - 1]; p2.x = time[n]; p2.y = value[n]; p3.x = time[n + 1]; p3.y = value[n + 1];
+	}
+
+	return interpolation(p1, p2, p3, offset);
+}
+
+double getParameterFromVector(vector<point> &value, double offset)
+{
+	int n = value.size();
+	point p1, p2, p3;
+	double x, a0, a1, a2;
+
+	if (offset < value[0].x)
+	{
+		return value[0].y;//достаем обороты из базы
+	}
+	else if (offset > value[n - 1].x)//отметка не совпала с базой
+	{
+		return value[n - 1].y;//достаем обороты из базы
+	}
+	else
+	{
+		n = binSer(value, offset);
+	}
+	//Выбираем 3 точки (вариант -1 0 +1)
+	if (n - 1 == -1)
+	{
+		p1 = value[n]; p2 = value[n + 1]; p3 = value[n + 2];
+	}
+	else if (n + 1 == value.size())
+	{
+		p1 = value[n - 2]; p2 = value[n - 1]; p3 = value[n];
+	}
+	else
+	{
+		p1 = value[n - 1]; p2 = value[n]; p3 = value[n + 1];
+	}
+
+	return interpolation(p1, p2, p3, offset);
+}
+
+int binSer(vector<double> &time, double offset)
+{
+	int l = 0;
+	int n = time.size() - 1;
+	int r = n;
+	while (abs(l - r) >= 2)
+	{
+		if (offset == time[n])
+		{
+			return n;
+		}
+		else if (offset < time[n])
+		{
+			r = n;
+		}
+		else
+		{
+			l = n;
+		}
+		n = (l + r) / 2;
+	}
+	return n;
+}
+
+int binSer(vector<point> &time, double offset)
+{
+	int l = 0;
+	int n = time.size() - 1;
+	int r = n;
+	while (abs(l - r) >= 2)
+	{
+		if (offset == time[n].x)
+		{
+			return n;
+		}
+		else if (offset < time[n].x)
+		{
+			r = n;
+		}
+		else
+		{
+			l = n;
+		}
+		n = (l + r) / 2;
+	}
+	return n;
 }
 
 void freeOpenAL()
@@ -3129,6 +3319,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			alSourcei(source[2], AL_DIRECT_FILTER, filter[2]);
 		}
 
+		//double b = getParameterFromVector(vector<point>{ { 1, 1 }, { 2,2 }, { 3, 3 }, { 4, 4 } }, 3.5);
+
 		//регулируем громкость шума
 		double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
 		alSourcef(source[2], AL_GAIN, beatsGain);
@@ -3957,10 +4149,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//Используем модифицированную атаку
-		double attack = calcA * getValue({ 0, 0 }, { 22.22, 1 }, velocityX, 1, "H") + (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0) * getValue({ 0, 0 }, { 13.89, 1 }, velocityX,0,1) * getValue({ 13.89, 1 }, { 22.22, 0 }, velocityX,0,1);
+		double attack = calcA * getValue({ 0, 0 }, { 22.22, 1 }, velocityX, 1, "H") + (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0) * getValue({ 0, 0 }, { 13.89, 1 }, velocityX, 0, 1) * getValue({ 13.89, 1 }, { 22.22, 0 }, velocityX, 0, 1);
 
 		//Передаточная финкция усиления хлопков от атаки
-		double atkGain = pow(10, (getValue({ 0, -12 }, { 12, 0 }, attack, 0, "H")) * 0.05);
+		double atkGain = pow(10, (getValue({ 0, -18 }, { 12, 0 }, attack, 0, "H")) * 0.05);
 
 		//Усиление хлопков при малом шаге
 		double flapStepGain = pow(10, interpolation(2, 2, 4, 0, step)*0.05);
@@ -3974,15 +4166,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double flappingVyGain = pow(10, vyG *0.05) * interpolation(0, 1, 22.22, 0, abs(velocityX)) * ((velocityY < 0) ? 1 : 0);
 
 		//Усиление по Vx
-		double flappingVxGain = 0;
-		if (abs(velocityX) > 56)
-		{
-			flappingVxGain = pow(10, interpolation(56, -3, 70, 0, abs(velocityX))*0.05);
-		}
-		else
-		{
-			flappingVxGain = pow(10, (abs(velocityX) * 1.07 - 66.924)*0.05);
-		}
+		double flappingVxGain = pow(10, getParameterFromVector(vector<point>{ {0, -60}, { 49,-12 }, { 56,-6 }, { 70,-3 } }, abs(velocityX))*0.05);
 
 		//Берем большее из 3х показателей для flapping
 		double flappingGainUnhover = max(max(flappingVyGain, atkGain), flappingVxGain);

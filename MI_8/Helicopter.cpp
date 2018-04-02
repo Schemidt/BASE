@@ -254,16 +254,16 @@ void Helicopter::setParam(string model)
 		redTurnoverMg2 = 47;
 		redTurnoverAvt = 85;
 		//Множители громкости
-		vsuFactor = 0.5/*всу*/;
+		vsuFactor = 0.35/*всу*/;
 		vsuHpFactor = 0.04/*всу хп*/;
-		engFactor = 0.5/*дв*/;
-		engHpFactor = 0.21/*дв хп*/;
-		redFactor = 0.5/*Редуктор*/;
+		engFactor = 0.35/*дв*/;
+		engHpFactor = 0.11/*дв хп*/;
+		redFactor = 0.35/*Редуктор*/;
 		tr115Factor = 0.08/*тр115*/;
-		skvFactor = 0.35/*СКВ*/;
-		runwayFactor = 0.5/*ВПП*/;
+		skvFactor = 0.21/*СКВ*/;
+		runwayFactor = 0.35/*ВПП*/;
 		//rocketHitFactor = 0.8/*Попадание ракеты*/;
-		vintSwishFactor = 0.5/*ВИНТ Верх*/;
+		vintSwishFactor = 0.55/*ВИНТ Верх*/;
 		vintBrakeFactor = 0.12/*Винт тормоз*/;
 		vintFlapFactor = 0.4/*Винт хлопки*/;
 		chassisBrakePumpFactor = 0.03/*Тормоз шасси*/;
@@ -274,7 +274,7 @@ void Helicopter::setParam(string model)
 		pumpStationFactor = 0.05/*Насосная станция*/;
 		consumTankFactor = 0.17/*Расходный бак*/;
 		rainFactor = 0.5/*Дождь*/;
-		vadd = 0.71/*Скоростная добавка*/;
+		vadd = 0.5/*Скоростная добавка*/;
 	}
 	else if (model == "mi_28")
 	{

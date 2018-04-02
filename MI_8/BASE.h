@@ -371,6 +371,12 @@ public:
 	double x;
 	double y;
 
+	point()
+	{
+		x = 0;
+		y = 0;
+	}
+
 	point(double x, double y)
 	{
 		this->x = x;
@@ -378,9 +384,21 @@ public:
 	}
 };
 
+double getValue(double parameter, int n, point p, ...);
+
 double getValue(point p1, point p2 , double x);
+
 double getValue(point p1, point p2, double x, double limit, string w);
+
 double getValue(point p1, point p2, double x, double low_limit, double hi_limit);
+
+double getParameterFromVector(vector<double> &value, vector<double> &time, double offset);
+
+double getParameterFromVector(vector<point> &value, double offset);
+
+int binSer(vector<double> &time, double offset);
+
+int binSer(vector<point> &time, double offset);
 
 /*!\brief Очищает объекты OpenAL*/
 void freeOpenAL();
@@ -467,6 +485,11 @@ fx = fx0 + ((fx1 - fx0) / (x1 - x0))*(x - x0);
 \return Значение fx в точке x
 */
 double interpolation(double x0, double fx0, double x1, double fx1, double x);
+
+double interpolation(point p1, point p2, double x);
+
+double interpolation(point p1, point p2, point p3, double x);
+
 /*!\brief Функция отладки*/
 void printProgrammStatus(SOUNDREAD srd);
 /*!
