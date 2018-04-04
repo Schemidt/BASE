@@ -3746,7 +3746,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 
 VintFlap::VintFlap() : Sound(3, 3, 2)
 {
-	
+
 }
 
 int VintFlap::play(Helicopter h, SOUNDREAD sr)
@@ -4229,7 +4229,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//Используем модифицированную атаку
-		double attack = calcA * getValue({ 0, 0 }, { 22.22, 1 }, velocityX, 1, "H") + (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0) * getValue({ 0, 0 }, { 13.89, 1 }, velocityX, 0, 1) * getValue({ 13.89, 1 }, { 22.22, 0 }, velocityX, 0, 1);
+		double attack = calcA * getValue({ 0, 0 }, { 22.22, 1 }, velocityX, 1, "H")
+			+ (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0)
+			* getValue({ 0, 0 }, { 13.89, 1 }, velocityX, 0, 1)
+			* getValue({ 13.89, 1 }, { 22.22, 0 }, velocityX, 0, 1);
 
 		//Передаточная финкция усиления хлопков от атаки
 		double atkGain = pow(10, (getValue({ 0, -18 }, { 12, 0 }, attack, 0, "H")) * 0.05);
