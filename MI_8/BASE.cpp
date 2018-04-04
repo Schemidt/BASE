@@ -446,6 +446,8 @@ int main(int argc, char *argv[])
 	double timerAvr = 0;
 	const double window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
 	double periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
+	remove("test.txt");
+
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (true)
 	{
@@ -1015,6 +1017,11 @@ int main(int argc, char *argv[])
 							skvUni = new Sound;//Создаем объект
 					if (skvUni)//Если объект создан - используем его
 					{
+
+						if (helicopter.modelName == "mi_26")
+						{
+							skvUni->pitch = 0.03245 * abs(max(localdata.eng1_obor, localdata.eng2_obor) - helicopter.engTurnoverAvt);
+						}
 						skvUni->play(localdata.p_skv_on, helicopter.fullName["skv_on"], helicopter.fullName["skv_w"], helicopter.fullName["skv_off"], helicopter.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (skvUni->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(skvUni);//Удаляем объект
@@ -1471,10 +1478,10 @@ int main(int argc, char *argv[])
 					{
 						g = (69.4 - abs(localdata.v)) * (-0.86);
 					}
-					else if (helicopter.modelName == "mi_26")
+					/*else if (helicopter.modelName == "mi_26")
 					{
 						g = abs(localdata.v) * 0.428 - 36;
-					}
+					}*/
 					else
 					{
 						g = -60;
@@ -1730,6 +1737,18 @@ int main(int argc, char *argv[])
 			{
 				Free(vintFlap);
 			}
+			if (vintSwishUni)
+			{
+				Free(vintSwishUni);
+			}
+			if (vintSwish)
+			{
+				Free(vintSwish);
+			}
+			if (runway)
+			{
+				Free(runway);
+			}
 			timerAvr = 0;
 			periodCalc = 0;
 			Sound::vectorTime.push_back(Sound::currentTime);
@@ -1844,16 +1863,14 @@ double interpolation(point p1, point p2, point p3, double x)
 	if (p2.x == p1.x | p3.x == p2.x)
 	{
 		return	interpolation(p1, p2, x);
-
 	}
 	else
 	{
-		double fx, a0, a1, a2;
+		double a0, a1, a2;
 		a2 = ((p3.y - p1.y) / ((p3.x - p1.x)*(p3.x - p2.x))) - ((p2.y - p1.y) / ((p2.x - p1.x)*(p3.x - p2.x)));
 		a1 = ((p2.y - p1.y) / (p2.x - p1.x)) - (a2*(p2.x + p1.x));
 		a0 = p1.y - a1 * p1.x - a2 * p1.x*p1.x;
-		return fx = a0 + a1 * x + a2*x*x;
-
+		return a0 + a1 * x + a2*x*x;
 	}
 
 }
@@ -2229,33 +2246,96 @@ double getParameterFromVector(vector<double> &value, vector<double> &time, doubl
 double getParameterFromVector(vector<point> &value, double offset)
 {
 	int n = value.size();
+	//если вектор из 1ой точки - возвращаем "y" этой точки
+	if (n == 1)
+	{
+		return value[0].y;
+	}
+
 	point p1, p2, p3;
 	double x, a0, a1, a2;
 
-	if (offset < value[0].x)
+	if (value[0].x <= value[n - 1].x)
 	{
-		return value[0].y;//достаем обороты из базы
-	}
-	else if (offset > value[n - 1].x)//отметка не совпала с базой
-	{
-		return value[n - 1].y;//достаем обороты из базы
+		for (int i = 0; i < n; i++)
+		{
+			if (offset < value[0].x)
+			{
+				return value[i].y;//достаем обороты из базы
+			}
+			if (offset == value[i].x)//реальная отметка времени совпала с отметкой из бд
+			{
+				return value[i].y;//достаем обороты из базы
+			}
+			if (offset > value[n - 1].x)//отметка не совпала с базой
+			{
+				return value[n - 1].y;//достаем обороты из базы
+			}
+			if (offset > value[i].x && offset < value[i + 1].x)//отметка не совпала с базой
+			{
+				if (value.size() > 2)
+				{
+					//Выбираем 3 точки (вариант -1 0 +1)
+					if (i - 1 == -1)
+					{
+						p1 = value[i]; p2 = value[i + 1]; p3 = value[i + 2];
+					}
+					else if (i + 1 == value.size())
+					{
+						p1 = value[i - 2]; p2 = value[i - 1]; p3 = value[i];
+					}
+					else
+					{
+						p1 = value[i - 1]; p2 = value[i]; p3 = value[i + 1];
+					}
+				}
+				else
+				{
+					return interpolation(value[0], value[1], offset);
+				}
+			}
+		}
 	}
 	else
 	{
-		n = binSer(value, offset);
-	}
-	//Выбираем 3 точки (вариант -1 0 +1)
-	if (n - 1 == -1)
-	{
-		p1 = value[n]; p2 = value[n + 1]; p3 = value[n + 2];
-	}
-	else if (n + 1 == value.size())
-	{
-		p1 = value[n - 2]; p2 = value[n - 1]; p3 = value[n];
-	}
-	else
-	{
-		p1 = value[n - 1]; p2 = value[n]; p3 = value[n + 1];
+		for (int i = 0; i < n; i++)
+		{
+			if (offset > value[0].x)
+			{
+				return value[0].y;//достаем обороты из базы
+			}
+			if (offset == value[i].x)//реальная отметка времени совпала с отметкой из бд
+			{
+				return value[i].y;//достаем обороты из базы
+			}
+			if (offset < value[n - 1].x)//отметка не совпала с базой
+			{
+				return value[n - 1].y;//достаем обороты из базы
+			}
+			if (offset < value[i].x && offset > value[i + 1].x)//отметка не совпала с базой
+			{
+				if (value.size() > 2)
+				{
+					//Выбираем 3 точки (вариант -1 0 +1)
+					if (i - 1 == -1)
+					{
+						p1 = value[i]; p2 = value[i + 1]; p3 = value[i + 2];
+					}
+					else if (i + 1 == value.size())
+					{
+						p1 = value[i - 2]; p2 = value[i - 1]; p3 = value[i];
+					}
+					else
+					{
+						p1 = value[i - 1]; p2 = value[i]; p3 = value[i + 1];
+					}
+				}
+				else
+				{
+					return interpolation(value[0], value[1], offset);
+				}
+			}
+		}
 	}
 
 	return interpolation(p1, p2, p3, offset);
@@ -2750,7 +2830,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			//Если запуск проигрывается - плавно переходим на цикл
 			if (sourceStatus[0] == AL_PLAYING)
 			{
-				//Оцениваем выходную громкость источников по параметрам оборотов и громкости,
+				//Оцениваем выходную громкость источников по параметрам оборотов и времени проигрывания,
 				//чтобы обеспечить нормальное звучание, если обороты по какимто причинам не вышли на малый газ,
 				//до окончания проигрывания записи запуска
 				double fadeTurn = 0;
@@ -2843,7 +2923,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			//Если запуск проигрывается - плавно переходим на цикл
 			if (sourceStatus[0] == AL_PLAYING)
 			{
-				//Оцениваем выходную громкость источников по параметрам оборотов и громкости,
+				//Оцениваем выходную громкость источников по параметрам оборотов и времени проигрывания,
 				//чтобы обеспечить нормальное звучание, если обороты по какимто причинам не вышли на малый газ,
 				//до окончания проигрывания записи запуска
 				double fadeTurn = 0;
@@ -3343,7 +3423,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double mid2FreqStepGain = step * 1 * interpolation(0, 1, 10, 0, high);
 
 		//Усиление по Vy
-		double vyG = (velocityY * (-2) - 10) - 4.43;//коэф 0.6
+		double vyG = (velocityY * (-2) - 10) - 4.43/*коэф 0.6*/;
 		vyG = (vyG > 0) ? 0 : vyG;
 		double velocityYGain = vyG * interpolation(0, 1, 22.22, 0, abs(velocityX)) * ((velocityY < 0) ? 1 : 0);
 
@@ -3352,9 +3432,9 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !high : 0;
 
 		lowFreqGain = pow(10, (velocityYGain + stepGain * 0.25 + stalkingGain + mid2FreqStepGain) * 0.05);
-		mid1FreqGain = pow(10, (turnGain + stepGain * 0.75 + stalkingGain + mid2FreqStepGain) * 0.05);
-		mid2FreqGain = pow(10, (turnGain + stepGain * 0.75) * 0.05);
-		highFreqGain = pow(10, (turnGain + stepGain * 0.75 + highFreqTurnGain) * 0.05);
+		mid1FreqGain = pow(10, (turnGain + stepGain * 1 + stalkingGain + mid2FreqStepGain) * 0.05);
+		mid2FreqGain = pow(10, (turnGain + stepGain * 1) * 0.05);
+		highFreqGain = pow(10, (turnGain + stepGain * 1 + highFreqTurnGain) * 0.05);
 
 		lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
 		mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
@@ -3460,7 +3540,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 			//Если запуск проигрывается - плавно переходим на цикл
 			if (sourceStatus[0] == AL_PLAYING)
 			{
-				//Оцениваем выходную громкость источников по параметрам оборотов и громкости,
+				//Оцениваем выходную громкость источников по параметрам оборотов и времени проигрывания,
 				//чтобы обеспечить нормальное звучание, если обороты по какимто причинам не вышли на малый газ,
 				//до окончания проигрывания записи запуска
 				double fadeTurn = 0;
@@ -3535,7 +3615,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 			//Если запуск проигрывается - плавно переходим на цикл
 			if (sourceStatus[0] == AL_PLAYING)
 			{
-				//Оцениваем выходную громкость источников по параметрам оборотов и громкости,
+				//Оцениваем выходную громкость источников по параметрам оборотов и времени проигрывания,
 				//чтобы обеспечить нормальное звучание, если обороты по какимто причинам не вышли на малый газ,
 				//до окончания проигрывания записи запуска
 				double fadeTurn = 0;
@@ -3666,7 +3746,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 
 VintFlap::VintFlap() : Sound(3, 3, 2)
 {
-	remove("test.txt");
+	
 }
 
 int VintFlap::play(Helicopter h, SOUNDREAD sr)
@@ -4161,32 +4241,38 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double flappingStepGain = pow(10, interpolation(2, -3, 4, 0, step)*0.05);
 
 		//Усиление по Vy при низких скоростях
-		double vyG = velocityY * (-2) - 10;
-		vyG = (vyG > 0) ? 0 : vyG;
-		double flappingVyGain = pow(10, vyG *0.05) * interpolation(0, 1, 22.22, 0, abs(velocityX)) * ((velocityY < 0) ? 1 : 0);
+		double vyG = getParameterFromVector(vector<point>{ {-6, 0}, { 0,-11 }, { 6,-24 }}, velocityY);
+		vyG = (vyG > -3) ? -3 : vyG;
+		double flappingVyGain = pow(10, vyG *0.05) * interpolation(0, 1, 22.22, 0, abs(velocityX));
 
 		//Усиление по Vx
-		double flappingVxGain = pow(10, getParameterFromVector(vector<point>{ {0, -60}, { 49,-12 }, { 56,-6 }, { 70,-3 } }, abs(velocityX))*0.05);
+		double flappingVxGain = pow(10, getParameterFromVector(vector<point>{ {0, -60}, { 49,-12 }, { 56,-6 }, { 70,-3 }, { 84,0 } }, abs(velocityX))*0.05);
 
 		//Берем большее из 3х показателей для flapping
 		double flappingGainUnhover = max(max(flappingVyGain, atkGain), flappingVxGain);
 
 		//Усиление по dvx
-		double accGain = pow(10, (abs(accelerationX) * 5.882 - 10)*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityX));
+		double accGain = pow(10, (getParameterFromVector(vector<point>{ {2, 0}, { 0,-12 } }, abs(accelerationX)))*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityX));
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		double hoveringGain = (velocityX * accelerationX < 0) ? accGain : 0;
+		double backFront = accGain * getParameterFromVector(vector<point>{ {0, 1}, { 1,0.5 }, { 2,0 }}, abs(velocityX));
+		double hoveringGain = ((velocityX * accelerationX <= 0) ? accGain : (((velocityX <= 0 && accelerationX <= 0 && dash >= 0) || (velocityX >= 0 && accelerationX >= 0 && dash <= 0)) ? backFront : 0));
+
+		//Ослабление звука при падении шага до 1
+		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((high > 0) ? 1 : 0);
 
 		//Усиление висения по vy
-		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05);
-		double velocityYGainFlapping = pow(10, velocityY * -1 * 0.05);
+		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * (accelerationX != 0) ? 1 : 0;
+		double velocityYGainFlapping = pow(10, velocityY * -1 * 0.05) * (accelerationX != 0) ? 1 : 0;
 
 		//Выбираем между хлопками на висении и нет
 		double flappingFinalGain = max(hoveringGain * velocityYGainFlapping, flappingGainUnhover * flappingStepGain);
 		double flapFinalGain = max(hoveringGain * velocityYGainFlap, atkGain * flapStepGain);
 
-		alSourcef(source[0], AL_GAIN, flapFinalGain * h.vintFlapFactor * masterGain * interpolation(0, 0, 0.3, 1, high));
-		alSourcef(source[1], AL_GAIN, flappingFinalGain * masterGain * interpolation(0, 0, 0.3, 1, high));
+		alSourcef(source[0], AL_GAIN, flapFinalGain * h.vintFlapFactor * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, high));
+		alSourcef(source[1], AL_GAIN, flappingFinalGain * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, high));
+
+		cout << flappingFinalGain * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, high) << "\r";
 
 		cout << " attack " << attack << " = " << calcA * interpolation(0, 0, 22.4, 1, velocityX) << " + " << (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0) << "\t" << flappingFinalGain << "\t\t\t\r";
 		static double p;
@@ -4194,7 +4280,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		if (p > 0.1)
 		{
 			FILE *f = fopen("test.txt", "at");
-			fprintf(f, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", currentTime, atkGain, flappingVyGain, flappingVxGain, hoveringGain, flapFinalGain * h.vintFlapFactor, flappingFinalGain, accelerationX, velocityX, attack);
+			fprintf(f, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", currentTime, atkGain, flappingVyGain, flappingVxGain, hoveringGain, flapFinalGain * h.vintFlapFactor, flappingFinalGain, velocityX, accelerationX, dash, attack);
 			fclose(f);
 			p = 0;
 		}
@@ -4320,14 +4406,7 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 		eq = "set";
 	}
 
-	if (sr.eng1_obor > sr.eng2_obor)
-	{
-		pitch = 0.029 * sr.eng1_obor - 1.484;
-	}
-	else
-	{
-		pitch = 0.029 * sr.eng2_obor - 1.484;
-	}
+	pitch = 0.029 * max(sr.eng1_obor, sr.eng2_obor) - 1.484;
 
 	Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 

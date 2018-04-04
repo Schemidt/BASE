@@ -274,7 +274,7 @@ void Helicopter::setParam(string model)
 		pumpStationFactor = 0.05/*Насосная станция*/;
 		consumTankFactor = 0.17/*Расходный бак*/;
 		rainFactor = 0.5/*Дождь*/;
-		vadd = 0.5/*Скоростная добавка*/;
+		//vadd = 0.5/*Скоростная добавка*/;
 	}
 	else if (model == "mi_28")
 	{

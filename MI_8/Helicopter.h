@@ -75,7 +75,7 @@ public:
 	double circlingCraneFactor = 0;//!<Кран кольцевания
 	double rocketIglaFactor = 0;//!<Игла
 	double vpryam = 0;//!<Выпрямительное устройство
-	double vadd;//!<Скоростная добавка
+	double vadd = 0;//!<Скоростная добавка
 
 	//!<Ассоциативный массив с именами файлов - звуков
 	map<string, string> shortName;
