@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A2B37FD2-0ECF-4607-A7F3-074E6F051AB0}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>MI_26</RootNamespace>
+    <RootNamespace>BASE</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
     <ProjectName>BASE</ProjectName>
   </PropertyGroup>
