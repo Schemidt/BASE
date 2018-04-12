@@ -400,8 +400,7 @@ int main(int argc, char *argv[])
 	Sound *fire2 = nullptr;
 	Sound *consTank = nullptr;
 	Sound *pstat = nullptr;
-	Sound *runway = nullptr;
-	Runway *runwayMi8 = nullptr;
+	Runway *runway = nullptr;
 	Sound *crash = nullptr;
 	VintSwish *vintSwish = nullptr;
 	Sound *vintSwishUni = nullptr;
@@ -421,7 +420,6 @@ int main(int argc, char *argv[])
 	Sound *beep = nullptr;
 	/*Sound *undefined0 = nullptr;*/
 	Sound *undefined1 = nullptr;
-	Sound *vintFlapUniversal = nullptr;
 	Sound *kranKolc = nullptr;
 	Sound *vpryam = nullptr;
 	Sound *vadd = nullptr;
@@ -1098,33 +1096,14 @@ int main(int argc, char *argv[])
 			//Если звуки движения по ВПП включены в проект борта
 			if (helicopter.runwayFactor)
 			{
-				if (helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_26")
+				if (localdata.v != 0 && Sound::high <= 0)//Условие создания объекта
+					if (!runway)//Если объект не создан 
+						runway = new Runway;//Создаем объект
+				if (runway)//Если объект создан - используем его
 				{
-					if (localdata.v != 0 && Sound::high <= 0)//Условие создания объекта
-						if (!runwayMi8)//Если объект не создан 
-							runwayMi8 = new Runway;//Создаем объект
-					if (runwayMi8)//Если объект создан - используем его
-					{
-						runwayMi8->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-						if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
-							Free(runwayMi8);//Удаляем объект
-					}
-				}
-				else
-				{
-					if (localdata.v != 0 && Sound::high <= 0)//Условие создания объекта
-						if (!runway)//Если объект не создан 
-							runway = new Sound;//Создаем объект
-					if (runway)//Если объект создан - используем его
-					{
-						runway->play(localdata.p_na_vpp && localdata.v != 0, "NULL", helicopter.fullName["runway"], "NULL", helicopter.runwayFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
-							Free(runway);//Удаляем объект
-						else
-						{
-							runway->gain = Sound::masterGain * interpolation(0, 0, 13.8, 1, abs(localdata.v)) * helicopter.runwayFactor;
-						}
-					}
+					runway->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
+					if (localdata.v == 0 || Sound::high > 0)//Условие удаления объекта
+						Free(runway);//Удаляем объект
 				}
 			}
 			//Крушение
@@ -1199,31 +1178,15 @@ int main(int argc, char *argv[])
 			//Если звук хлопков винта включен в проект
 			if (helicopter.vintFlapFactor)
 			{
-				if (helicopter.modelName == "ka_29" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "ka_27" || helicopter.modelName == "mi_28" || helicopter.modelName == "mi_26")
+				if (localdata.styk_hv > 0)//Условие создания объекта
+					if (!vintFlap)//Если объект не создан 
+						vintFlap = new VintFlap;//Создаем объект
+				if (vintFlap)//Если объект создан - используем его
 				{
-					if (localdata.styk_hv > 0)//Условие создания объекта
-						if (!vintFlap)//Если объект не создан 
-							vintFlap = new VintFlap;//Создаем объект
-					if (vintFlap)//Если объект создан - используем его
-					{
-						vintFlap->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-						if (localdata.styk_hv <= 0)//Условие удаления объекта
-							Free(vintFlap);//Удаляем объект
-					}
+					vintFlap->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
+					if (localdata.styk_hv <= 0)//Условие удаления объекта
+						Free(vintFlap);//Удаляем объект
 				}
-				else
-				{
-					if (localdata.rez_10)//Условие создания объекта
-						if (!vintFlapUniversal)//Если объект не создан 
-							vintFlapUniversal = new Sound;//Создаем объект
-					if (vintFlapUniversal)//Если объект создан - используем его
-					{
-						vintFlapUniversal->play(localdata.rez_10, "NULL", helicopter.fullName["vint_flap"], "NULL", helicopter.vintFlapFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (vintFlapUniversal->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-							Free(vintFlapUniversal);//Удаляем объект
-					}
-				}
-
 			}
 			//Если тормоза включены на борту
 			if (helicopter.chassisBrakePumpFactor)
@@ -1744,10 +1707,6 @@ int main(int argc, char *argv[])
 			if (vintSwish)
 			{
 				Free(vintSwish);
-			}
-			if (runway)
-			{
-				Free(runway);
 			}
 			timerAvr = 0;
 			periodCalc = 0;
@@ -3155,7 +3114,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		highCutoffFreq = 10000;//ВЧ 4000-16000
 	}
 	//Полеты 8 мтв5, 8 амтш
-	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
+	else if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
 		//Вычисляем средние обороты за последние 30с
 		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
@@ -3225,7 +3184,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		highCutoffFreq = 10000;//ВЧ 4000-16000
 	}
 	//Полеты ка 29
-	if (h.modelName == "ka_29")
+	else if (h.modelName == "ka_29")
 	{
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
@@ -3297,7 +3256,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		highCutoffFreq = 10000;//ВЧ 4000-16000
 	}
 	//Полеты ка 27
-	if (h.modelName == "ka_27")
+	else if (h.modelName == "ka_27")
 	{
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
@@ -3382,7 +3341,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		highCutoffFreq = 10000;//ВЧ 4000-16000
 	}
 	//Полеты ми 26
-	if (h.modelName == "mi_26")
+	else if (h.modelName == "mi_26")
 	{
 		//добавляем шум биений
 		if (beats != h.fullName["beats"])
@@ -3455,6 +3414,16 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		alEffectf(effect[2], AL_EQUALIZER_LOW_GAIN, pow(10, (stepGain * 0.25)*0.05));//
 
 		alAuxiliaryEffectSloti(effectSlot[2], AL_EFFECTSLOT_EFFECT, effect[2]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+	}
+	//Полеты ка 226
+	else if (h.modelName == "ka_226")
+	{
+
+	}
+	//Остальные борты
+	else
+	{
+
 	}
 
 	for (size_t i = 0; i < 2; i++)
@@ -3725,6 +3694,10 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 		mid2FreqGain = pow(10, (turnGain)*0.05);
 		highFreqGain = pow(10, (turnGain /*+ highFreqTurnGain*/)*0.05);
 	}
+	else
+	{
+
+	}
 
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -3888,7 +3861,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 	}
 	//Полеты 8 амтш
-	if (h.modelName == "mi_8_amtsh")
+	else if (h.modelName == "mi_8_amtsh")
 	{
 		if (key[0] != h.fullName["vint_flap"])
 		{
@@ -3981,7 +3954,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 	}
 	//Полеты 28
-	if (h.modelName == "mi_28")
+	else if (h.modelName == "mi_28")
 	{
 		if (key[0] != h.fullName["vint_flap"])
 		{
@@ -4048,7 +4021,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 	}
 	//Полеты ка 27 - 29
-	if (h.modelName == "ka_27" || h.modelName == "ka_29")
+	else if (h.modelName == "ka_27" || h.modelName == "ka_29")
 	{
 		if (key[0] != h.fullName["vint_flap_A"] || key[1] != h.fullName["vint_flap_B"] || key[2] != h.fullName["vint_flap_C"])
 		{
@@ -4213,7 +4186,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 	}
 	//Полеты ми 26
-	if (h.modelName == "mi_26")
+	else if (h.modelName == "mi_26")
 	{
 		if (key[0] != h.fullName["vint_flap"])
 		{
@@ -4259,7 +4232,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		double backFront = accGain * getParameterFromVector(vector<point>{ {0, 1}, { 1,0.5 }, { 2,0 }}, abs(velocityX));
-		double hoveringGain = ((velocityX * accelerationX <= 0) ? accGain : (((velocityX <= 0 && accelerationX <= 0 && dash >= 0) || (velocityX >= 0 && accelerationX >= 0 && dash <= 0)) ? backFront : 0));
+		double hoveringGain = ((velocityX * accelerationX <= 0) ? accGain
+			: (((velocityX <= 0 && accelerationX <= 0 && dash >= 0) || (velocityX >= 0 && accelerationX >= 0 && dash <= 0)) ? backFront : 0));
 
 		//Ослабление звука при падении шага до 1
 		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((high > 0) ? 1 : 0);
@@ -4288,6 +4262,23 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			p = 0;
 		}
 	}
+	//Полеты ка 226
+	else if (h.modelName == "ka_226")
+	{
+
+	}
+	//Остальные борты
+	else
+	{
+		if (key[0] != h.fullName["vint_flap"])
+		{
+			sourceStatus[0] = setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap"]);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			key[0] = h.fullName["vint_flap"];
+		}
+		alSourcef(source[0], AL_GAIN, gain * h.vintFlapFactor * masterGain);
+	}
+
 	return 1;
 }
 
@@ -4497,6 +4488,16 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 14, 0, abs(velocityX)) * !high * interpolation(78, 0.71, 84, 1, sr.reduktor_gl_obor) * h.runwayFactor /** 0.25*//*Уменьшаем движение по полосе*/);//
 																																													  //alSourcef(source[1], AL_GAIN, 0);//
 
+	}
+	else if (h.modelName == "ka_226")
+	{
+
+	}
+	else
+	{
+		filetoBuffer[1] = h.fullName["runway"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		alSourcef(source[1], AL_GAIN, masterGain * interpolation(0, 0, 13.8, 1, abs(velocityX)) * h.runwayFactor);
 	}
 
 	return 1;

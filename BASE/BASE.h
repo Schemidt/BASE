@@ -366,6 +366,10 @@ public:
 
 #endif
 
+/*!
+\brief Класс "точка"
+\details Определяет класс точки
+*/
 class point {
 public:
 	double x;
@@ -384,20 +388,85 @@ public:
 	}
 };
 
+/*!
+\brief Возвращает значение функции
+\details Возвращает значение функции заданной графически (точками)
+\param[in] p Точки функции
+\param[in] n Количество точек
+\param[in] parameter Значение переменной в искомой точке
+\return Возвращает значение функции
+*/
 double getValue(double parameter, int n, point p, ...);
 
+/*!
+\brief Возвращает значение функции
+\details Возвращает значение функции заданной графически (точками)
+\param[in] p1 Точка функции
+\param[in] p2 Точка функции
+\param[in] x Значение переменной в искомой точке
+\return Возвращает значение функции
+*/
 double getValue(point p1, point p2 , double x);
 
+/*!
+\brief Возвращает значение функции
+\details Возвращает значение функции заданной графически (точками), с учетом предельного значения функции
+\param[in] p1 Точка функции
+\param[in] p2 Точка функции
+\param[in] x Значение переменной в искомой точке
+\param[in] limit Предел функции
+\param[in] w Переменная определяющая верхний или нижний предел
+\return Возвращает значение функции
+*/
 double getValue(point p1, point p2, double x, double limit, string w);
 
+/*!
+\brief Возвращает значение функции
+\details Возвращает значение функции заданной графически (точками), с учетом предельного значения функции
+\param[in] p1 Точка функции
+\param[in] p2 Точка функции
+\param[in] x Значение переменной в искомой точке
+\param[in] low_limit Нижний предел функции
+\param[in] hi_limit Верхний предел функции
+\return Возвращает значение функции
+*/
 double getValue(point p1, point p2, double x, double low_limit, double hi_limit);
 
+/*!
+\brief Возвращает значение функции
+\details Возвращает значение функции заданной графически, векторами точек
+\param[in] &value Вектор значений функции
+\param[in] &time Вектор значений параметра
+\param[in] offset Значение переменной в искомой точке
+\return Возвращает значение функции
+*/
 double getParameterFromVector(vector<double> &value, vector<double> &time, double offset);
 
+/*!
+\brief Возвращает значение функции
+\details Возвращает значение функции заданной графически, вектором точек
+\param[in] &value Вектор точек функции
+\param[in] offset Значение переменной в искомой точке
+\return Возвращает значение функции
+*/
 double getParameterFromVector(vector<point> &value, double offset);
 
+/*!
+\brief Возвращает номер искомой ячейки вектора
+\details Возвращает номер искомой ячейки упорядоченного вектора с помощью бинарного поиска
+\param[in] &time Упорядоченный вектор переменных
+\param[in] offset Значение переменной в искомой точке
+\return Номер искомой ячейки
+*/
 int binSer(vector<double> &time, double offset);
 
+/*!
+\brief Возвращает номер искомой ячейки вектора
+\details Возвращает номер искомой ячейки упорядоченного вектора с помощью бинарного поиска
+\param[in] &time Вектор точек
+\param[in] offset Значение переменной в искомой точке
+\return Номер искомой ячейки
+*/
 int binSer(vector<point> &time, double offset);
 
 /*!\brief Очищает объекты OpenAL*/
