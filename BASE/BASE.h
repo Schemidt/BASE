@@ -596,3 +596,7 @@ double attack(double velocityX, double velocityXPrevious, double tangaz, double 
 */
 bool IsProcessPresent(wchar_t * szExe);
 
+double toDb(double coef);
+
+double toCoef(double db);
+
