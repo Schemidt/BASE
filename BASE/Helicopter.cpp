@@ -49,6 +49,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["red_off_w"] = "red_off.wav"; //!<имя файла звука остановки редуктора ниже режима мг
 	shortName["red_crash"] = "red_crash.wav"; //!<имя файла звука поломки редуктора
 	shortName["red_w_avt_fly"] = "red_w_avt_fly.wav"; //!<имя файла звука работы редуктора на режиме автомат
+	shortName["red_harm"] = "red_harm.wav"; //!<имя файла гармоники редуктора
 	//ВСУ
 	shortName["vsu_on"] = "vsu_on.wav";//!<имя файла звука запуска ВСУ
 	shortName["vsu_w"] = "vsu_w.wav";//!<имя файла звука работы ВСУ

@@ -1445,6 +1445,10 @@ int main(int argc, char *argv[])
 					{
 						g = abs(localdata.v) * 0.428 - 36;
 					}*/
+					else if (helicopter.modelName == "ka_226")
+					{
+						g = getParameterFromVector(vector<point>{ { 42, 0 }, { 50, 1 } }, abs(localdata.v));
+					}
 					else
 					{
 						g = -60;
@@ -3358,8 +3362,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			alSourcei(source[2], AL_DIRECT_FILTER, filter[2]);
 		}
 
-		//double b = getParameterFromVector(vector<point>{ { 1, 1 }, { 2,2 }, { 3, 3 }, { 4, 4 } }, 3.5);
-
 		//регулируем громкость шума
 		double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
 		alSourcef(source[2], AL_GAIN, beatsGain);
@@ -3418,7 +3420,69 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	//Полеты ка 226
 	else if (h.modelName == "ka_226")
 	{
+		//добавляем отдельную гармонику редуктора
+		if (beats != h.fullName["red_harm"])
+		{
+			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["red_harm"]);
+			alSourcei(source[2], AL_LOOPING, AL_TRUE);
+			beats = h.fullName["red_harm"];
 
+			alEffecti(effect[2], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
+			alAuxiliaryEffectSloti(effectSlot[2], AL_EFFECTSLOT_EFFECT, effect[2]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+			alFilteri(filter[2], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+			alFilterf(filter[2], AL_LOWPASS_GAIN, 0);
+			alSource3i(source[2], AL_AUXILIARY_SEND_FILTER, effectSlot[2], 0, NULL);
+			alSourcei(source[2], AL_DIRECT_FILTER, filter[2]);
+		}
+
+		//громкость гармоники
+		double harmGain = getParameterFromVector(vector<point>{{ 0, -40 } ,{ 5, -15 }, { 9, 0 }}, step);
+		alSourcef(source[2], AL_GAIN, harmGain);
+
+		//высота тона гармоники 0.008(5) -> 1% Оборота редуктора
+		double harmPitch = (sr.reduktor_gl_obor - h.redTurnoverAvt) * 0.0085;
+		alSourcef(source[2], AL_PITCH, harmPitch);
+
+		//
+		double avrEngTurns = (abs(sr.eng1_obor - getAverange("eng1Turns", 2)) > abs(sr.eng2_obor - getAverange("eng2Turns", 2)))? sr.eng1_obor - getAverange("eng1Turns", 2) : sr.eng2_obor - getAverange("eng2Turns", 2);
+
+		//усиление 1го купола
+		double harmMid1Gain = getParameterFromVector(vector<point>{ { 9, 0 }, { 12, 12 }}, step) * getParameterFromVector(vector<point>{ { 0, 1.6 }, { 50, 0.7 }, { 70, 0 }}, velocityX);
+
+		//усиление 2го купола
+		double harmMid2Gain = getParameterFromVector(vector<point>{ { -2, -12 }, { -1, -6 }, { 0, 0 }, { 1, 6 }, { 2, 12 }}, avrEngTurns);
+
+		//Усиление гармоники
+		alEffectf(effect[2], AL_EQUALIZER_MID1_CENTER, 500);
+		alEffectf(effect[2], AL_EQUALIZER_MID2_CENTER, 4300);
+
+		alEffectf(effect[2], AL_EQUALIZER_MID1_WIDTH, 0.33);
+		alEffectf(effect[2], AL_EQUALIZER_MID2_WIDTH, 0.1);
+
+		alEffectf(effect[2], AL_EQUALIZER_MAX_MID1_GAIN, pow(10, (harmMid1Gain)*0.05));//
+		alEffectf(effect[2], AL_EQUALIZER_MAX_MID2_GAIN, pow(10, (harmMid2Gain)*0.05));//
+
+		alAuxiliaryEffectSloti(effectSlot[2], AL_EFFECTSLOT_EFFECT, effect[2]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+
+		//усиление по шагу в ВЧ
+		double highFreqStepGain = getParameterFromVector(vector<point>{ { 0, 0 }, { 2, 5 }, { 3, 9 }, { 5, 12 } }, step);
+
+		//усиление по шагу в НЧ (1) (призма)
+		double lowFreqStepGain1 = getParameterFromVector(vector<point>{ { 0, 0 }, { 9, 13 }, { 16, 23.1 } }, step) * getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, high);
+
+		//усиление по шагу в НЧ (2)
+		double lowFreqStepGain2 = getParameterFromVector(vector<point>{ { 0, 0 }, { 12, 12 } }, step) * getParameterFromVector(vector<point>{ { 0, 1 }, { 28, 0 } }, abs(velocityX));
+
+		lowFreqGain = pow(10, (lowFreqStepGain1 + lowFreqStepGain2) * 0.05);
+		highFreqGain = pow(10, (highFreqStepGain) * 0.05);
+
+		lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
+		mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
+		mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
+		highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
+
+		lowCutoffFreq = pow(10, getParameterFromVector(vector<point>{ { 8, log10(60) }, { 16, log10(120) } }, high));//НЧ 50-800
+		highCutoffFreq = 4000;//ВЧ 4000-16000
 	}
 	//Остальные борты
 	else
@@ -3670,18 +3734,10 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 	double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;//ВЧ 4000-16000
 
 	//Полеты 8 мтв5, 8 амтш, ка 27м, ка 29
-	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "mi_26" || h.modelName == "ka_27" || h.modelName == "ka_29")
+	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "mi_26" || h.modelName == "ka_27" || h.modelName == "ka_29" || h.modelName == "ka_226")
 	{
-		double averangeTurn = 0;
-		if (engNum == 1)
-		{
-			averangeTurn = getAverange("eng1Turns", 25 * interpolation(0, 0.01, h.engTurnoverAvt, 1, parameter));
-		}
-		else
-		{
-			averangeTurn = getAverange("eng2Turns", 25 * interpolation(0, 0.01, h.engTurnoverAvt, 1, parameter));
-		}
-
+		double averangeTurn = getAverange("eng" + to_string(engNum) + "Turns", 25 * interpolation(0, 0.01, h.engTurnoverAvt, 1, parameter));
+		
 		////усиление от оборотов выше 10000
 		//double highFreqTurnGain = (parameter - averangeTurn) * 0.35;
 		//highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
