@@ -313,6 +313,24 @@ AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_2;//Конфигурация кана
 /*!\brief Основная функция программы*/
 int main(int argc, char *argv[])
 {
+	//Только 1на копия приложения может быть запусщена одновременно
+	HANDLE hMutex = OpenMutex(
+		MUTEX_ALL_ACCESS, 0, L"BASE");
+
+	if (!hMutex)
+		// Mutex doesn’t exist. This is
+		// the first instance so create
+		// the mutex.
+		hMutex =
+		CreateMutex(0, 0, L"BASE");
+	else
+		// The mutex exists so this is the
+		// the second instance so return.
+	{	
+		cout << "Application already exist!" << endl;
+		return 1;
+	}
+
 	//Получаем указатели на функции EFX
 	setEFXPointers();
 	vector <string> helicoptersNames = { "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29" };
@@ -1447,7 +1465,7 @@ int main(int argc, char *argv[])
 					}*/
 					else if (helicopter.modelName == "ka_226")
 					{
-						g = getParameterFromVector(vector<point>{ { 42, -60 }, { 50, 0 } }, abs(localdata.v));
+						g = getParameterFromVector(vector<point>{ { 36.11111, -60 }, { 50, 0 } }, abs(localdata.v));
 					}
 					else
 					{
@@ -3468,10 +3486,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double highFreqStepGain = getParameterFromVector(vector<point>{ { 0, 0 }, { 5, 2 }, { 9, 3 }, { 12, 5 } }, step);
 
 		//усиление по шагу в НЧ (1) (призма)
-		double lowFreqStepGain1 = getParameterFromVector(vector<point>{ { 0, 0 }, { 9, 13 }, { 16, 23.1 } }, step) * getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, high);
+		double lowFreqStepGain1 = getParameterFromVector(vector<point>{ { 0, 0 }, { 9, 15 }, { 16, 26.66 } }, step) * getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, high);
 
 		//усиление по шагу в НЧ (2)
-		double lowFreqStepGain2 = getParameterFromVector(vector<point>{ { 0, 0 }, { 12, 12 } }, step) * getParameterFromVector(vector<point>{ { 0, 0 }, { 28, 1 } }, abs(velocityX));
+		double lowFreqStepGain2 = getParameterFromVector(vector<point>{ { 0, 0 }, { 12, 14 } }, step) * getParameterFromVector(vector<point>{ { 0, 0 }, { 28, 1 } }, abs(velocityX));
 
 		lowFreqGain = pow(10, (lowFreqStepGain1 + lowFreqStepGain2) * 0.05);
 		highFreqGain = pow(10, (highFreqStepGain) * 0.05);
@@ -4323,7 +4341,19 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 	//Полеты ка 226
 	else if (h.modelName == "ka_226")
 	{
+		if (key[1] != h.fullName["flapping"])
+		{
+			setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["flapping"]);
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			key[1] = h.fullName["flapping"];
+		}
 
+		//
+		double flappingGain = toCoef(getParameterFromVector(vector<point>{ { 28, -20 }, { 50, -13 }}, velocityX)) * getParameterFromVector(vector<point>{ { 0, 0 }, { h.redTurnoverAvt, 1 }}, sr.reduktor_gl_obor);
+
+		alSourcef(source[1], AL_GAIN, flappingGain * masterGain * h.vintFlapFactor);
+
+		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
 	}
 	//Остальные борты
 	else
