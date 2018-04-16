@@ -3440,7 +3440,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[2], AL_GAIN, toCoef(harmGain) * 0.56 * masterGain);
 
 		//высота тона гармоники 0.008(5) -> 1% Оборота редуктора
-		double harmPitch = (sr.reduktor_gl_obor - h.redTurnoverAvt) * 0.0085;
+		double harmPitch = sr.reduktor_gl_obor / h.redTurnoverAvt /*1 + (sr.reduktor_gl_obor - h.redTurnoverAvt) * 0.0085556*/;
 		alSourcef(source[2], AL_PITCH, harmPitch);
 
 		//
@@ -3457,7 +3457,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		alEffectf(effect[2], AL_EQUALIZER_MID2_CENTER, 4300);
 
 		alEffectf(effect[2], AL_EQUALIZER_MID1_WIDTH, 0.33);
-		alEffectf(effect[2], AL_EQUALIZER_MID2_WIDTH, 0.1);
+		alEffectf(effect[2], AL_EQUALIZER_MID2_WIDTH, 0.33);//сделай 0.33
 
 		alEffectf(effect[2], AL_EQUALIZER_MID1_GAIN, pow(10, (harmMid1Gain)*0.05));//
 		alEffectf(effect[2], AL_EQUALIZER_MID2_GAIN, pow(10, (harmMid2Gain)*0.05));//
@@ -3477,8 +3477,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		highFreqGain = pow(10, (highFreqStepGain) * 0.05);
 
 		lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
-		mid1FreqGain = (mid1FreqGain <= 1) ? 1 : mid1FreqGain;
-		mid2FreqGain = (mid2FreqGain <= 1) ? 1 : mid2FreqGain;
 		highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
 
 		lowCutoffFreq = pow(10, getParameterFromVector(vector<point>{ { 8, log10(60) }, { 16, log10(120) } }, high));//НЧ 50-800
