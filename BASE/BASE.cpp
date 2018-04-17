@@ -3500,8 +3500,11 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		//усиление по шагу в НЧ (2)
 		double lowFreqStepGain2 = getParameterFromVector(vector<point>{ { 0, 0 }, { 12, 14 } }, step) * getParameterFromVector(vector<point>{ { 0, 0 }, { 28, 1 } }, abs(velocityX));
 
-		lowFreqGain = pow(10, (lowFreqStepGain1 + lowFreqStepGain2) * 0.05);
-		highFreqGain = pow(10, (highFreqStepGain) * 0.05);
+		//Усиление на висении
+		double hoveringGain = (high > 0) ? abs(accelerationX) * 6 * getParameterFromVector(vector<point>{ { 0, 1 }, { 28, 0 } }, velocityX) : 0;
+
+		lowFreqGain = toCoef(lowFreqStepGain1 + lowFreqStepGain2 + hoveringGain);
+		highFreqGain = toCoef(highFreqStepGain);
 
 		lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
 		highFreqGain = (highFreqGain <= 1) ? 1 : highFreqGain;
@@ -4439,7 +4442,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
 
 		//отладка
-		static double p = 0;
+		/*static double p = 0;
 		p += deltaTime;
 		if (p >= 0.1)
 		{
@@ -4447,7 +4450,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			fprintf(f, "%lf\t%lf\t%lf\t%lf\t%lf\n", toDb(flappingVelxGain), dTangazGain, flappingGain, derivTangaz, currentTime);
 			fclose(f);
 			p = 0;
-		}
+		}*/
 		//
 	}
 	//Остальные борты
@@ -4674,7 +4677,11 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	}
 	else if (h.modelName == "ka_226")
 	{
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }, { 8.4, -12 }, { 14, -18 }}, abs(velocityX));
 
+		filetoBuffer[1] = h.fullName["runway"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor);
 	}
 	else
 	{
