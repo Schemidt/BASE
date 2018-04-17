@@ -67,6 +67,7 @@ public:
 
 	static double step; /*!< Ўаг */
 	static double tangaz;/*!< “ангаж */
+	static double derivTangaz;/*!<скорость изменени€ “ангажа (dtangaz/dt) */
 	static double high;/*!< ¬ысота */
 	static double velocityX;/*!< приборна€ скорость */
 	static double accelerationX;/*!< ”скорение по приборной скорости (dvx/dt) */
@@ -77,7 +78,7 @@ public:
 	static double calcA;/*!< јтака винта */
 	static double RedTurnAcc;/*!< ”скорение оборотов редуктора (dturn/dt) */
 
-	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTime, vectorRedTurn;//!<ћассивы дл€ хранени€ значений переменных за некоторое врем€ (определено условием в main), дл€ расчета производных
+	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTangaz, vectorTime, vectorRedTurn;//!<ћассивы дл€ хранени€ значений переменных за некоторое врем€ (определено условием в main), дл€ расчета производных
 	static vector<double> vectorAvrEng1Turn, vectorAvrEng2Turn, vectorAvrRedTurn, vectorAvrStep, vectorAvrAtk;//!<ћассивы дл€ рассчета среднего методом скольз€щего среднего
 	static double globalWindow;//!<ѕеременна€ времени дл€ набора значений в массивы дл€ рассчета среднего
 
