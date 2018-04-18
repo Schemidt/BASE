@@ -7,7 +7,6 @@
 */
 
 /*! \mainpage Документация
-
 Эта документация разделена на следующие разделы:
 - \subpage intro
 - \subpage advanced
@@ -28,6 +27,11 @@
 <pre>
 Запустить из коммандной строки "BASE.exe" с необходимым параметром:
 "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29".
+Пример:
+\code{.cpp}
+		../BASE/BASE.exe mi_8_mtv5
+\endcode
+
 </pre>
 */
 
@@ -62,24 +66,23 @@
 которые не были получены по протоколу обмена и код обработки объектов устройств – условия их инициализации,
 выполнение метода «play», условия высвобождения объектов.
 После инициализации «контекста» жизненный цикл объектов устройств прогоняется в бесконечном цикле.
-\code
-//ПТС
-if (helicopter.ptsFactor)
+\code{.cpp}
+{AL_init}//Инициализация OpenAL
+while(true)//Бесконечный цикл
 {
-	if (localdata.p_pts)//Условие создания объекта
-		if (!pts)//Если объект не создан
-		{
-			pts = new Sound;
-		}
-	if (pts)//Если объект создан - используем его
-	{
-		pts->play(localdata.p_pts, helicopter.fullName["pts_on"], helicopter.fullName["pts_w"], helicopter.fullName["pts_off"], helicopter.ptsFactor);//Воспроизводим звук - записываем состояние звука в play
-		if (pts->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-		{
-			Free(pts);//Удаляем объект
-		}
-	}
+	{Calc_par1}//рассчет параметров, например Атака, 1ые и 2ые производные
+	{CAlc_par2}
+
+	{easy_sound0}//Инициализация объекта - звука устройства, c универсальной логикой, например ПТС
+	{easy_sound1}
+	{easy_sound2}
+	{hard_sound0}//Инициализация объекта - звука устройства, с уникальной логикой, например редуктор
+	{easy_sound2}
+	{hard_sound1}
+	
+	//Выход из цикла происходит только при закрытии приложения
 }
+{AL_deinit}//Деинициализация OpenAL
 \endcode
 </pre>
 
@@ -152,8 +155,28 @@ if (helicopter.ptsFactor)
 <td>Все фазы отсутствуют
 <td>0
 <td>Звук не воспроизводится, высвобождается память
-
 </table>
+Пример инициализации "Простого" устройства:
+\code{.cpp}
+Sound *pts;
+//ПТС
+if (helicopter.ptsFactor)
+{
+	if (localdata.p_pts)//Условие создания объекта
+		if (!pts)//Если объект не создан
+		{
+			pts = new Sound;
+		}
+		if (pts)//Если объект создан - используем его
+		{
+			pts->play(localdata.p_pts, helicopter.fullName["pts_on"], helicopter.fullName["pts_w"], helicopter.fullName["pts_off"], helicopter.ptsFactor);//Воспроизводим звук - записываем состояние звука в play
+			if (pts->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+		{
+		Free(pts);//Удаляем объект
+		}
+	}
+}
+\endcode
 </pre>
 
 \subsection subsec1 "Сложные" устройства
@@ -166,9 +189,32 @@ if (helicopter.ptsFactor)
 двигатели, звук хлопков винта, свист винта, движение по взлетной полосе.
 Для установления корреляций между параметрами ЛА и звучанием устройств инженер-акустик оценивает спектр и
 субъективное звучание аудио сигнала в различные моменты времени во время работы ЛА.
+Пример инициализации "Сложного" устройства:
+\code{.cpp}
+Engine *eng[2];
+if (localdata.p_eng1_zap | localdata.eng1_obor > 0)
+{
+	if (!eng[0])//Если объект не создан
+	{
+		eng[0] = new Engine;//Создаем объект
+	}
+}
+if (eng[0])//Если объект создан - используем его
+{
+	eng[0]->channel[0] = 1;//magic numbers//1//L
+	eng[0]->channel[1] = 1;//-1
+	eng[0]->play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, helicopter);
+	if (localdata.eng1_obor == 0)//Условие удаления объекта
+		Free(eng[0]);//Удаляем объект
+}
+\endcode
+\sa 
+Reductor::play()
+Engine::play()
+VintFlap::play()
 </pre>
 
-\section sec3 Назначение <Helicopter>
+\section sec3 Назначение "Helicopter"
 <pre>
 Данный класс агрегирует имена файлов всех звуков, которые используются при загрузке буферов OpenAL.
 После создания объекта данного класса вызывается метод класса, который принимает в качестве входного параметра конкретную модель ЛА,
@@ -218,6 +264,8 @@ if (model == "mi_8_mtv5")
 	rainFactor = 0.5//Дождь;
 }
 \endcode
+\sa
+Helicopter
 </pre>
 */
 
@@ -4592,13 +4640,6 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 
 	//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 	double averangeTurn = getAverange("redTurns", 25);
-	/*double averangeTurn = 0;
-	averangeCalcPeriod += deltaTime;
-	if (averangeCalcPeriod >= 25 && !vector.empty())
-		vector.erase(vector.begin());
-	vector.push_back(sr.reduktor_gl_obor);
-	for (auto& x : vector)
-		averangeTurn += x / vector.size();*/
 
 	double avrTurngain = (-5) + (sr.reduktor_gl_obor - averangeTurn) * 4;
 	avrTurngain = (avrTurngain > 0) ? 0 : avrTurngain;
