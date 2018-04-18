@@ -610,7 +610,19 @@ double attack(double velocityX, double velocityXPrevious, double tangaz, double 
 */
 bool IsProcessPresent(wchar_t * szExe);
 
+/*!
+\brief Переводит коэффициент громкости в децибелы
+
+\param[in] coef коэффициент громкости
+\return децибелы
+*/
 double toDb(double coef);
 
+/*!
+\brief Переводит децибелы в коэффициент громкости
+
+\param[in] db децибелы
+\return коэффициент громкости
+*/
 double toCoef(double db);
 

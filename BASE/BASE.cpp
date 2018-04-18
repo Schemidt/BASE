@@ -310,7 +310,7 @@ VintFlap::play()
 Пример работы метода для mi_26:
 \code
 setPath("mi_26")
-{	
+{
 	...
 	//Вооружение
 	shortName["sturm"] = "sturm.wav" --> fullName["sturm"] = ../mi_26/"sturm.wav"
@@ -3612,7 +3612,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//Усиление на висении
 		double hoveringGain = (high > 0) ? abs(accelerationX) * 6 * getParameterFromVector(vector<point>{ { 0, 1 }, { 28, 0 } }, velocityX) : 0;
-		
+
 		//
 		if (velocityY < 0)
 		{
@@ -3625,8 +3625,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
 		}
 
-		//0.1 -> 1дб
-		double lowFreqAccGain = (accelerationX <= -0.56) ? (((abs(accelerationX) - 0.56) * 10) * getParameterFromVector(vector<point>{ { 4, 1 }, { 9, 0 } }, step) * getParameterFromVector(vector<point>{ { 8, 0 }, { 16, 1 } }, high) * offsetOn) : 0;
+		//0.1 -> 2дб
+		double lowFreqAccGain = (accelerationX <= -0.56) ? (((abs(accelerationX) - 0.56) * 20) * getParameterFromVector(vector<point>{ { 4, 1 }, { 9, 0 } }, step) * getParameterFromVector(vector<point>{ { 8, 0 }, { 16, 1 } }, high) * offsetOn) : 0;
 
 		cout << lowFreqAccGain << "\r";
 
@@ -4694,7 +4694,7 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 			pitch = sr.reduktor_gl_obor / h.redTurnoverAvt;
 			//Выключаем шелест винта на оборотах редуктора ниже оборотов малого газа редуктора
 			//Делаем поправку на шаг
-			gain = interpolation(h.redTurnoverAvt, 1, h.redTurnoverMg2, 0, sr.reduktor_gl_obor) * toCoef(getParameterFromVector(vector<point>{ { 0, -10 }, { 12, -6 }}, step));
+			gain = interpolation(h.redTurnoverAvt, 1, h.redTurnoverMg2, 0, sr.reduktor_gl_obor) * toCoef(getParameterFromVector(vector<point>{ { 0, -11 }, { 12, -7 }}, step));
 		}
 		else
 		{
