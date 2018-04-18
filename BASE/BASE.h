@@ -63,7 +63,7 @@ public:
 	static double masterGain;/*!< √лобальный модификатор громкости */
 	static AL_SOUND_CHANNELS channelsSetup;/*!<  онфигураци€ каналов - устройств вывода (2.1,4.1,5.1,6.1,7.1) */
 	static double currentTime;/*!< ѕеременна€ хран€ща€ текущее врем€ полученное из общей пам€ти от USPO */
-	static double deltaTime;/*!< Gеременна€ дл€ отслеживани€ изменени€ времени */
+	static double deltaTime;/*!< ѕеременна€ дл€ отслеживани€ изменени€ времени */
 
 	static double step; /*!< Ўаг */
 	static double tangaz;/*!< “ангаж */
@@ -78,8 +78,21 @@ public:
 	static double calcA;/*!< јтака винта */
 	static double RedTurnAcc;/*!< ”скорение оборотов редуктора (dturn/dt) */
 
-	static vector<double> vectorHigh, vectorVy, vectorVx, vectorAcc, vectorStep, vectorTangaz, vectorTime, vectorRedTurn;//!<ћассивы дл€ хранени€ значений переменных за некоторое врем€ (определено условием в main), дл€ расчета производных
-	static vector<double> vectorAvrEng1Turn, vectorAvrEng2Turn, vectorAvrRedTurn, vectorAvrStep, vectorAvrAtk;//!<ћассивы дл€ рассчета среднего методом скольз€щего среднего
+	static vector<double> vectorHigh;//!<ћассив дл€ рассчета производной от высоты
+	static vector<double> vectorVy;//!<ћассив дл€ рассчета производной от вертикальной скорости
+	static vector<double> vectorVx;//!<ћассив дл€ рассчета производной от горизонтальной скорости
+	static vector<double> vectorAcc;//!<ћассив дл€ рассчета производной от горизонтального ускорени€
+	static vector<double> vectorStep;//!<ћассив дл€ рассчета производной от шага
+	static vector<double> vectorTangaz;//!<ћассив дл€ рассчета производной от тангажа
+	static vector<double> vectorTime;//!<ћассив дл€ рассчета производной
+	static vector<double> vectorRedTurn;//!<ћассив дл€ рассчета производной от оборотов редуктора
+
+	static vector<double> vectorAvrEng1Turn;//!<ћассив дл€ рассчета среднего оборотов первого двигател€
+	static vector<double> vectorAvrEng2Turn;//!<ћассив дл€ рассчета среднего оборотов второго двигател€
+	static vector<double> vectorAvrRedTurn;//!<ћассив дл€ рассчета среднего оборотов редуктора
+	static vector<double> vectorAvrStep;//!<ћассив дл€ рассчета среднего шага
+	static vector<double> vectorAvrAtk;//!<ћассив дл€ рассчета средней атаки
+
 	static double globalWindow;//!<ѕеременна€ времени дл€ набора значений в массивы дл€ рассчета среднего
 
 	unique_ptr<int[]> sourceStatus;/*!< ѕеременна€ дл€ статуса источника */

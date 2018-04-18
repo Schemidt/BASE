@@ -86,6 +86,89 @@ while(true)//Бесконечный цикл
 \endcode
 </pre>
 
+\subsection subSecCalculating Рассчет недостающих параметров
+<pre>
+К недостающим параметрам относятся:
+•	Средние значения входящих параметров (средний шаг, средние обороты);
+•	Первые и вторые производные (ускорение, рывок);
+•	Специальные - разработанные для определенной задачи параметры (атака)
+Для рассчета среднего значения используется метод скользящего среднего:
+значения в каждой точке определения равны среднему значению исходной функции за предыдущий период.
+Для этого для каждого необходимого параметра собираются массивы значений за время Sound::globalWindow,
+если необходимо значение среднего за меньший промежуток времени, то среднее расчитывается теоретически.
+\see Sound::getAverange();
+
+Набор массивов для расчета среднего:
+\code{.cpp}
+//Набираем массивы для среднего
+timerAvr += Sound::deltaTime;
+//Если необходимый размер окна достигнут - выбрасываем значения в начале массива
+if (timerAvr > Sound::globalWindow)
+{
+	if (!Sound::vectorAvrEng1Turn.empty())
+	{
+		Sound::vectorAvrEng1Turn.erase(Sound::vectorAvrEng1Turn.begin());
+	}
+	if (!Sound::vectorAvrEng2Turn.empty())
+	{
+		Sound::vectorAvrEng2Turn.erase(Sound::vectorAvrEng2Turn.begin());
+	}
+	if (!Sound::vectorAvrRedTurn.empty())
+	{
+		Sound::vectorAvrRedTurn.erase(Sound::vectorAvrRedTurn.begin());
+	}
+	if (!Sound::vectorAvrStep.empty())
+	{
+		Sound::vectorAvrStep.erase(Sound::vectorAvrStep.begin());
+	}
+	if (!Sound::vectorAvrAtk.empty())
+	{
+		Sound::vectorAvrAtk.erase(Sound::vectorAvrAtk.begin());
+	}
+}
+//Кладем значения в конец массива
+Sound::vectorAvrEng1Turn.push_back(localdata.eng1_obor);
+Sound::vectorAvrEng2Turn.push_back(localdata.eng2_obor);
+Sound::vectorAvrRedTurn.push_back(localdata.reduktor_gl_obor);
+Sound::vectorAvrStep.push_back(Sound::step);
+Sound::vectorAvrAtk.push_back(Sound::calcA);
+\endcode
+
+Для рассчета производных используются численные методы приближенного вычисления производной.
+Так как будущее значение производной неизвестно вычиляется только значение левой производной( (Y_текущее - Y_прошлое)/(dt) ).
+Где dt = Sound::window.
+Пример расчета вертикальной скорости как производной от высоты:
+\code{.cpp}
+//Если не пришел признак остановки модели - вычисляем переменные
+//Если необходимый размер окна достигнут - выбрасываем значения в начале массива
+while (periodCalc >= window && Sound::vectorTime.size() > 2)
+{
+	if (!Sound::vectorTime.empty())
+	{
+		Sound::vectorHigh.erase(Sound::vectorHigh.begin());
+		Sound::vectorTime.erase(Sound::vectorTime.begin());
+	}
+	periodCalc = Sound::currentTime - Sound::vectorTime.front();
+}
+//Собираем значения только если время изменяется
+if (Sound::vectorTime.back() != Sound::currentTime)
+{
+	Sound::vectorTime.push_back(Sound::currentTime);
+	Sound::vectorHigh.push_back(Sound::high);
+}
+//Если вектор времени не пуст - время изменяется, можно вычилить производные
+if (!Sound::vectorTime.empty())
+{
+	//Производные
+	periodCalc = Sound::currentTime - Sound::vectorTime.front();
+	if (periodCalc > 0)
+	{
+		Sound::velocityY = (Sound::high - Sound::vectorHigh.front()) / periodCalc;
+	}
+}
+\endcode
+</pre>
+
 \section sec2 Класс "Sound" и подклассы
 <pre>
 Данный класс и его наследники определяет каким образом реагирует источник OpenAL на изменение входящих параметров.
@@ -212,6 +295,7 @@ if (eng[0])//Если объект создан - используем его
 Reductor::play()
 Engine::play()
 VintFlap::play()
+
 </pre>
 
 \section sec3 Назначение "Helicopter"
@@ -266,6 +350,7 @@ if (model == "mi_8_mtv5")
 \endcode
 \sa
 Helicopter
+
 </pre>
 */
 
@@ -354,8 +439,8 @@ double Sound::RedTurnAcc = 0;
 int Engine::engCount = 0;
 
 vector<double> Sound::vectorHigh, Sound::vectorVy, Sound::vectorVx, Sound::vectorAcc, Sound::vectorStep, Sound::vectorTangaz, Sound::vectorTime, Sound::vectorRedTurn;
-vector<double> Sound::vectorAvrEng1Turn, Sound::vectorAvrEng2Turn, Sound::vectorAvrRedTurn, Sound::vectorAvrStep, Sound::vectorAvrAtk;//!<Массивы для рассчета среднего методом скользящего среднего
-double Sound::globalWindow = 50;//!<Переменная времени для набора значений в массивы для рассчета среднего
+vector<double> Sound::vectorAvrEng1Turn, Sound::vectorAvrEng2Turn, Sound::vectorAvrRedTurn, Sound::vectorAvrStep, Sound::vectorAvrAtk;
+double Sound::globalWindow = 50;
 
 AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_2;//Конфигурация каналов звука
 
@@ -533,6 +618,7 @@ int main(int argc, char *argv[])
 			Sound::step = localdata.ny; //шаг (временно используем параметр перегрузки)
 
 			//Если не пришел признак остановки модели - вычисляем переменные
+			//Если необходимый размер окна достигнут - выбрасываем значения в начале массива
 			while (periodCalc >= window && Sound::vectorTime.size() > 2)
 			{
 				if (!Sound::vectorTime.empty())
@@ -548,6 +634,7 @@ int main(int argc, char *argv[])
 				}
 				periodCalc = Sound::currentTime - Sound::vectorTime.front();
 			}
+			//Собираем значения только если время изменяется
 			if (Sound::vectorTime.back() != Sound::currentTime)
 			{
 				Sound::vectorTime.push_back(Sound::currentTime);
@@ -559,6 +646,7 @@ int main(int argc, char *argv[])
 				Sound::vectorStep.push_back(Sound::step);
 				Sound::vectorRedTurn.push_back(localdata.reduktor_gl_obor);
 			}
+			//Если вектор времени не пуст - время изменяется, можно вычилить производные
 			if (!Sound::vectorTime.empty())
 			{
 				//Производные
@@ -578,6 +666,7 @@ int main(int argc, char *argv[])
 
 			//Набираем массивы для среднего
 			timerAvr += Sound::deltaTime;
+			//Если необходимый размер окна достигнут - выбрасываем значения в начале массива
 			if (timerAvr > Sound::globalWindow)
 			{
 				if (!Sound::vectorAvrEng1Turn.empty())
@@ -601,7 +690,7 @@ int main(int argc, char *argv[])
 					Sound::vectorAvrAtk.erase(Sound::vectorAvrAtk.begin());
 				}
 			}
-
+			//Кладем значения в конец массива
 			Sound::vectorAvrEng1Turn.push_back(localdata.eng1_obor);
 			Sound::vectorAvrEng2Turn.push_back(localdata.eng2_obor);
 			Sound::vectorAvrRedTurn.push_back(localdata.reduktor_gl_obor);
