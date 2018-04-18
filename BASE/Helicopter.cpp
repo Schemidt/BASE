@@ -338,6 +338,7 @@ void Helicopter::setParam(string model)
 		runwayFactor = 1/*ВПП*/;
 		vintBrakeFactor = 1/*Винт тормоз*/;
 		vintFlapFactor = 1/*Винт хлопки*/;
+		vintSwishFactor = 1/*Винт свист*/;
 		chassisBrakePumpFactor = 0.178/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.178/*Сброс давления*/;
 		rainFactor = 1/*Дождь*/;

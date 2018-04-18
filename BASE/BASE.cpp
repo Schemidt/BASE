@@ -79,7 +79,7 @@ while(true)//Бесконечный цикл
 	{hard_sound0}//Инициализация объекта - звука устройства, с уникальной логикой, например редуктор
 	{easy_sound2}
 	{hard_sound1}
-	
+
 	//Выход из цикла происходит только при закрытии приложения
 }
 {AL_deinit}//Деинициализация OpenAL
@@ -291,7 +291,7 @@ if (eng[0])//Если объект создан - используем его
 		Free(eng[0]);//Удаляем объект
 }
 \endcode
-\sa 
+\sa
 Reductor::play()
 Engine::play()
 VintFlap::play()
@@ -300,9 +300,34 @@ VintFlap::play()
 
 \section sec3 Назначение "Helicopter"
 <pre>
+Секция описывает работу класса "Helicopter"
+</pre>
+\subsection subSecNames Определение путей
+<pre>
 Данный класс агрегирует имена файлов всех звуков, которые используются при загрузке буферов OpenAL.
 После создания объекта данного класса вызывается метод класса, который принимает в качестве входного параметра конкретную модель ЛА,
 устанавливая пути к конкретным файлам: %модель%/%имяфайла%.wav.
+Пример работы метода для mi_26:
+\code
+setPath("mi_26")
+{	
+	...
+	//Вооружение
+	shortName["sturm"] = "sturm.wav" --> fullName["sturm"] = ../mi_26/"sturm.wav"
+	"s8.wav"						 -->					 ../mi_26/"s8.wav"
+	"s13.wav"						 -->					 ../mi_26/"s13.wav"
+	"rocket.wav"					 -->					 ../mi_26/"rocket.wav"
+	"gun_loop.wav"					 -->					 ../mi_26/"gun_loop.wav"
+	"shoot.wav"						 -->					 ../mi_26/"shoot.wav"
+	"sturm.wav"						 -->					 ../mi_26/"sturm.wav"
+	//Винт
+	...
+}
+\endcode
+</pre>
+
+\subsection subSecFactors Определение состава устройств
+<pre>
 Кроме адресов файлов также определяются коэффициенты громкости звуков.
 Коэффициент равный «0» означает, что звук данного агрегата или эффекта отсутствует на данном ЛА.
 В таком случае алгоритм не исполняется вовсе, в отличии от воспроизведения файла с 0-вой громкостью,
@@ -547,7 +572,6 @@ int main(int argc, char *argv[])
 	Sound *perek2 = nullptr;
 	Sound *ko50 = nullptr;
 	Skv *skv = nullptr;
-	Sound *skvUni = nullptr;
 	Sound *fire1 = nullptr;
 	Sound *fire2 = nullptr;
 	Sound *consTank = nullptr;
@@ -555,7 +579,6 @@ int main(int argc, char *argv[])
 	Runway *runway = nullptr;
 	Sound *crash = nullptr;
 	VintSwish *vintSwish = nullptr;
-	Sound *vintSwishUni = nullptr;
 	Sound *vintBrake = nullptr;
 	VintFlap *vintFlap = nullptr;
 	Sound *brake = nullptr;
@@ -1155,35 +1178,14 @@ int main(int argc, char *argv[])
 			//Если СКВ присутствует на Борту
 			if (helicopter.skvFactor)
 			{
-
-				if (helicopter.modelName == "mi_28")
+				if (localdata.p_skv_on)//Условие создания объекта
+					if (!skv)//Если объект не создан 
+						skv = new Skv;//Создаем объект
+				if (skv)//Если объект создан - используем его
 				{
-					if (localdata.p_skv_on)//Условие создания объекта
-						if (!skv)//Если объект не создан 
-							skv = new Skv;//Создаем объект
-					if (skv)//Если объект создан - используем его
-					{
-						skv->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-						if (skv->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-							Free(skv);//Удаляем объект
-					}
-				}
-				else
-				{
-					if (localdata.p_skv_on)//Условие создания объекта
-						if (!skvUni)//Если объект не создан 
-							skvUni = new Sound;//Создаем объект
-					if (skvUni)//Если объект создан - используем его
-					{
-
-						if (helicopter.modelName == "mi_26")
-						{
-							skvUni->pitch = 0.03245 * abs(max(localdata.eng1_obor, localdata.eng2_obor) - helicopter.engTurnoverAvt);
-						}
-						skvUni->play(localdata.p_skv_on, helicopter.fullName["skv_on"], helicopter.fullName["skv_w"], helicopter.fullName["skv_off"], helicopter.skvFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (skvUni->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-							Free(skvUni);//Удаляем объект
-					}
+					skv->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
+					if (skv->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+						Free(skv);//Удаляем объект
 				}
 			}
 			//Если КО-50 присутствует на Борту
@@ -1283,39 +1285,14 @@ int main(int argc, char *argv[])
 			//Винт
 			if (helicopter.vintSwishFactor)
 			{
-
-				if (helicopter.modelName == "mi_28")
+				if (localdata.reduktor_gl_obor != 0 && localdata.p_vu3)//Условие создания объекта
+					if (!vintSwish)//Если объект не создан 
+						vintSwish = new VintSwish;//Создаем объект
+				if (vintSwish)//Если объект создан - используем его
 				{
-					if (localdata.reduktor_gl_obor != 0 && localdata.p_vu3)//Условие создания объекта
-						if (!vintSwish)//Если объект не создан 
-							vintSwish = new VintSwish;//Создаем объект
-					if (vintSwish)//Если объект создан - используем его
-					{
-						vintSwish->play(helicopter, localdata);
-						if (localdata.reduktor_gl_obor == 0 || !localdata.p_vu3)//Условие удаления объекта
-							Free(vintSwish);//Удаляем объект
-					}
-				}
-				else
-				{
-					if (localdata.reduktor_gl_obor >= helicopter.redTurnoverMg2 && localdata.p_vu3)//Условие создания объекта
-						if (!vintSwishUni)//Если объект не создан 
-							vintSwishUni = new Sound;//Создаем объект
-					if (vintSwishUni)//Если объект создан - используем его
-					{
-						vintSwishUni->play(localdata.reduktor_gl_obor >= helicopter.redTurnoverMg2, "NULL", helicopter.fullName["vint_hi"], "NULL", helicopter.vintSwishFactor);//Воспроизводим звук - записываем состояние звука в play
-						if (localdata.reduktor_gl_obor < helicopter.redTurnoverMg2 || !localdata.p_vu3)//Условие удаления объекта
-							Free(vintSwishUni);//Удаляем объект
-						else
-						{
-							//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
-							vintSwishUni->pitch = localdata.reduktor_gl_obor / helicopter.redTurnoverAvt;
-							//Выключаем шелест винта на оборотах редуктора ниже оборотов малого газа редуктора
-							//Линейно гасим звук в течении 3х оборотов
-							if (localdata.reduktor_gl_obor <= helicopter.redTurnoverAvt)
-								vintSwishUni->gain = interpolation(helicopter.redTurnoverAvt, 1, helicopter.redTurnoverMg2, 0, localdata.reduktor_gl_obor);
-						}
-					}
+					vintSwish->play(helicopter, localdata);
+					if (localdata.reduktor_gl_obor == 0 || !localdata.p_vu3)//Условие удаления объекта
+						Free(vintSwish);//Удаляем объект
 				}
 			}
 			//Если звук тормоза винта включен в проект
@@ -1867,10 +1844,6 @@ int main(int argc, char *argv[])
 			if (vintFlap)
 			{
 				Free(vintFlap);
-			}
-			if (vintSwishUni)
-			{
-				Free(vintSwishUni);
 			}
 			if (vintSwish)
 			{
@@ -3639,8 +3612,25 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//Усиление на висении
 		double hoveringGain = (high > 0) ? abs(accelerationX) * 6 * getParameterFromVector(vector<point>{ { 0, 1 }, { 28, 0 } }, velocityX) : 0;
+		
+		//
+		if (velocityY < 0)
+		{
+			offsetOn += deltaTime;
+			offsetOn = (offsetOn > 1) ? 1 : offsetOn;//плавно наводим громкость за 1с
+		}
+		else
+		{
+			offsetOn -= deltaTime;
+			offsetOn = (offsetOn < 0) ? 0 : offsetOn;
+		}
 
-		lowFreqGain = toCoef(lowFreqStepGain1 + lowFreqStepGain2 + hoveringGain);
+		//0.1 -> 1дб
+		double lowFreqAccGain = (accelerationX <= -0.56) ? (((abs(accelerationX) - 0.56) * 10) * getParameterFromVector(vector<point>{ { 4, 1 }, { 9, 0 } }, step) * getParameterFromVector(vector<point>{ { 8, 0 }, { 16, 1 } }, high) * offsetOn) : 0;
+
+		cout << lowFreqAccGain << "\r";
+
+		lowFreqGain = toCoef(lowFreqStepGain1 + lowFreqStepGain2 + hoveringGain + lowFreqAccGain);
 		highFreqGain = toCoef(highFreqStepGain);
 
 		lowFreqGain = (lowFreqGain <= 1) ? 1 : lowFreqGain;
@@ -4506,18 +4496,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[0], AL_GAIN, flapFinalGain * h.vintFlapFactor * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, high));
 		alSourcef(source[1], AL_GAIN, flappingFinalGain * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, high));
 
-		cout << flappingFinalGain * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, high) << "\r";
-
-		cout << " attack " << attack << " = " << calcA * interpolation(0, 0, 22.4, 1, velocityX) << " + " << (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0) << "\t" << flappingFinalGain << "\t\t\t\r";
-		static double p;
-		p += deltaTime;
-		if (p > 0.1)
-		{
-			FILE *f = fopen("test.txt", "at");
-			fprintf(f, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", currentTime, atkGain, flappingVyGain, flappingVxGain, hoveringGain, flapFinalGain * h.vintFlapFactor, flappingFinalGain, velocityX, accelerationX, dash, attack);
-			fclose(f);
-			p = 0;
-		}
 	}
 	//Полеты ка 226
 	else if (h.modelName == "ka_226")
@@ -4631,77 +4609,124 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 		}
 	}
 
-	//0 -> мг 1дв
-	if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
+	if (h.modelName == "mi_28")
 	{
-		filetoBuffer[0] = h.fullName["vint_swish_on"];
-		filetoBuffer[1] = h.fullName["vint_swish_w"];
-		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcei(source[0], AL_LOOPING, AL_FALSE);
-		offset[0] = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-		offset[1] = 0;
+		//0 -> мг 1дв
+		if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
+		{
+			filetoBuffer[0] = h.fullName["vint_swish_on"];
+			filetoBuffer[1] = h.fullName["vint_swish_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_FALSE);
+			offset[0] = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
+			offset[1] = 0;
 
-		double fade, rise;
-		crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.vintSwishFactor);
-		alSourcef(source[0], AL_GAIN, fade);//0
-		alSourcef(source[1], AL_GAIN, rise);//1
+			double fade, rise;
+			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.vintSwishFactor);
+			alSourcef(source[0], AL_GAIN, fade);//0
+			alSourcef(source[1], AL_GAIN, rise);//1
 
-		alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-		if (sr.reduktor_gl_obor >= 5)
-			alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
+			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
+			if (sr.reduktor_gl_obor >= 5)
+				alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
+			else
+				alSourcef(source[0], AL_PITCH, 1);
+			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+
+
+		}
+		//мг1дв <-> мг2дв
+		if (sr.reduktor_gl_obor > h.redTurnoverMg1 && sr.reduktor_gl_obor <= h.redTurnoverMg2)
+		{
+			filetoBuffer[1] = h.fullName["vint_swish_w"];
+			filetoBuffer[0] = h.fullName["vint_swish_w_mg"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			offset[0] = 0;
+			offset[1] = 0;
+
+			double fade = 0, rise = 0;
+			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg2, masterGain*h.vintSwishFactor);
+			alSourcef(source[1], AL_GAIN, fade);//0
+			alSourcef(source[0], AL_GAIN, rise);//1
+
+			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
+			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+		}
+		//мг2дв <-> авт
+		if (sr.reduktor_gl_obor > h.redTurnoverMg2)
+		{
+			filetoBuffer[1] = h.fullName["vint_swish_w_avt"];
+			filetoBuffer[0] = h.fullName["vint_swish_w_mg"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			offset[0] = 0;
+			offset[1] = 0;
+
+			double fade, rise;
+			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.vintSwishFactor);
+			alSourcef(source[0], AL_GAIN, fade);//
+			alSourcef(source[1], AL_GAIN, rise);//
+
+			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);
+			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+		}
+		//мг1дв -> 0
+		if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1 - 1)
+		{
+			filetoBuffer[1] = h.fullName["vint_swish_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			offset[1] = 0;
+
+			alSourcef(source[0], AL_GAIN, 0);
+			alSourcef(source[1], AL_GAIN, interpolation(h.redTurnoverMg1*0.69, 0, h.redTurnoverMg1, 1, sr.reduktor_gl_obor));//
+			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
+		}
+	}
+	else if (h.modelName == "ka_226")
+	{
+		filetoBuffer[0] = h.fullName["vint_hi"];
+		alSourcei(source[0], AL_LOOPING, AL_TRUE);
+
+		if (sr.reduktor_gl_obor >= h.redTurnoverMg2 && sr.p_vu3)
+		{
+			//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
+			pitch = sr.reduktor_gl_obor / h.redTurnoverAvt;
+			//Выключаем шелест винта на оборотах редуктора ниже оборотов малого газа редуктора
+			//Делаем поправку на шаг
+			gain = interpolation(h.redTurnoverAvt, 1, h.redTurnoverMg2, 0, sr.reduktor_gl_obor) * toCoef(getParameterFromVector(vector<point>{ { 0, -10 }, { 12, -6 }}, step));
+		}
 		else
-			alSourcef(source[0], AL_PITCH, 1);
-		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+		{
+			pitch = 1;
+			gain = 0;
+		}
 
-
+		alSourcef(source[0], AL_GAIN, masterGain * gain * h.vintSwishFactor);
+		alSourcef(source[0], AL_PITCH, pitch);
 	}
-	//мг1дв <-> мг2дв
-	if (sr.reduktor_gl_obor > h.redTurnoverMg1 && sr.reduktor_gl_obor <= h.redTurnoverMg2)
+	else
 	{
-		filetoBuffer[1] = h.fullName["vint_swish_w"];
-		filetoBuffer[0] = h.fullName["vint_swish_w_mg"];
-		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		filetoBuffer[0] = h.fullName["vint_hi"];
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
-		offset[0] = 0;
-		offset[1] = 0;
 
-		double fade = 0, rise = 0;
-		crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg2, masterGain*h.vintSwishFactor);
-		alSourcef(source[1], AL_GAIN, fade);//0
-		alSourcef(source[0], AL_GAIN, rise);//1
+		if (sr.reduktor_gl_obor >= h.redTurnoverMg2 && sr.p_vu3)
+		{
+			//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
+			pitch = sr.reduktor_gl_obor / h.redTurnoverAvt;
+			//Выключаем шелест винта на оборотах редуктора ниже оборотов малого газа редуктора
+			gain = interpolation(h.redTurnoverAvt, 1, h.redTurnoverMg2, 0, sr.reduktor_gl_obor);
+		}
+		else
+		{
+			pitch = 1;
+			gain = 0;
+		}
 
-		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
-		alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+		alSourcef(source[0], AL_GAIN, masterGain * gain * h.vintSwishFactor);
+		alSourcef(source[0], AL_PITCH, pitch);
 	}
-	//мг2дв <-> авт
-	if (sr.reduktor_gl_obor > h.redTurnoverMg2)
-	{
-		filetoBuffer[1] = h.fullName["vint_swish_w_avt"];
-		filetoBuffer[0] = h.fullName["vint_swish_w_mg"];
-		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcei(source[0], AL_LOOPING, AL_TRUE);
-		offset[0] = 0;
-		offset[1] = 0;
 
-		double fade, rise;
-		crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.vintSwishFactor);
-		alSourcef(source[0], AL_GAIN, fade);//
-		alSourcef(source[1], AL_GAIN, rise);//
-
-		alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);
-		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-	}
-	//мг1дв -> 0
-	if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1 - 1)
-	{
-		filetoBuffer[1] = h.fullName["vint_swish_w"];
-		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		offset[1] = 0;
-
-		alSourcef(source[0], AL_GAIN, 0);
-		alSourcef(source[1], AL_GAIN, interpolation(h.redTurnoverMg1*0.69, 0, h.redTurnoverMg1, 1, sr.reduktor_gl_obor));//
-		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
-	}
 	return 1;
 }
 
@@ -4723,25 +4748,37 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 		eq = "set";
 	}
 
-	pitch = 0.029 * max(sr.eng1_obor, sr.eng2_obor) - 1.484;
+	if (h.modelName == "mi_28")
+	{
+		pitch = 0.029 * max(sr.eng1_obor, sr.eng2_obor) - 1.484;
 
-	Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
+		Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 
-	//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-	double averangeTurn = getAverange("redTurns", 25);
+		double averangeTurn = getAverange("redTurns", 25);
 
-	double avrTurngain = (-5) + (sr.reduktor_gl_obor - averangeTurn) * 4;
-	avrTurngain = (avrTurngain > 0) ? 0 : avrTurngain;
+		double avrTurngain = (-5) + (sr.reduktor_gl_obor - averangeTurn) * 4;
+		avrTurngain = (avrTurngain > 0) ? 0 : avrTurngain;
 
-	double highFreqGain = pow(10, avrTurngain * 0.05);
+		double highFreqGain = pow(10, avrTurngain * 0.05);
 
-	double highCutoffFreq = 4000;//ВЧ 4000-16000
+		double highCutoffFreq = 4000;//ВЧ 4000-16000
 
-	alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
+		alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, highCutoffFreq);
 
-	alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
+		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, highFreqGain);//
 
-	alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+	}
+	else if (h.modelName == "mi_26")
+	{
+		pitch = 0.03245 * abs(max(sr.eng1_obor, sr.eng2_obor) - h.engTurnoverAvt);
+
+		Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
+	}
+	else
+	{
+		Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
+	}
 
 	return 1;
 }
