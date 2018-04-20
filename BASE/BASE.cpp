@@ -95,12 +95,12 @@ while(true)//Ѕесконечный цикл
 ƒл€ рассчета среднего значени€ используетс€ метод скольз€щего среднего:
 значени€ в каждой точке определени€ равны среднему значению исходной функции за предыдущий период.
 ƒл€ этого дл€ каждого необходимого параметра собираютс€ массивы значений за врем€ Sound::globalWindow,
-если необходимо значение среднего за меньший промежуток времени, то среднее расчитываетс€ теоретически.
+если необходимо значение среднего за меньший промежуток времени, то среднее расчитываетс€ теоретически
+(тоесть беретс€ часть собраных значений).
 \see Sound::getAverange();
 
 Ќабор массивов дл€ расчета среднего:
 \code{.cpp}
-//Ќабираем массивы дл€ среднего
 timerAvr += Sound::deltaTime;
 //≈сли необходимый размер окна достигнут - выбрасываем значени€ в начале массива
 if (timerAvr > Sound::globalWindow)
@@ -126,7 +126,7 @@ if (timerAvr > Sound::globalWindow)
 		Sound::vectorAvrAtk.erase(Sound::vectorAvrAtk.begin());
 	}
 }
-// ладем значени€ в конец массива
+// ладем значени€ в конец массива каждую итерацию цикла
 Sound::vectorAvrEng1Turn.push_back(localdata.eng1_obor);
 Sound::vectorAvrEng2Turn.push_back(localdata.eng2_obor);
 Sound::vectorAvrRedTurn.push_back(localdata.reduktor_gl_obor);
@@ -3628,8 +3628,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		//0.1 -> 2дб
 		double lowFreqAccGain = (accelerationX <= -0.56) ? (((abs(accelerationX) - 0.56) * 20) * getParameterFromVector(vector<point>{ { 4, 1 }, { 9, 0 } }, step) * getParameterFromVector(vector<point>{ { 8, 0 }, { 16, 1 } }, high) * offsetOn) : 0;
 
-		cout << lowFreqAccGain << "\r";
-
 		lowFreqGain = toCoef(lowFreqStepGain1 + lowFreqStepGain2 + hoveringGain + lowFreqAccGain);
 		highFreqGain = toCoef(highFreqStepGain);
 
@@ -4555,18 +4553,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[1], AL_GAIN, toCoef(flappingGain) * masterGain * h.vintFlapFactor);
 
 		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
-
-		//отладка
-		/*static double p = 0;
-		p += deltaTime;
-		if (p >= 0.1)
-		{
-			FILE *f = fopen("test.txt", "at");
-			fprintf(f, "%lf\t%lf\t%lf\t%lf\t%lf\n", toDb(flappingVelxGain), dTangazGain, flappingGain, derivTangaz, currentTime);
-			fclose(f);
-			p = 0;
-		}*/
-		//
 	}
 	//ќстальные борты
 	else
