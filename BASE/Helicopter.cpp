@@ -114,7 +114,8 @@ void Helicopter::setPath(string pathToFile)
 	shortName["vint_hi_avt"] = "vint_hi_avt.wav";//!<имя файла звука свиста винта
 	shortName["vint_torm"] = "tormoz.wav";//!<имя файла звука тормоза винта
 	shortName["vint_flap"] = "vint_flap.wav";//!<имя файла звука равномерных хлопков винта
-	shortName["vint_flap_low"] = "vint_flap_lo.wav";//!<имя файла звука винта на низких оборотах
+	shortName["vint_flap_hi"] = "vint_flap_hi.wav";//!<имя файла звука винта на низких оборотах
+	shortName["vint_flap_low"] = "vint_flap_lo.wav";//!<
 	shortName["vint_flap_A"] = "flap_A.wav";//!<имя файла звука равномерных хлопков винта
 	shortName["vint_flap_B"] = "flap_B.wav";//!<имя файла звука неравномерных хлопков винта
 	shortName["vint_flap_C"] = "flap_C.wav";//!<имя файла звука неравномерных хлопков винта
@@ -158,6 +159,8 @@ void Helicopter::setPath(string pathToFile)
 	shortName["pinkNoise"] = "vadd.wav";//
 	shortName["landing"] = "landing.wav";//
 	shortName["testNoise"] = "testNoise.wav";
+	//бумбум
+	shortName["BumBum"] = "LF_.wav";
 
 	fullName = shortName;
 
