@@ -111,6 +111,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["igla"] = "sturm.wav";//!<имя файла звука ракеты штурм
 									//Винт
 	shortName["vint_hi"] = "vint_hi.wav";//!<имя файла звука свиста винта
+	shortName["vint_hi_avt"] = "vint_hi_avt.wav";//!<имя файла звука свиста винта
 	shortName["vint_torm"] = "tormoz.wav";//!<имя файла звука тормоза винта
 	shortName["vint_flap"] = "vint_flap.wav";//!<имя файла звука равномерных хлопков винта
 	shortName["vint_flap_low"] = "vint_flap_lo.wav";//!<имя файла звука винта на низких оборотах
@@ -350,17 +351,18 @@ void Helicopter::setParam(string model)
 		//Константы		
 		engTurnoverHp = 20;
 		engTurnoverMg = 65;//73
-		//engTurnoverAvt = 80;
+		engTurnoverAvt = 80;
 		redTurnoverMg1 = 65;
 		redTurnoverMg2 = 65;
 		redTurnoverAvt = 100;
 		//Множители громкости
-		engFactor = 0.398/*дв*/;
+		engFactor = 0.56/*дв*/;//-5
 		engHpFactor = 0.141/*дв хп*/;
-		redFactor = 0.398/*Редуктор*/;
-		accumFactor = 0.100/*аккум*/;
+		redFactor = 0.63/*Редуктор*/;//-4
+		accumFactor = 0.2/*аккум*/;
 		vintBrakeFactor = 1/*Винт тормоз*/;
 		vintFlapFactor = 0.5/*Винт хлопки*/;
+		vintSwishFactor = 0.89;//-1
 		chassisBrakePumpFactor = 0.178/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.178/*Сброс давления*/;
 		rainFactor = 1/*Дождь*/;

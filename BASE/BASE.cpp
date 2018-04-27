@@ -3637,6 +3637,40 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		lowCutoffFreq = pow(10, getParameterFromVector(vector<point>{ { 8, log10(80) }, { 16, log10(120) } }, high));//НЧ 50-800
 		highCutoffFreq = 4000;//ВЧ 4000-16000
 	}
+	//Полеты ансат
+	else if (h.modelName == "ansat")
+	{
+		//
+		double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange("eng1Turns", 2) : sr.eng2_obor - getAverange("eng2Turns", 2);
+
+		//усиление 2го купола
+		double mid2FreqGainEngTurns = getParameterFromVector(vector<point>{ { -2, -8 }, { -1, -4 }, { 0, 0 }, { 2, 4 }}, avrEngTurns);
+
+		double trueStep = (step < 7) ? 7 : step - 7;//7->0 шаг // очень странные единицы шага у ансата
+
+		double lowFreqGainStep = trueStep * 0.0755;
+
+		double lowFreqGainVelX = getParameterFromVector(vector<point>{ { 33.33, 0 }, { 56, 6 }, { 70, 3 }}, abs(velocityX));
+
+		double mid2GainStep = -7 + trueStep * 0.13;
+
+		double mid2FreqGainVelX = getParameterFromVector(vector<point>{ { 33.33, 0 }, { 44.44, 6 }, { 47.2, 6 }, { 56, 3 }}, abs(velocityX));
+
+		double highFreqGainVelX = getParameterFromVector(vector<point>{ { 44.44, 0 }, { 56, 4 }, { 70, 6 }}, abs(velocityX));
+
+		lowFreqGain = toCoef(lowFreqGainStep + lowFreqGainVelX);
+		//mid1FreqGain = toCoef(0);
+		mid2FreqGain = toCoef(mid2GainStep + mid2FreqGainVelX + mid2FreqGainEngTurns);
+		highFreqGain = toCoef(highFreqGainVelX);
+
+		alEffectf(effect[0], AL_EQUALIZER_MID2_WIDTH, 0.3);//Ширина купола в октавах
+		alEffectf(effect[1], AL_EQUALIZER_MID2_WIDTH, 0.3);//
+
+		lowCutoffFreq = 120;//НЧ 50-800
+		//mid1CutoffFreq = 1000;//купол 1 200-3000
+		mid2CutoffFreq = 3700;//купол 2 1000-8000
+		highCutoffFreq = 4000;//ВЧ 4000-16000
+	}
 	//Остальные борты
 	else
 	{
@@ -4693,6 +4727,33 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 
 		alSourcef(source[0], AL_GAIN, masterGain * gain * h.vintSwishFactor);
 		alSourcef(source[0], AL_PITCH, pitch);
+	}
+	else if (h.modelName == "ansat")
+	{
+		//filetoBuffer[0] = h.fullName["vint_hi"];
+		filetoBuffer[1] = h.fullName["vint_hi_avt"];
+		//alSourcei(source[0], AL_LOOPING, AL_TRUE);
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		//30(avt)-55(fly) переход между файлами h=0
+		//если h>0 
+		//vint hi -1.5 
+
+		if (sr.reduktor_gl_obor >= h.redTurnoverMg2 && sr.p_vu3)
+		{
+			//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
+			pitch = sr.reduktor_gl_obor / h.redTurnoverAvt;
+			//Выключаем шелест винта на оборотах редуктора ниже оборотов малого газа редуктора
+			//Делаем поправку на шаг
+			gain = interpolation(h.redTurnoverAvt, 1, h.redTurnoverMg2, 0, sr.reduktor_gl_obor);
+		}
+		else
+		{
+			pitch = 1;
+			gain = 0;
+		}
+
+		alSourcef(source[1], AL_GAIN, masterGain * gain * h.vintSwishFactor);
+		alSourcef(source[1], AL_PITCH, pitch);
 	}
 	else
 	{
