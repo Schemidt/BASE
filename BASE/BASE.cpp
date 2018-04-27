@@ -4635,11 +4635,11 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
 			key[1] = h.fullName["vint_flap"];
 		}
-		if (key[2] != h.fullName["vadd"])
+		if (key[2] != h.fullName["pinkNoise"])
 		{
-			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["vadd"]);
+			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["pinkNoise"]);
 			alSourcei(source[2], AL_LOOPING, AL_TRUE);
-			key[2] = h.fullName["vadd"];
+			key[2] = h.fullName["pinkNoise"];
 		}
 
 		double lowShelf = getParameterFromVector(vector<point>{ { 44.44, -15 }, { 56, -12 }, { 61.1, -8 }, { 70, -7 }}, abs(velocityX));
