@@ -6,8 +6,8 @@
 */
 #pragma once
 
-#include"AL\efx.h"
-#include"AL\efx-creative.h"
+#include "AL\efx.h"
+#include "AL\efx-creative.h"
 
 // EFX Extension function pointer variables
 

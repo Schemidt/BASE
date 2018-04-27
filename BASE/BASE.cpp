@@ -2951,8 +2951,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				fade = 0;
 				rise = 1;
 			}
-			alSourcef(source[0], AL_GAIN, fade);//0
-			alSourcef(source[1], AL_GAIN, rise);//1
+			alSourcef(source[0], AL_GAIN, fade * masterGain*h.redFactor);//0
+			alSourcef(source[1], AL_GAIN, rise * masterGain*h.redFactor);//1
 
 
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
@@ -3045,8 +3045,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				rise = 1;
 			}
 
-			alSourcef(source[0], AL_GAIN, fade);//0
-			alSourcef(source[1], AL_GAIN, rise);//1
+			alSourcef(source[0], AL_GAIN, fade * masterGain*h.redFactor);//0
+			alSourcef(source[1], AL_GAIN, rise * masterGain*h.redFactor);//1
 
 			if (sr.reduktor_gl_obor >= 5)
 				alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
@@ -3709,8 +3709,9 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 	//ДВИГАТЕЛЬ АНСАТА
 	if (h.modelName == "ansat")
 	{
+		const double ansatSoundTurns = 73;//обороты при которых записывался звук двигателя 
 		//0 -> мг
-		if (parameter <= h.engTurnoverMg && status_on)
+		if (/*parameter <= h.engTurnoverMg &&*/ status_on)
 		{
 			filetoBuffer[0] = h.fullName["eng_on_w"];
 			filetoBuffer[1] = h.fullName["eng_w_w"];
@@ -3747,20 +3748,20 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 				fade = 0;
 				rise = 1;
 			}
-			alSourcef(source[0], AL_GAIN, fade);
-			alSourcef(source[1], AL_GAIN, rise);
+			alSourcef(source[0], AL_GAIN, fade * masterGain * h.engFactor);
+			alSourcef(source[1], AL_GAIN, rise * masterGain  *h.engFactor);
 
 			if (parameter > 5)
 				alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["eng_on"], parameter));
 			else
 				alSourcef(source[0], AL_PITCH, 1);
 
-			alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+			alSourcef(source[1], AL_PITCH, parameter / ansatSoundTurns);//меняем pitch 
 
 
 		}
 		//мг -> 0
-		if (status_off && parameter > 0 && parameter < h.engTurnoverMg)
+		if (status_off && parameter > 0 /*&& parameter < h.engTurnoverMg*/)
 		{
 			filetoBuffer[0] = h.fullName["eng_off_w"];
 			filetoBuffer[1] = h.fullName["eng_w_w"];
@@ -3780,6 +3781,8 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["eng_off"], parameter));
 			else
 				alSourcef(source[0], AL_PITCH, 1);
+
+			alSourcef(source[1], AL_PITCH, parameter / ansatSoundTurns);//меняем pitch 
 		}
 	}
 	else
@@ -3823,8 +3826,8 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 				rise = 1;
 			}
 
-			alSourcef(source[0], AL_GAIN, fade);
-			alSourcef(source[1], AL_GAIN, rise);
+			alSourcef(source[0], AL_GAIN, fade * masterGain * h.engFactor);
+			alSourcef(source[1], AL_GAIN, rise * masterGain * h.engFactor);
 
 			//alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
 

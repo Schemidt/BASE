@@ -349,8 +349,8 @@ void Helicopter::setParam(string model)
 	{
 		//Константы		
 		engTurnoverHp = 20;
-		engTurnoverMg = 65;
-		engTurnoverAvt = 80;
+		engTurnoverMg = 65;//73
+		//engTurnoverAvt = 80;
 		redTurnoverMg1 = 65;
 		redTurnoverMg2 = 65;
 		redTurnoverAvt = 100;
