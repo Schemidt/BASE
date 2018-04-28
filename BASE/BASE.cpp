@@ -3774,7 +3774,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 	{
 		const double ansatSoundTurns = 73;//обороты при которых записывался звук двигателя 
 		//0 -> мг
-		if (/*parameter <= h.engTurnoverMg &&*/ status_on)
+		if (parameter <= h.engTurnoverMg && status_on)
 		{
 			filetoBuffer[0] = h.fullName["eng_on_w"];
 			filetoBuffer[1] = h.fullName["eng_w_w"];
@@ -3823,8 +3823,18 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 
 
 		}
+		//мг -> авт
+		if (parameter >= h.engTurnoverMg)
+		{
+			filetoBuffer[1] = h.fullName["eng_w_w"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			offset[1] = getLengthWAV(h.fullName["eng_w_w"]) * phase;
+
+			alSourcef(source[1], AL_GAIN, 1);//
+			alSourcef(source[1], AL_PITCH, parameter / ansatSoundTurns);//меняем pitch 
+		}
 		//мг -> 0
-		if (status_off && parameter > 0 /*&& parameter < h.engTurnoverMg*/)
+		if (status_off && parameter > 0 && parameter < h.engTurnoverMg)
 		{
 			filetoBuffer[0] = h.fullName["eng_off_w"];
 			filetoBuffer[1] = h.fullName["eng_w_w"];
