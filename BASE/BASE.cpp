@@ -2876,7 +2876,7 @@ double Sound::getAverange(string parameter, double seconds)
 	return averange;
 }
 
-Reductor::Reductor() : Sound(3, 3, 3)
+Reductor::Reductor() : Sound(4, 4, 3)
 {
 	//Не самый умный ход менять конструктор по 
 	//наибольшему количеству требуемых источников
@@ -3651,6 +3651,19 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			alSourcei(source[2], AL_LOOPING, AL_TRUE);
 			beats = h.fullName["BumBum"];
 		}
+		//добавляем отдельный звук взлета
+		if (takeOff != h.fullName["takeOff"])
+		{
+			setAndDeploySound(&buffer[3], &source[3], 0, h.fullName["takeOff"]);
+			alSourcei(source[3], AL_LOOPING, AL_TRUE);
+			takeOff = h.fullName["takeOff"];
+		}
+
+		double takeOffGain = toCoef(getParameterFromVector(vector<point>{ { 7, -18 }, { 60, 0 }}, step))
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 11.11, 0 } }, abs(velocityX))
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, high);
+
+		alSourcef(source[3], AL_GAIN, takeOffGain * masterGain);
 
 		//Громкость бумбума
 		double bumBumGain = getParameterFromVector(vector<point>{ { -13, 0 }, { -10, -4 }, { -7, -13 }, { -5, -18 }, { 0, -60 }}, calcA);
@@ -4680,7 +4693,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		//Результирующая громкость хлопков 
 		double vintFlapGain = max(toCoef(lowShelf), attackFlapGain) * toCoef(crunchGainMod + velYGainMod);
-
+		
 		//Результирующая громкость хлопков 
 		double vintFlapHiGain = velYFlapHiGain;
 
@@ -4698,6 +4711,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
 
 		alSourcef(source[2], AL_GAIN, vaddGain * masterGain * h.vintFlapFactor);
+
+		cout << " vintFlapGain : " << toDb(vintFlapGain * masterGain * h.vintFlapFactor) << "\tvintFlapHiGain : " << toDb(vintFlapHiGain * masterGain * h.vintFlapFactor) << "\tvaddGain : " << toDb(vaddGain * masterGain * h.vintFlapFactor) << "\r";
 	}
 	//Остальные борты
 	else
@@ -4838,20 +4853,17 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 	}
 	else if (h.modelName == "ansat")
 	{
-		//filetoBuffer[0] = h.fullName["vint_hi"];
+		filetoBuffer[0] = h.fullName["vint_hi"];
 		filetoBuffer[1] = h.fullName["vint_hi_avt"];
-		//alSourcei(source[0], AL_LOOPING, AL_TRUE);
+		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		//30(avt)-55(fly) переход между файлами h=0
-		//если h>0 
-		//vint hi -1.5 
+
 
 		if (sr.reduktor_gl_obor >= h.redTurnoverMg2 && sr.p_vu3)
 		{
 			//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
 			pitch = sr.reduktor_gl_obor / h.redTurnoverAvt;
 			//Выключаем шелест винта на оборотах редуктора ниже оборотов малого газа редуктора
-			//Делаем поправку на шаг
 			gain = interpolation(h.redTurnoverAvt, 1, h.redTurnoverMg2, 0, sr.reduktor_gl_obor);
 		}
 		else
@@ -4860,8 +4872,13 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 			gain = 0;
 		}
 
-		alSourcef(source[1], AL_GAIN, masterGain * gain * h.vintSwishFactor);
+		double stepGainMod = getParameterFromVector(vector<point>{ { 30, 1 }, { 42.5, 0.5 }, { 55, 0 }}, step) * !high;
+
 		alSourcef(source[1], AL_PITCH, pitch);
+		alSourcef(source[0], AL_PITCH, pitch);
+
+		alSourcef(source[1], AL_GAIN, gain * stepGainMod * masterGain * h.vintSwishFactor);
+		alSourcef(source[0], AL_GAIN, gain * (1 - stepGainMod) * masterGain * h.vintSwishFactor);
 	}
 	else
 	{
@@ -5003,6 +5020,14 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	else if (h.modelName == "ka_226")
 	{
 		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }, { 8.4, -12 }, { 14, -18 }}, abs(velocityX));
+
+		filetoBuffer[1] = h.fullName["runway"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor);
+	}
+	else if (h.modelName == "ansat")
+	{
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }, { 14, 0 } }, abs(velocityX));
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);

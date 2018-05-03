@@ -161,6 +161,8 @@ void Helicopter::setPath(string pathToFile)
 	shortName["testNoise"] = "testNoise.wav";
 	//бумбум
 	shortName["BumBum"] = "LF_.wav";
+	//Отрыв
+	shortName["takeOff"] = "take_off.wav";
 
 	fullName = shortName;
 
@@ -359,13 +361,13 @@ void Helicopter::setParam(string model)
 		redTurnoverMg2 = 65;
 		redTurnoverAvt = 100;
 		//Множители громкости
-		engFactor = 0.56/*дв*/;//-5
+		engFactor = 0.398/*дв*/;//-8
 		engHpFactor = 0.141/*дв хп*/;
 		redFactor = 0.63/*Редуктор*/;//-4
 		accumFactor = 0.2/*аккум*/;
 		vintBrakeFactor = 1/*Винт тормоз*/;
-		vintFlapFactor = 0.5/*Винт хлопки*/;
-		vintSwishFactor = 0.89;//-1
+		vintFlapFactor = 1/*Винт хлопки*/;
+		vintSwishFactor = 1;//
 		chassisBrakePumpFactor = 0.178/*Тормоз шасси*/;
 		chassisBrakeReleaseFactor = 0.178/*Сброс давления*/;
 		rainFactor = 1/*Дождь*/;
