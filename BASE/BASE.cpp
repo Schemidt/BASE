@@ -3843,7 +3843,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
 			offset[1] = getLengthWAV(h.fullName["eng_w_w"]) * phase;
 
-			alSourcef(source[1], AL_GAIN, 1);//
+			alSourcef(source[1], AL_GAIN, masterGain * h.engFactor);//
 			alSourcef(source[1], AL_PITCH, parameter / ansatSoundTurns);//לוםÿול pitch 
 		}
 		//לד -> 0
@@ -4872,13 +4872,13 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 			gain = 0;
 		}
 
-		double stepGainMod = getParameterFromVector(vector<point>{ { 30, 1 }, { 42.5, 0.5 }, { 55, 0 }}, step) * !high;
+		double velXGainMod = toCoef(getParameterFromVector(vector<point>{ { 0, -7 }, { 14, -1 }}, abs(velocityX)));
 
 		alSourcef(source[1], AL_PITCH, pitch);
 		alSourcef(source[0], AL_PITCH, pitch);
 
-		alSourcef(source[1], AL_GAIN, gain * stepGainMod * masterGain * h.vintSwishFactor);
-		alSourcef(source[0], AL_GAIN, gain * (1 - stepGainMod) * masterGain * h.vintSwishFactor);
+		alSourcef(source[1], AL_GAIN, gain * velXGainMod * masterGain * h.vintSwishFactor);
+		alSourcef(source[0], AL_GAIN, gain * (1 - velXGainMod) * masterGain * h.vintSwishFactor);
 	}
 	else
 	{
@@ -5027,7 +5027,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	}
 	else if (h.modelName == "ansat")
 	{
-		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }, { 14, 0 } }, abs(velocityX));
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }, { 5.5, -3 }, { 14, 0 } }, abs(velocityX));
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);

@@ -166,10 +166,10 @@ void Helicopter::setPath(string pathToFile)
 
 	fullName = shortName;
 
-	map<string, string> ::iterator num, num1;
-	for (num = shortName.begin(), num1 = fullName.begin(); num != shortName.end(); num++, num1++)
+	map<string, string> ::iterator num;
+	for (num = fullName.begin(); num != fullName.end(); num++)
 	{
-		(*num1).second = pathToFile + (*num).second;
+		(*num).second = pathToFile + (*num).second;
 	}
 }
 
@@ -361,7 +361,7 @@ void Helicopter::setParam(string model)
 		redTurnoverMg2 = 65;
 		redTurnoverAvt = 100;
 		//Множители громкости
-		engFactor = 0.398/*дв*/;//-8
+		engFactor = 0.446/*дв*/;//-7
 		engHpFactor = 0.141/*дв хп*/;
 		redFactor = 0.63/*Редуктор*/;//-4
 		accumFactor = 0.2/*аккум*/;
@@ -372,6 +372,7 @@ void Helicopter::setParam(string model)
 		chassisBrakeReleaseFactor = 0.178/*Сброс давления*/;
 		rainFactor = 1/*Дождь*/;
 		vadd = 1/*Скоростная добавка*/;
+		runwayFactor = 1/*ВПП*/;
 	}
 	else if (model == "ka_27")
 	{
