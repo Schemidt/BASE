@@ -3690,13 +3690,13 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		//НЧ во время треска винта
 		double lowFreqCrunchGain = getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 6 }}, calcA) 
 			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
-			* getParameterFromVector(vector<point>{ { 32, 1 }, { 35, 0.5 }, { 38, 0 }}, step)
+			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step)
 			* getParameterFromVector(vector<point>{ { -1.3, 0 }, { -0.7, 1 }}, velocityY);
 
 		//НЧ при авторотации
 		double lowFreqAutorotation = getParameterFromVector(vector<point>{ { -8, 3 }, { -4, 0 }}, velocityY)
 			* getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 1 }}, calcA)
-			* getParameterFromVector(vector<point>{ { 32, 1 }, { 35, 0.5 }, { 38, 0 }}, step);
+			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step);
 
 		//треск частный случай хлопков, серьезные хлопки + условия
 
@@ -4657,6 +4657,13 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap"]);
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
 			key[1] = h.fullName["vint_flap"];
+
+			alEffecti(effect[1], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
+			alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[1]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+			alFilteri(filter[1], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+			alFilterf(filter[1], AL_LOWPASS_GAIN, 0);
+			alSource3i(source[1], AL_AUXILIARY_SEND_FILTER, effectSlot[1], 0, NULL);
+			alSourcei(source[1], AL_DIRECT_FILTER, filter[1]);
 		}
 		if (key[2] != h.fullName["pinkNoise"])
 		{
@@ -4671,24 +4678,24 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		double attackFlapGain = toCoef(getParameterFromVector(vector<point>{ { -10, lowShelf }, { atkMiddlePoint, lowShelf }, { 5, -6 }, { 10, -4 }}, calcA))
 			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 8.33, 0.5 }, { 11.11, 1 }}, abs(velocityX))
-			* getParameterFromVector(vector<point>{ { 32, 0 }, { 35, 0.5 }, { 38, 1 }}, step)
+			* getParameterFromVector(vector<point>{ { 34, 0 }, { 37, 0.5 }, { 40, 1 }}, step)
 			* getParameterFromVector(vector<point>{ { 0, 0 }, { 1, 1 }}, high);
 
 		//Ослабление хлопков при треске
 		double crunchGainMod = getParameterFromVector(vector<point>{ { -1.3, 0 }, { -0.7, -3 }}, velocityY)
 			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
-			* getParameterFromVector(vector<point>{ { 32, 1 }, { 35, 0.5 }, { 38, 0 }}, step)
+			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step)
 			* getParameterFromVector(vector<point>{ { 0, 0 }, { 1, 1 }}, high)
 			* getParameterFromVector(vector<point>{ { 3, 0 }, { 5, 1 }}, calcA);
 		
 		//Ослабление хлопков при верт скор
 		double velYGainMod = getParameterFromVector(vector<point>{ { -8, -3 }, { -4, 0 }}, velocityY)
-			* getParameterFromVector(vector<point>{ { 32, 1 }, { 35, 0.5 }, { 38, 0 }}, step)
+			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step)
 			* getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 1 }}, calcA);
 
 		double velYFlapHiGain = toCoef(getParameterFromVector(vector<point>{ { -1.3, -13 }, { -0.7, 0 }}, velocityY))
 			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
-			* getParameterFromVector(vector<point>{ { 32, 0 }, { 35, 0.5 }, { 38, 1 }}, step)
+			* getParameterFromVector(vector<point>{ { 34, 0 }, { 37, 0.5 }, { 40, 1 }}, step)
 			* getParameterFromVector(vector<point>{ { 3, 0 }, { 5, 1 }}, calcA);
 
 		//Результирующая громкость хлопков 
@@ -4699,15 +4706,19 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		double vaddGain = toCoef(getParameterFromVector(vector<point>{ { -2, -18 }, { -1.3, -15 }, { -0.7, -6 }}, velocityY))
 			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
-			* getParameterFromVector(vector<point>{ { 32, 0 }, { 35, 0.5 }, { 38, 1 }}, step)
+			* getParameterFromVector(vector<point>{ { 34, 0 }, { 37, 0.5 }, { 40, 1 }}, step)
 			* getParameterFromVector(vector<point>{ { 3, 0 }, { 5, 1 }}, calcA);
 
-		alSourcef(source[1], AL_GAIN, vintFlapGain * masterGain * h.vintFlapFactor);
+		double highFreqVintFlapGain = toCoef(getParameterFromVector(vector<point>{ { -1, -18 }, { -0.5, -9 }, { 0, 0 }}, derivTangaz))
+			* getParameterFromVector(vector<point>{ { 3, 0 }, { 7, 1 }}, calcA);
 
+		alSourcef(source[1], AL_GAIN, vintFlapGain * masterGain * h.vintFlapFactor);
 		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
+		alEffectf(effect[1], AL_EQUALIZER_HIGH_CUTOFF, 4000);
+		alEffectf(effect[1], AL_EQUALIZER_HIGH_GAIN, highFreqVintFlapGain);//
+		alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[1]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
 		alSourcef(source[0], AL_GAIN, vintFlapHiGain * masterGain * h.vintFlapFactor);
-
 		alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
 
 		alSourcef(source[2], AL_GAIN, vaddGain * masterGain * h.vintFlapFactor);
@@ -4854,9 +4865,9 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 	else if (h.modelName == "ansat")
 	{
 		filetoBuffer[0] = h.fullName["vint_hi"];
-		filetoBuffer[1] = h.fullName["vint_hi_avt"];
+		//filetoBuffer[1] = h.fullName["vint_hi_avt"];
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
-		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		//alSourcei(source[1], AL_LOOPING, AL_TRUE);
 
 
 		if (sr.reduktor_gl_obor >= h.redTurnoverMg2 && sr.p_vu3)
@@ -4874,11 +4885,11 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 
 		double velXGainMod = toCoef(getParameterFromVector(vector<point>{ { 0, -7 }, { 14, -1 }}, abs(velocityX)));
 
-		alSourcef(source[1], AL_PITCH, pitch);
+		//alSourcef(source[1], AL_PITCH, pitch);
 		alSourcef(source[0], AL_PITCH, pitch);
 
-		alSourcef(source[1], AL_GAIN, gain * velXGainMod * masterGain * h.vintSwishFactor);
-		alSourcef(source[0], AL_GAIN, gain * (1 - velXGainMod) * masterGain * h.vintSwishFactor);
+		//alSourcef(source[1], AL_GAIN, gain * velXGainMod * masterGain * h.vintSwishFactor);
+		alSourcef(source[0], AL_GAIN, gain * velXGainMod * masterGain * h.vintSwishFactor);
 	}
 	else
 	{
@@ -5027,7 +5038,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	}
 	else if (h.modelName == "ansat")
 	{
-		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }, { 5.5, -3 }, { 14, 0 } }, abs(velocityX));
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }/*, { 2.77, -6 }*/, { 5.5, -3 }, { 14, 0 } }, abs(velocityX));
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);

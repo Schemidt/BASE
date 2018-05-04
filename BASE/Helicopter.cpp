@@ -17,7 +17,7 @@ void Helicopter::setPath(string pathToFile)
 	//Двигатель
 	shortName["eng_on"] = "eng_on.txt"; //!<имя файла с переходной функцией разгона двигателя до режима МГ
 	shortName["eng_off"] = "eng_off.txt"; //!<имя файла с переходной функцией остановки двигателя 
-	shortName["eng_on_avt"] = "eng_on_avt.txt"; //!<имя файла с переходной функцией разгона двигателя до режима автомат
+	shortName["eng_mg_avt"] = "eng_mg_avt.txt"; //!<имя файла с переходной функцией разгона двигателя до режима автомат
 	shortName["eng_avt_mg"] = "eng_avt_mg.txt"; //!<имя файла c переходной функцией остановки до режима малого газа
 												//Редуктор
 	shortName["red_on"] = "red_on.txt"; //!<имя файла c переходной функцией разгона редуктора до режима малого газа на 1ом двигателе
@@ -361,7 +361,7 @@ void Helicopter::setParam(string model)
 		redTurnoverMg2 = 65;
 		redTurnoverAvt = 100;
 		//Множители громкости
-		engFactor = 0.446/*дв*/;//-7
+		engFactor = 0.56/*дв*/;//-5
 		engHpFactor = 0.141/*дв хп*/;
 		redFactor = 0.63/*Редуктор*/;//-4
 		accumFactor = 0.2/*аккум*/;
