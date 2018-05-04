@@ -3666,9 +3666,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[3], AL_GAIN, takeOffGain * masterGain);
 
 		//Громкость бумбума
-		double bumBumGain = getParameterFromVector(vector<point>{ { -13, 0 }, { -10, -4 }, { -7, -13 }, { -5, -18 }, { 0, -60 }}, calcA);
+		double bumBumGain = toCoef(getParameterFromVector(vector<point>{ { -15, 0 }, { -10, -6 }, { -7, -15 }, { -5, -20 }, { 0, -60 }}, calcA))
+			* getParameterFromVector(vector<point>{ { 8.3, 0 }, { 14, 1 }}, abs(velocityX));
 
-		alSourcef(source[2], AL_GAIN, toCoef(bumBumGain) * masterGain);
+		alSourcef(source[2], AL_GAIN, bumBumGain * masterGain);
 		//
 		double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange("eng1Turns", 2) : sr.eng2_obor - getAverange("eng2Turns", 2);
 
@@ -3698,9 +3699,11 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			* getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 1 }}, calcA)
 			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step);
 
-		//треск частный случай хлопков, серьезные хлопки + условия
+		//НЧ треск на висении
+		double lowFreqCrunchHoveringGain = getParameterFromVector(vector<point>{ { 4, 0 }, { 6, 4 }}, tangaz)
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityX));
 
-		lowFreqGain = toCoef(lowFreqGainStep + lowFreqGainVelX + lowFreqCrunchGain + lowFreqAutorotation);
+		lowFreqGain = toCoef(lowFreqGainStep + lowFreqGainVelX + lowFreqCrunchGain + lowFreqAutorotation + lowFreqCrunchHoveringGain);
 		//mid1FreqGain = toCoef(0);
 		mid2FreqGain = toCoef(mid2GainStep + mid2FreqGainVelX + mid2FreqGainEngTurns);
 		highFreqGain = toCoef(highFreqGainVelX);
@@ -4698,11 +4701,19 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			* getParameterFromVector(vector<point>{ { 34, 0 }, { 37, 0.5 }, { 40, 1 }}, step)
 			* getParameterFromVector(vector<point>{ { 3, 0 }, { 5, 1 }}, calcA);
 
+		//треск на висении
+		double vintFlapCrunchHoveringGain = getParameterFromVector(vector<point>{ { 3, 0 }, { 6, 8 }}, tangaz)
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityX));
+
 		//Результирующая громкость хлопков 
-		double vintFlapGain = max(toCoef(lowShelf), attackFlapGain) * toCoef(crunchGainMod + velYGainMod);
+		double vintFlapGain = max(toCoef(lowShelf), attackFlapGain) * toCoef(crunchGainMod + velYGainMod + vintFlapCrunchHoveringGain);
 		
+		//треск на висении
+		double vintFlapHiCrunchHoveringGain = toCoef(getParameterFromVector(vector<point>{ { 4, -13 }, { 6, 0 }}, tangaz))
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityX));
+
 		//Результирующая громкость хлопков 
-		double vintFlapHiGain = velYFlapHiGain;
+		double vintFlapHiGain = max(velYFlapHiGain, vintFlapHiCrunchHoveringGain);
 
 		double vaddGain = toCoef(getParameterFromVector(vector<point>{ { -2, -18 }, { -1.3, -15 }, { -0.7, -6 }}, velocityY))
 			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
@@ -5038,7 +5049,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	}
 	else if (h.modelName == "ansat")
 	{
-		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }/*, { 2.77, -6 }*/, { 5.5, -3 }, { 14, 0 } }, abs(velocityX));
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }/*, { 2.77, -6 }*/, { 8.3, -3 }, { 14, 0 } }, abs(velocityX));
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
