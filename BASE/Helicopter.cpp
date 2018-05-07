@@ -154,6 +154,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["undefined0_w"] = "undefined0_w.wav";//
 	shortName["undefined1_on"] = "undefined1_on.wav";//
 	shortName["undefined1_w"] = "undefined1_w.wav";//
+	shortName["undefined1_off"] = "undefined1_off.wav";
 											   //Другое
 											   //Шум
 	shortName["pinkNoise"] = "vadd.wav";//
@@ -373,6 +374,7 @@ void Helicopter::setParam(string model)
 		rainFactor = 1/*Дождь*/;
 		vadd = 1/*Скоростная добавка*/;
 		runwayFactor = 1/*ВПП*/;
+		undefinedFactor = 1; /*хз1*/
 	}
 	else if (model == "ka_27")
 	{
