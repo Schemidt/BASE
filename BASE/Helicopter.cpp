@@ -361,7 +361,7 @@ void Helicopter::setParam(string model)
 		redTurnoverMg2 = 65;
 		redTurnoverAvt = 100;
 		//Множители громкости
-		engFactor = 0.56/*дв*/;//-5
+		engFactor = 0.63/*дв*/;//-4
 		engHpFactor = 0.141/*дв хп*/;
 		redFactor = 0.63/*Редуктор*/;//-4
 		accumFactor = 0.2/*аккум*/;

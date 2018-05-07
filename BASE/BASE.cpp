@@ -3695,7 +3695,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			* getParameterFromVector(vector<point>{ { -1.3, 0 }, { -0.7, 1 }}, velocityY);
 
 		//НЧ при авторотации
-		double lowFreqAutorotation = getParameterFromVector(vector<point>{ { -8, 3 }, { -4, 0 }}, velocityY)
+		double lowFreqAutorotation = getParameterFromVector(vector<point>{ { -9, 7 }, { -8, 6 }, { -4, 0 }}, velocityY)
 			* getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 1 }}, calcA)
 			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step);
 
@@ -3988,16 +3988,22 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 		//highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 
 		//усиление от оборотов
-		double turnGain = (parameter - averangeTurn) * 0.35;
+		double turnGain = toCoef((parameter - averangeTurn) * 0.35);
 
-		lowFreqGain = pow(10, (turnGain)*0.05);
-		mid1FreqGain = pow(10, (turnGain)*0.05);
-		mid2FreqGain = pow(10, (turnGain)*0.05);
-		highFreqGain = pow(10, (turnGain /*+ highFreqTurnGain*/)*0.05);
+		lowFreqGain = turnGain;
+		mid1FreqGain = turnGain;
+		mid2FreqGain = turnGain;
+		highFreqGain = turnGain;
 	}
-	else if (h.modelName == "ka_226")
+	else if (h.modelName == "ansat")
 	{
+		//Громкость двигателей в зависимости от оборотов
+		double turnsGainControl = toCoef(getParameterFromVector(vector<point>{ { 60, -6 }, { 80, -4 }, { 100, 0 }}, parameter));
 
+		lowFreqGain = turnsGainControl;
+		mid1FreqGain = turnsGainControl;
+		mid2FreqGain = turnsGainControl;
+		highFreqGain = turnsGainControl;
 	}
 	else
 	{
