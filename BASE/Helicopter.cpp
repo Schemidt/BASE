@@ -365,8 +365,8 @@ void Helicopter::setParam(string model)
 		engFactor = 0.63/*дв*/;//-4
 		engHpFactor = 0.141/*дв хп*/;
 		redFactor = 0.63/*Редуктор*/;//-4
-		accumFactor = 0.2/*аккум*/;
-		vintBrakeFactor = 1/*Винт тормоз*/;
+		accumFactor = 0.089/*аккум*/;//-21
+		vintBrakeFactor = 0.015/*Винт тормоз*/;
 		vintFlapFactor = 1/*Винт хлопки*/;
 		vintSwishFactor = 1;//
 		chassisBrakePumpFactor = 0.178/*Тормоз шасси*/;

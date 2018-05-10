@@ -1285,13 +1285,13 @@ int main(int argc, char *argv[])
 			//Винт
 			if (helicopter.vintSwishFactor)
 			{
-				if (localdata.reduktor_gl_obor != 0 && localdata.p_vu3)//Условие создания объекта
+				if (localdata.reduktor_gl_obor != 0)//Условие создания объекта
 					if (!vintSwish)//Если объект не создан 
 						vintSwish = new VintSwish;//Создаем объект
 				if (vintSwish)//Если объект создан - используем его
 				{
 					vintSwish->play(helicopter, localdata);
-					if (localdata.reduktor_gl_obor == 0 || !localdata.p_vu3)//Условие удаления объекта
+					if (localdata.reduktor_gl_obor == 0)//Условие удаления объекта
 						Free(vintSwish);//Удаляем объект
 				}
 			}
@@ -1303,12 +1303,24 @@ int main(int argc, char *argv[])
 						vintBrake = new Sound;//Создаем объект
 				if (vintBrake)//Если объект создан - используем его
 				{
-					vintBrake->play(localdata.tormoz_vint, "NULL", helicopter.fullName["vint_torm"], "NULL", helicopter.vintBrakeFactor);//Воспроизводим звук - записываем состояние звука в play
+					vintBrake->play(localdata.tormoz_vint, helicopter.fullName["vint_torm"], helicopter.fullName["vint_torm"], helicopter.fullName["vint_torm"], helicopter.vintBrakeFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (vintBrake->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(vintBrake);//Удаляем объект
 					else
 					{
-						vintBrake->pitch = localdata.reduktor_gl_obor / 30.;
+						vintBrake->pitch = localdata.reduktor_gl_obor / 15.0;
+						if (vintBrake->soundOn)
+						{
+							vintBrake->gain = ((vintBrake->offsetOn > 1)? 1 : vintBrake->offsetOn / vintBrake->lengthOn) * getParameterFromVector(vector<point>{ { 15, 1 }, { 0, 0 } }, localdata.reduktor_gl_obor);
+						}
+						else if (vintBrake->soundOff)
+						{
+							vintBrake->gain = ((vintBrake->offsetOff > 1) ? 0 : 1 - (vintBrake->offsetOff / vintBrake->lengthOff)) * getParameterFromVector(vector<point>{ { 15, 1 }, { 0, 0 } }, localdata.reduktor_gl_obor);
+						}
+						else
+						{
+							vintBrake->gain = getParameterFromVector(vector<point>{ { 15, 1 }, { 0, 0 } }, localdata.reduktor_gl_obor);
+						}
 					}
 				}
 			}
@@ -2955,7 +2967,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				double riseTime = 0;
 				lengthOn = getLengthWAV(h.fullName["red_on_w"]);
 				lengthOff = getLengthWAV(h.fullName["red_w_w"]);
-				crossFade(&fadeTurn, &riseTurn, sr.reduktor_gl_obor, h.redTurnoverMg1 - 5, h.redTurnoverMg1 - 2, masterGain * h.redFactor);
+				crossFade(&fadeTurn, &riseTurn, sr.reduktor_gl_obor, h.redTurnoverMg1 - 3, h.redTurnoverMg1, masterGain * h.redFactor);
 				if (offsetOn != 0)
 					crossFade(&fadeTime, &riseTime, offsetOn, lengthOn - lengthOff, lengthOn, masterGain * h.redFactor);
 				fade = min(fadeTurn,fadeTime);
@@ -2970,7 +2982,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			alSourcef(source[0], AL_GAIN, fade);//0
 			alSourcef(source[1], AL_GAIN, rise);//1
 
-			cout << "fade: " << fade << "\trise: " << rise << "\tpitch: " << sr.reduktor_gl_obor / h.redTurnoverMg2 << "\t\t\t\t\t\t\r";
 
 			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
 			if (sr.reduktor_gl_obor >= 5)
@@ -2992,13 +3003,12 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 			double fade = 0;
 			double rise = 0;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2 + 2, h.redTurnoverAvt, masterGain*h.redFactor);
+			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
 			alSourcef(source[1], AL_GAIN, fade);//
 			alSourcef(source[0], AL_GAIN, rise);//
 			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
 			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
 
-			cout << "fade: " << fade << "\trise: " << rise << "\tpitch: " << sr.reduktor_gl_obor / h.redTurnoverMg2 << "\t\t\t\t\t\t\r";
 		}
 		//мг -> 0
 		if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1)
@@ -3011,7 +3021,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			offset[1] = 0;
 
 			double fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 5, masterGain*h.redFactor);
+			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 3, masterGain*h.redFactor);
 			alSourcef(source[1], AL_GAIN, fade);//
 			alSourcef(source[0], AL_GAIN, rise);//
 
@@ -3024,7 +3034,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			else
 				alSourcef(source[0], AL_PITCH, 1);
 
-			cout << "fade: " << fade << "\trise: " << rise << "\tpitch: " << sr.reduktor_gl_obor / h.redTurnoverMg2 << "\t\t\t\t\t\t\r";
 
 		}
 	}
@@ -3056,10 +3065,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 				double riseTime = 0;
 				lengthOn = getLengthWAV(h.fullName["red_on_w"]);
 				lengthOff = getLengthWAV(h.fullName["red_w_w"]);
-				crossFade(&fadeTurn, &riseTurn, sr.reduktor_gl_obor, h.redTurnoverMg1 - 5, h.redTurnoverMg1, masterGain*h.redFactor);
+				crossFade(&fadeTurn, &riseTurn, sr.reduktor_gl_obor, h.redTurnoverMg1 - 2, h.redTurnoverMg1, masterGain*h.redFactor);
 				if (offsetOn != 0)
 					crossFade(&fadeTime, &riseTime, offsetOn, lengthOn - lengthOff, lengthOn, masterGain*h.redFactor);
-				fade = (fadeTurn < fadeTime) ? fadeTurn : fadeTime;
+				fade = min(fadeTurn,fadeTime);
 				rise = (masterGain * h.engFactor) - fade;
 			}
 			//Иначе используем цикл
@@ -3167,7 +3176,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			offset[1] = 0;
 
 			double fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 5, masterGain*h.redFactor);
+			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 2, masterGain*h.redFactor);
 			alSourcef(source[1], AL_GAIN, fade);//
 			alSourcef(source[0], AL_GAIN, rise);//
 
@@ -3841,7 +3850,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 				double riseTime = 0;
 				lengthOn = getLengthWAV(h.fullName["eng_on_w"]);
 				lengthOff = getLengthWAV(h.fullName["eng_w_w"]);
-				crossFade(&fadeTurn, &riseTurn, parameter, h.engTurnoverMg - 5, h.engTurnoverMg, masterGain*h.engFactor);
+				crossFade(&fadeTurn, &riseTurn, parameter, h.engTurnoverMg - 3, h.engTurnoverMg, masterGain*h.engFactor);
 				if (offsetOn != 0)
 					crossFade(&fadeTime, &riseTime, offsetOn, lengthOn - lengthOff, lengthOn, masterGain*h.engFactor);
 				fade = min(fadeTurn,fadeTime);
@@ -3869,15 +3878,24 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 		//мг -> 0
 		if (status_off && parameter > 0 /*&& parameter < h.engTurnoverMg*/)
 		{
-			filetoBuffer[0] = h.fullName["eng_off_w"];
 			filetoBuffer[1] = h.fullName["eng_w_w"];
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
 			alSourcei(source[0], AL_LOOPING, AL_FALSE);
 			offset[0] = getOffset(1, h.fullName["eng_off"], parameter);
 			offset[1] = getLengthWAV(h.fullName["eng_w_w"]) * phase;
 
-			double fade, rise;
-			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverMg - 5, masterGain*h.engFactor);
+			//файл остановки начинается с МГ, ждем до этих оборотов
+			if (parameter < h.engTurnoverMg)
+			{
+				filetoBuffer[0] = h.fullName["eng_off_w"];
+			}
+
+			float off = 0;
+			alGetSourcef(source[0], AL_SEC_OFFSET, &off);
+			cout << "off: " << off << "\r";
+
+			double fade = 0, rise = 0;
+			crossFade(&rise, &fade, parameter, h.engTurnoverMg - 3, h.engTurnoverMg, masterGain * h.engFactor);
 			alSourcef(source[1], AL_GAIN, fade);
 			alSourcef(source[0], AL_GAIN, rise);
 
@@ -3919,7 +3937,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 				double riseTime = 0;
 				lengthOn = getLengthWAV(h.fullName["eng_on_w"]);
 				lengthOff = getLengthWAV(h.fullName["eng_w_w"]);
-				crossFade(&fadeTurn, &riseTurn, parameter, h.engTurnoverMg - 10, h.engTurnoverMg, masterGain*h.engFactor);
+				crossFade(&fadeTurn, &riseTurn, parameter, h.engTurnoverMg - 2, h.engTurnoverMg, masterGain*h.engFactor);
 				if (offsetOn != 0)
 					crossFade(&fadeTime, &riseTime, offsetOn, lengthOn - lengthOff, lengthOn, masterGain*h.engFactor);
 				fade = (fadeTurn < fadeTime) ? fadeTurn : fadeTime;
@@ -3972,7 +3990,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 			offset[1] = getLengthWAV(h.fullName["eng_w_w"]) * phase;
 
 			double fade, rise;
-			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverMg - 10, masterGain*h.engFactor);
+			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverMg - 2, masterGain*h.engFactor);
 			alSourcef(source[1], AL_GAIN, fade);
 			alSourcef(source[0], AL_GAIN, rise);
 
@@ -4016,7 +4034,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 	{
 		//Громкость двигателей в зависимости от оборотов
 		double turnsGainControl = toCoef(getParameterFromVector(vector<point>{ { 60, -6 }, { 80, -4 }, { 100, 0 }}, parameter)
-			/** getParameterFromVector(vector<point>{ { 0, 1 }, { 5.5, 0 }}, velocityX)*/);
+			/** getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, velocityX)*/);
 
 		lowFreqGain = turnsGainControl;
 		mid1FreqGain = turnsGainControl;
@@ -4814,7 +4832,7 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 			offset[1] = 0;
 
 			double fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 10, h.redTurnoverMg1, masterGain*h.vintSwishFactor);
+			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1 - 5, h.redTurnoverMg1, masterGain*h.vintSwishFactor);
 			alSourcef(source[0], AL_GAIN, fade);//0
 			alSourcef(source[1], AL_GAIN, rise);//1
 
@@ -4880,7 +4898,7 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 		filetoBuffer[0] = h.fullName["vint_hi"];
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 
-		if (sr.reduktor_gl_obor >= h.redTurnoverMg2 && sr.p_vu3)
+		if (sr.reduktor_gl_obor >= h.redTurnoverMg2)
 		{
 			//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
 			pitch = sr.reduktor_gl_obor / h.redTurnoverAvt;
@@ -4905,7 +4923,7 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 		//alSourcei(source[1], AL_LOOPING, AL_TRUE);
 
 
-		if (sr.reduktor_gl_obor >= h.redTurnoverMg2 && sr.p_vu3)
+		if (sr.reduktor_gl_obor >= h.redTurnoverMg2)
 		{
 			//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
 			pitch = sr.reduktor_gl_obor / h.redTurnoverAvt;
@@ -4931,7 +4949,7 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 		filetoBuffer[0] = h.fullName["vint_hi"];
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 
-		if (sr.reduktor_gl_obor >= h.redTurnoverMg2 && sr.p_vu3)
+		if (sr.reduktor_gl_obor >= h.redTurnoverMg2)
 		{
 			//Выбираем высоту тона в зависимости от оборотов редуктора в данный момент
 			pitch = sr.reduktor_gl_obor / h.redTurnoverAvt;
