@@ -97,6 +97,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["skv_on"] = "skv_on.wav";//!<имя файла звука СКВ
 	shortName["skv_w"] = "skv_w.wav";//!<имя файла звука СКВ
 	shortName["skv_off"] = "skv_off.wav";//!<имя файла звука СКВ
+	shortName["skv_harm_29"] = "skv_harm_29.wav";//!<имя файла гармоники СКВ для Ка-29
 										 //Движение по ВПП и РД
 	shortName["runway"] = "driving.wav";//!<имя файла звука звука движения по ВПП и РД
 										
@@ -433,6 +434,7 @@ void Helicopter::setParam(string model)
 		undefinedFactor = 0.25; /*хз1*///-12
 		runwayFactor = 0.63/*ВПП*/;
 		vadd = 1/*Скоростная добавка*/;
+		skvFactor = 1;
 
 		rocketSturmFactor = 1/*ШТУРМ*/;
 		rocketNar8Factor = 1/*НАР8*/;
@@ -443,8 +445,6 @@ void Helicopter::setParam(string model)
 
 		rainFactor = 0.5/*Дождь*/;
 
-		//ptsToneFactor = 0.25/*птс тон*/;
-		//vintSwishFactor = 0.5/*ВИНТ Верх*/;
 		fireCraneFactor = 0.354/*Пожарный кран*/;
 	}
 	else

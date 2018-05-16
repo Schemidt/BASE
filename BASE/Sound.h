@@ -116,7 +116,7 @@ struct SOUNDREAD {
 	bool p_nasos_perek;         //!< Насос перекачки признак работы, 0-1
 	bool p_rocket_hit;          //!< Признак попадания ракетой, 0-1
 	bool p_bullet_hit;          //!< Признак попадания из пулемета, 0-1
-	float high;					//Высота (м) (резерв 1)
+	float hight;					//Высота (м) (резерв 1)
 	float tangaz;				//Тангаж (градус) (резерв 2)
 	float step;					//Шаг винта (градусы) 3
 	bool accumulator;			// Аккумулятор 4

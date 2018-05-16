@@ -68,7 +68,7 @@ public:
 	static double step; //!< Шаг
 	static double tangaz;//!< Тангаж
 	static double derivTangaz;//!<скорость изменения Тангажа (dtangaz/dt)
-	static double high;//!< Высота
+	static double hight;//!< Высота
 	static double velocityX;//!< приборная скорость
 	static double accelerationX;//!< Ускорение по приборной скорости (dvx/dt)
 	static double velocityY;//!< вертикальная скорость
@@ -78,7 +78,7 @@ public:
 	static double calcA;//!< Атака винта
 	static double RedTurnAcc;//!< Ускорение оборотов редуктора (dturn/dt)
 
-	static vector<double> vectorHigh;//!<Массив для рассчета производной от высоты
+	static vector<double> vectorHight;//!<Массив для рассчета производной от высоты
 	static vector<double> vectorVy;//!<Массив для рассчета производной от вертикальной скорости
 	static vector<double> vectorVx;//!<Массив для рассчета производной от горизонтальной скорости
 	static vector<double> vectorAcc;//!<Массив для рассчета производной от горизонтального ускорения
@@ -220,11 +220,12 @@ public:
 	string filetoBuffer[2] = {"NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
 	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = { 0 };
-	vector<string> engModeSequence = { "0","0","0" };
-	int engModeCounter = 0;
+	vector<string> redModeSequence = { "0","0","0" };
+	int redModeCounter = 0;
 	int previous = 1;
 	double switcher = 0;
 	int id = 0;
+	double deltaTakeOffGain = 0;
 
 	Reductor();
 
@@ -387,9 +388,14 @@ class VintSwish : public Sound
 {
 public:
 
-	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
-	string fileBuffered[2];/*!< Переменная для хранения имени загруженного файла */
+	string filetoBuffer[2] = { "NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
+	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = { 0 };
+	vector<string> swshModeSequence = { "0","0","0" };
+	int swshModeCounter = 0;
+	int previous = 1;
+	double switcher = 0;
+	int id = 0;
 
 	VintSwish();
 
@@ -415,8 +421,8 @@ class Skv : public Sound
 {
 public:
 
-	string eq;/*!< Переменная для однократной загрузки буфера */
-
+	string eq[2];/*!< Переменная для однократной загрузки буфера */
+	string harm;
 	Skv();
 
 	/*!
@@ -677,6 +683,4 @@ double toDb(double coef);
 \return коэффициент громкости
 */
 double toCoef(double db);
-
-SOUNDREAD converter(SOUNDREAD read);
 
