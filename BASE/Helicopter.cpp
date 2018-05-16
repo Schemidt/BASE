@@ -356,8 +356,8 @@ void Helicopter::setParam(string model)
 	{
 		//Константы		
 		engTurnoverHp = 20;
-		engTurnoverMg = 65;//73
-		engTurnoverAvt = 80;
+		engTurnoverMg = 65;
+		engTurnoverAvt = 73;
 		redTurnoverMg1 = 65;
 		redTurnoverMg2 = 65;
 		redTurnoverAvt = 100;
@@ -411,7 +411,7 @@ void Helicopter::setParam(string model)
 	else if (model == "ka_29")
 	{
 		//Константы		
-		engTurnoverHp = 20;
+		engTurnoverHp = 25;
 		engTurnoverMg = 75;
 		engTurnoverAvt = 85;
 		redTurnoverMg1 = 44;

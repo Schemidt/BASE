@@ -34,6 +34,8 @@ public:
 	double redTurnoverMg1 = 0; //!<обороты редуктора с 1им двигателем на малом газу
 	double redTurnoverMg2 = 0; //!<обороты редуктора с 2мя двигателями на малом газу
 	double redTurnoverAvt = 0; //!<обороты редуктора на режиме автомат
+	double vsuTurnoverFull = 100;
+	double vsuTurnoverHp = 35;
 	//Множители громкости
 	double vsuFactor = 0;//!<Множитель громкости ВСУ
 	double vsuHpFactor = 0;//!<Множитель громкости ВСУ ХП

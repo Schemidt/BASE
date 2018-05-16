@@ -112,7 +112,7 @@ public:
 	double pitch = 1;//!< Переменная для параметра высоты тона звука агрегата
 	double gain = 1;//!< Переменная для параметра громкости звука агрегата
 	vector<double> channel = { 1,1,0,0,0,0,0 };//!< массив для поканального вывода звука
-	int sourceNumber = 1;//!< Переменная для хранения количества источников используемых объектом звука агрегата
+	int sourceNumber = 2;//!< Переменная для хранения количества источников используемых объектом звука агрегата
 	int bufferNumber = 3;//!< Переменная для хранения количества буфферов используемых объектом звука агрегата
 	int effectSlotNumber = 0;//!< Переменная для хранения количества слотов эффектов используемых объектом звука агрегата
 
@@ -217,9 +217,14 @@ public:
 	string pinkNoise;/*!< Переменная для однократной загрузки буфера */
 	string beats;/*!< Переменная для однократной загрузки буфера */
 	string takeOff;/*!< Переменная для однократной загрузки буфера */
-	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
-	string fileBuffered[2];/*!< Переменная для хранения имени загруженного файла */
+	string filetoBuffer[2] = {"NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
+	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = { 0 };
+	vector<string> engModeSequence = { "0","0","0" };
+	int engModeCounter = 0;
+	int previous = 1;
+	double switcher = 0;
+	int id = 0;
 
 	Reductor();
 
@@ -248,10 +253,15 @@ public:
 	static int engCount;/*!< Переменная для количества инициализированных двигателей в программе */
 	double phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
 	int engNum;//!<Номер двигателя
+	vector<string> engModeSequence = {"0","0","0"};
+	int engModeCounter = 0;
+	int previous = 1;
+	double switcher = 0;
+	int id = 0;
 
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
-	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
-	string fileBuffered[2];/*!< Переменная для хранения имени загруженного файла */
+	string filetoBuffer[2] = { "NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
+	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = { 0 };
 
 	Engine();
@@ -266,7 +276,48 @@ public:
 	\param[in] h Объект хранящий характеристики вертолета
 	\return Статус источника OpenAL
 	*/
-	int play(bool status_on, bool status_off, double parameter, Helicopter h);
+	int play(bool status_on, bool status_off, bool status_hp, double parameter, Helicopter h);
+};
+
+/*!
+\brief Класс объекта двигателя
+\author Самсонов А.В.
+\version 2.0
+\date  06.03.2018
+
+Класс определяющий работу объекта - двигателя
+*/
+class Vsu : public Sound
+{
+public:
+
+
+	double vsuDownTimer = 0;
+	double vsuUpTimer = 0;
+	vector<string> vsuModeSequence = {"0", "0", "0"};
+	int vsuModeCounter = 0;
+	int previous = 1;
+	double switcher = 0;
+	int id = 0;
+
+	string eq[2];/*!< Переменная для однократной загрузки буфера */
+	string filetoBuffer[2] = { "NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
+	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
+	double offset[2] = { 0 };
+
+	Vsu();
+
+	~Vsu();
+	/*!
+	\brief Определяет логику вывода звука
+	\details определяет логику изменения параметров акустических объектов OpenAL
+	\param[in] status_on Переменная статуса запуска
+	\param[in] status_off Переменная статуса остановки
+	\param[in] parameter Обороты двигателя
+	\param[in] h Объект хранящий характеристики вертолета
+	\return Статус источника OpenAL
+	*/
+	int play(SOUNDREAD sr, Helicopter h);
 };
 
 /*!
@@ -601,7 +652,7 @@ calcA = calcA * 180 / M_PI;
 \param[in] periodCalc Разница по времени между выбранными моментами
 \return Значение атаки при данных параметрах
 */
-double attack(double velocityX, double velocityXPrevious, double tangaz, double deltaHigh, double periodCalc);
+double attack(double velocityX, double velocityXPrevious, double tangaz, double velocityY);
 /*!
 \brief Проверяет наличие процесса
 \details Проверяет наличие процесса
@@ -626,4 +677,6 @@ double toDb(double coef);
 \return коэффициент громкости
 */
 double toCoef(double db);
+
+SOUNDREAD converter(SOUNDREAD read);
 

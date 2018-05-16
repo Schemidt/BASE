@@ -38,13 +38,13 @@
 /*! \page advanced Основные сведения
 \tableofcontents
 <pre>
-Ниже будут поясненны все элементы программы, которые ,по мнению разработчика,
+Ниже будут пояснены все элементы программы, которые ,по мнению разработчика,
 могут быть непонятны будущему разработчику или тестировщику
 </pre>
 
 \section sec0 Общая структура и диаграмма последовательности
 <pre>
-Данный компонент можно разбить на 4 части:
+Данное ПО можно разбить на 4 части:
 •	Логика обмена данными через общую память
 •	Класс определяющий объект вертолета – его основные константы, коэффициенты громкости и пути хранения звуков
 •	Класс определяющий параметры и функции объектов - звуков вертолета
@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
 	InitRealTime(1);//инициируется "реальное" время с задержкой в 1мс
 
 	//Указатели на объекты определяющие параметры выводимого звука
-	Sound *vsu = nullptr;
+	Vsu *vsu = nullptr;
 	Sound *vsuHp = nullptr;
 	Sound *vsuKran = nullptr;
 	Sound *engHp[2] = { nullptr };
@@ -615,8 +615,6 @@ int main(int argc, char *argv[])
 	double timerNar13 = 0;
 	int counterNar8 = 0;
 	int counterNar13 = 0;
-	double vsuDownTimer = 0;
-	double vsuUpTimer = 0;
 	double timerAvr = 0;
 	const double window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
 	double periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
@@ -635,10 +633,10 @@ int main(int argc, char *argv[])
 			Sound::deltaTime = localdata.time - Sound::currentTime;
 			Sound::currentTime = localdata.time;
 			Sound::masterGain = localdata.master_gain;
-			Sound::tangaz = localdata.osadki;//тангаж (временно используем параметр инт осадков)
+			Sound::tangaz = localdata.tangaz;//тангаж (временно используем параметр инт осадков)
 			Sound::velocityX = localdata.v;//приборная скорость
-			Sound::high = localdata.styk_hv;
-			Sound::step = localdata.ny; //шаг (временно используем параметр перегрузки)
+			Sound::high = localdata.high;
+			Sound::step = localdata.step; //шаг (временно используем параметр перегрузки)
 
 			//Если не пришел признак остановки модели - вычисляем переменные
 			//Если необходимый размер окна достигнут - выбрасываем значения в начале массива
@@ -682,7 +680,7 @@ int main(int argc, char *argv[])
 					Sound::dash = (Sound::accelerationX - Sound::vectorAcc.front()) / periodCalc;
 					Sound::derivStep = (Sound::step - Sound::vectorStep.front()) / periodCalc;
 					Sound::derivTangaz = (Sound::tangaz - Sound::vectorTangaz.front()) / periodCalc;
-					Sound::calcA = attack(Sound::velocityX, Sound::vectorVx.front(), Sound::tangaz, Sound::high - Sound::vectorHigh.front(), periodCalc);
+					Sound::calcA = attack(Sound::velocityX, Sound::vectorVx.front(), Sound::tangaz, Sound::velocityY);
 					Sound::RedTurnAcc = (localdata.reduktor_gl_obor - Sound::vectorRedTurn.front()) / periodCalc;
 				}
 			}
@@ -723,82 +721,20 @@ int main(int argc, char *argv[])
 			//ВСУ
 			if (helicopter.vsuFactor)//Если ВСУ включено в проект
 			{
-				if (localdata.p_vsu_zap | localdata.p_vsu_ostanov)
+				if (localdata.vsu_obor > 0)
 				{
 					if (!vsu)
 					{
-						vsu = new Sound;
+						vsu = new Vsu;
 					}
 				}
 				if (vsu)
 				{
-					vsu->lengthOff = vsu->getLengthWAV(helicopter.fullName["vsu_off"]);
-					vsu->lengthOn = vsu->getLengthWAV(helicopter.fullName["vsu_on"]);
-					vsu->offsetOff = vsu->lengthOff * (1 - localdata.vsu_obor / 100.);//Включаем запись с текущего уровня оборотов
-					vsu->offsetOn = vsu->lengthOn * localdata.vsu_obor / 100.;//Включаем запись с текущего уровня оборотов
-
-					//Для 27 29 и 8
-					if (helicopter.modelName == "ka_27" || helicopter.modelName == "ka_29" || helicopter.modelName == "mi_8_mtv5" || helicopter.modelName == "mi_8_amtsh")
-					{
-						//Подсадка ВСУ при запущенном двигателе, но до запуска редуктора
-						if (localdata.reduktor_gl_obor > 0)
-						{
-							vsu->gain = interpolation(0, 0.7, 2.5, 0.85, 5, 1, vsuUpTimer);
-							vsuUpTimer += Sound::deltaTime;
-							vsuDownTimer = 0;
-						}
-						else
-						{
-							if (localdata.p_eng1_zap || localdata.p_eng1_hp || localdata.p_eng2_zap || localdata.p_eng2_hp)
-							{
-								vsu->gain = interpolation(0, 1, 0.25, 0.85, 0.5, 0.7, vsuDownTimer);
-								vsuDownTimer += Sound::deltaTime;
-								vsuUpTimer = 0;
-							}
-							else
-							{
-								vsu->gain = interpolation(0, 0.7, 2.5, 0.85, 5, 1, vsuUpTimer);
-								vsuUpTimer += Sound::deltaTime;
-								vsuDownTimer = 0;
-							}
-						}
-					}
-					vsu->play(localdata.p_vsu_zap, helicopter.fullName["vsu_on"], helicopter.fullName["vsu_w"], helicopter.fullName["vsu_off"], helicopter.vsuFactor);
+					vsu->play(localdata, helicopter);
 				}
-				if (vsu && vsu->sourceStatus[0] != AL_PLAYING)
+				if (vsu && localdata.vsu_obor == 0)
 				{
 					Free(vsu);
-				}
-
-				//ВСУ ХП
-				if (localdata.p_vsu_hp)
-				{
-					if (!vsuHp)
-					{
-						vsuHp = new Sound;
-					}
-				}
-				if (vsuHp)
-				{
-					//if (localdata.vsu_obor > 0 & localdata.vsu_obor < 35.)
-					//{
-					//	vsuHp->lengthOff = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_off"]);
-					//	vsuHp->lengthOn = vsuHp->getLengthWAV(helicopter.fullName["vsu_hp_on"]);
-					//	vsuHp->offsetOff = vsuHp->lengthOff * (1 - localdata.vsu_obor / 35.);//Включаем запись с текущего уровня оборотов
-					//	vsuHp->offsetOn = vsuHp->lengthOn * localdata.vsu_obor / 35.;//Включаем запись с текущего уровня оборотов
-					//}
-					if (localdata.p_vsu_zap | localdata.p_vsu_ostanov)//если ВСУ работает - вырубаем прокрутку
-					{
-						vsuHp->play(localdata.p_vsu_hp, "NULL", "NULL", "NULL", helicopter.vsuHpFactor);
-					}
-					else
-					{
-						vsuHp->play(localdata.p_vsu_hp, helicopter.fullName["vsu_hp_on"], helicopter.fullName["vsu_hp_w"], helicopter.fullName["vsu_hp_off"], helicopter.vsuHpFactor);
-					}
-					if (vsuHp->sourceStatus[0] != AL_PLAYING)
-					{
-						Free(vsuHp);
-					}
 				}
 			}
 			//Аккумулятор
@@ -806,7 +742,7 @@ int main(int argc, char *argv[])
 			{
 				if (helicopter.modelName != "ansat")//226
 				{
-					if (localdata.rez_2)//Условие создания объекта
+					if (localdata.accumulator)//Условие создания объекта
 					{
 						if (!accum)//Если объект не создан 
 						{
@@ -815,7 +751,7 @@ int main(int argc, char *argv[])
 					}
 					if (accum)//Если объект создан - используем его
 					{
-						accum->play(localdata.rez_2, "NULL", helicopter.fullName["accum"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
+						accum->play(localdata.accumulator, "NULL", helicopter.fullName["accum"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (accum->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						{
 							Free(accum);//Удаляем объект
@@ -824,7 +760,7 @@ int main(int argc, char *argv[])
 				}
 				if (helicopter.modelName == "ka_226" || helicopter.modelName == "ansat")//226
 				{
-					if (localdata.rez_2)//Условие создания объекта
+					if (localdata.accumulator)//Условие создания объекта
 					{
 						if (!accumTr)//Если объект не создан 
 						{
@@ -833,7 +769,7 @@ int main(int argc, char *argv[])
 					}
 					if (accumTr)//Если объект создан - используем его
 					{
-						accumTr->play(localdata.rez_2, "NULL", helicopter.fullName["accum_tr"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
+						accumTr->play(localdata.accumulator, "NULL", helicopter.fullName["accum_tr"], "NULL", helicopter.accumFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (accumTr->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						{
 							Free(accumTr);//Удаляем объект
@@ -941,7 +877,7 @@ int main(int argc, char *argv[])
 			//НИП
 			if (helicopter.nipFactor)
 			{
-				if (localdata.rez_3)//Условие создания объекта
+				if (localdata.ground_power_supply)//Условие создания объекта
 				{
 					if (!nip)//Если объект не создан 
 					{
@@ -950,7 +886,7 @@ int main(int argc, char *argv[])
 				}
 				if (nip)//Если объект создан - используем его
 				{
-					nip->play(localdata.rez_3, "NULL", helicopter.fullName["nip_tone"], "NULL", helicopter.nipFactor);
+					nip->play(localdata.ground_power_supply, "NULL", helicopter.fullName["nip_tone"], "NULL", helicopter.nipFactor);
 					if (nip->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 					{
 						Free(nip);//Удаляем объект
@@ -1002,7 +938,7 @@ int main(int argc, char *argv[])
 			//Гировертикаль
 			if (helicopter.girovertFactor)
 			{
-				if (localdata.rez_3)//Условие создания объекта
+				if (nip)//Условие создания объекта
 				{
 					if (!girovert)//Если объект не создан 
 					{
@@ -1016,7 +952,7 @@ int main(int argc, char *argv[])
 					{
 						girovert->offsetOn = girovert->lengthOn * girovert->pitch;//Включаем запись с текущего уровня оборотов
 					}
-					girovert->play(localdata.rez_3, helicopter.fullName["girovert_on"], helicopter.fullName["girovert_w"], helicopter.fullName["girovert_w"], helicopter.ptsFactor);
+					girovert->play(nip, helicopter.fullName["girovert_on"], helicopter.fullName["girovert_w"], helicopter.fullName["girovert_w"], helicopter.ptsFactor);
 					if (girovert->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 					{
 						Free(girovert);//Удаляем объект
@@ -1033,13 +969,15 @@ int main(int argc, char *argv[])
 							girovert->pitch -= Sound::deltaTime*0.0024;//уменьшаем питч по 0.0024 в сек
 																	   //если Pitch == 0 - звук пропал, источник можно отключить
 							if (girovert->pitch <= 0.8)
-								girovert->play(localdata.rez_3, "NULL", "NULL", "NULL", helicopter.ptsFactor);
+								girovert->play(localdata.ground_power_supply, "NULL", "NULL", "NULL", helicopter.ptsFactor);
 
 						}
 					}
 				}
 			}
+
 			//Топливна система
+
 			//Если насосы подкачки присутствуют на Борту
 			if (helicopter.pumpLeftFactor)
 			{
@@ -1191,12 +1129,12 @@ int main(int argc, char *argv[])
 			//Если КО-50 присутствует на Борту
 			if (helicopter.ko50Factor)
 			{
-				if (localdata.rez_9)//Условие создания объекта
+				if (localdata.stove)//Условие создания объекта
 					if (!ko50)//Если объект не создан 
 						ko50 = new Sound;//Создаем объект
 				if (ko50)//Если объект создан - используем его
 				{
-					ko50->play(localdata.rez_9, helicopter.fullName["ko50_on"], helicopter.fullName["ko50_w"], helicopter.fullName["ko50_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
+					ko50->play(localdata.stove, helicopter.fullName["ko50_on"], helicopter.fullName["ko50_w"], helicopter.fullName["ko50_off"], helicopter.ko50Factor);//Воспроизводим звук - записываем состояние звука в play
 					if (ko50->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(ko50);//Удаляем объект
 				}
@@ -1204,12 +1142,12 @@ int main(int argc, char *argv[])
 			//Если насос расходного бака
 			if (helicopter.consumTankFactor)
 			{
-				if (localdata.rez_4)//Условие создания объекта
+				if (localdata.dis_tank_pump)//Условие создания объекта
 					if (!consTank)//Если объект не создан 
 						consTank = new Sound;//Создаем объект
 				if (consTank)//Если объект создан - используем его
 				{
-					consTank->play(localdata.rez_4, helicopter.fullName["cons_tank_on"], helicopter.fullName["cons_tank_w"], "NULL", helicopter.consumTankFactor);//Воспроизводим звук - записываем состояние звука в play
+					consTank->play(localdata.dis_tank_pump, helicopter.fullName["cons_tank_on"], helicopter.fullName["cons_tank_w"], "NULL", helicopter.consumTankFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (consTank->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(consTank);//Удаляем объект
 				}
@@ -1254,7 +1192,9 @@ int main(int argc, char *argv[])
 						Free(pstat);//Удаляем объект
 				}
 			}
+
 			//Движение по ВПП и РД
+
 			//Если звуки движения по ВПП включены в проект борта
 			if (helicopter.runwayFactor)
 			{
@@ -1268,7 +1208,9 @@ int main(int argc, char *argv[])
 						Free(runway);//Удаляем объект
 				}
 			}
+
 			//Крушение
+
 			//Если звук столкновения с препятствием включен в проект
 			if (true)
 			{
@@ -1282,6 +1224,7 @@ int main(int argc, char *argv[])
 						Free(crash);//Удаляем объект
 				}
 			}
+
 			//Винт
 			if (helicopter.vintSwishFactor)
 			{
@@ -1308,18 +1251,19 @@ int main(int argc, char *argv[])
 						Free(vintBrake);//Удаляем объект
 					else
 					{
-						vintBrake->pitch = localdata.reduktor_gl_obor / 15.0;
+						double soundOff = getParameterFromVector(vector<point>{ { 12, 1 }, { 1, 0 } }, localdata.reduktor_gl_obor);
+						vintBrake->pitch = localdata.reduktor_gl_obor / 12.0;
 						if (vintBrake->soundOn)
 						{
-							vintBrake->gain = ((vintBrake->offsetOn > 1)? 1 : vintBrake->offsetOn / vintBrake->lengthOn) * getParameterFromVector(vector<point>{ { 15, 1 }, { 0, 0 } }, localdata.reduktor_gl_obor);
+							vintBrake->gain = ((vintBrake->offsetOn > 1) ? 1 : vintBrake->offsetOn / vintBrake->lengthOn) * soundOff;
 						}
 						else if (vintBrake->soundOff)
 						{
-							vintBrake->gain = ((vintBrake->offsetOff > 1) ? 0 : 1 - (vintBrake->offsetOff / vintBrake->lengthOff)) * getParameterFromVector(vector<point>{ { 15, 1 }, { 0, 0 } }, localdata.reduktor_gl_obor);
+							vintBrake->gain = ((vintBrake->offsetOff > 1) ? 0 : 1 - (vintBrake->offsetOff / vintBrake->lengthOff)) * soundOff;
 						}
 						else
 						{
-							vintBrake->gain = getParameterFromVector(vector<point>{ { 15, 1 }, { 0, 0 } }, localdata.reduktor_gl_obor);
+							vintBrake->gain = soundOff;
 						}
 					}
 				}
@@ -1541,7 +1485,7 @@ int main(int argc, char *argv[])
 						redCrash->pitch = localdata.reduktor_gl_obor / helicopter.redTurnoverAvt / 2.0;
 				}
 
-				if (localdata.p_eng1_zap | localdata.p_eng2_zap | localdata.reduktor_gl_obor > 0)//условие создания объекта редуктора
+				if (localdata.reduktor_gl_obor > 0 || localdata.p_eng1_zap || localdata.p_eng2_zap)//условие создания объекта редуктора
 					if (!red)//Если объект не создан 
 						red = new Reductor;//Создаем объект
 				if (red)//Если объект создан - используем его
@@ -1549,7 +1493,7 @@ int main(int argc, char *argv[])
 					red->channel[0] = 1;
 					red->channel[1] = 1;
 					red->play(helicopter, localdata);//
-					if (red->sourceStatus[0] != AL_PLAYING && red->sourceStatus[1] != AL_PLAYING && !(localdata.p_eng1_zap | localdata.p_eng2_zap | localdata.reduktor_gl_obor > 0))//Условие удаления объекта
+					if (red && !(localdata.reduktor_gl_obor > 0 || localdata.p_eng1_zap || localdata.p_eng2_zap))//Условие удаления объекта
 						Free(red);//Удаляем объект
 				}
 
@@ -1618,48 +1562,6 @@ int main(int argc, char *argv[])
 			//Двигатель
 			if (helicopter.engFactor)
 			{
-				if (localdata.p_eng1_hp & localdata.eng1_obor != 0)//Условие создания объекта
-				{
-					if (!engHp[0])//Если объект не создан 
-					{
-						engHp[0] = new Sound;//Создаем объект
-					}
-				}
-				if (engHp[0])//Если объект создан - используем его
-				{
-					engHp[0]->channel[0] = 1;//L
-					engHp[0]->channel[1] = 0;
-					if (localdata.p_eng1_zap | localdata.p_eng1_ostanov)
-					{
-						engHp[0]->play(localdata.p_eng1_hp & localdata.eng1_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
-					}
-					else
-						engHp[0]->play(localdata.p_eng1_hp & localdata.eng1_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (engHp[0]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng1_hp)//Условие удаления объекта
-						Free(engHp[0]);//Удаляем объект
-				}
-
-				if (localdata.p_eng2_hp & localdata.eng2_obor != 0)//Условие создания объекта
-				{
-					if (!engHp[1])//Если объект не создан 
-					{
-						engHp[1] = new Sound;//Создаем объект
-					}
-				}
-				if (engHp[1])//Если объект создан - используем его
-				{
-					engHp[1]->channel[0] = 0;
-					engHp[1]->channel[1] = 1;//R
-					if (localdata.p_eng2_zap | localdata.p_eng2_ostanov)
-					{
-						engHp[1]->play(localdata.p_eng2_hp & localdata.eng2_obor != 0, "NULL", "NULL", "NULL", helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
-					}
-					else
-						engHp[1]->play(localdata.p_eng2_hp & localdata.eng2_obor != 0, helicopter.fullName["eng_on_hp_w"], helicopter.fullName["eng_w_hp_w"], helicopter.fullName["eng_off_hp_w"], helicopter.engHpFactor);//Воспроизводим звук - записываем состояние звука в play
-					if (engHp[1]->sourceStatus[0] != AL_PLAYING && !localdata.p_eng2_hp)//Условие удаления объекта
-						Free(engHp[1]);//Удаляем объект
-				}
-
 				if (localdata.p_eng1_pomp)//Условие создания объекта
 				{
 					if (!engPomp[0])//Если объект не создан 
@@ -1692,7 +1594,7 @@ int main(int argc, char *argv[])
 						Free(engPomp[1]);//Удаляем объект
 				}
 
-				if (localdata.p_eng1_zap | localdata.eng1_obor > 0)
+				if (localdata.eng1_obor > 0)
 				{
 					if (!eng[0])//Если объект не создан 
 					{
@@ -1702,15 +1604,15 @@ int main(int argc, char *argv[])
 				if (eng[0])//Если объект создан - используем его
 				{
 					eng[0]->channel[0] = 1;//magic numbers//1//L
-					eng[0]->channel[1] = 1;//-1
-					eng[0]->play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.eng1_obor, helicopter);
+					eng[0]->channel[1] = -1;//-1
+					eng[0]->play(localdata.p_eng1_zap, localdata.p_eng1_ostanov, localdata.p_eng1_hp, localdata.eng1_obor, helicopter);
 
 
 					if (localdata.eng1_obor == 0)//Условие удаления объекта
 						Free(eng[0]);//Удаляем объект
 				}
 
-				if (localdata.p_eng2_zap | localdata.eng2_obor > 0)
+				if (localdata.eng2_obor > 0)
 				{
 					if (!eng[1])//Если объект не создан 
 					{
@@ -1719,9 +1621,9 @@ int main(int argc, char *argv[])
 				}
 				if (eng[1])//Если объект создан - используем его
 				{
-					eng[1]->channel[0] = 1;//magic numbers//0
-					eng[1]->channel[1] = 1;//2//R
-					eng[1]->play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.eng2_obor, helicopter);
+					eng[1]->channel[0] = 0;//magic numbers//0
+					eng[1]->channel[1] = 2;//2//R
+					eng[1]->play(localdata.p_eng2_zap, localdata.p_eng2_ostanov, localdata.p_eng2_hp, localdata.eng2_obor, helicopter);
 
 
 					if (localdata.eng2_obor == 0)//Условие удаления объекта
@@ -1731,32 +1633,32 @@ int main(int argc, char *argv[])
 			//Перекрывной кран ВСУ
 			if (helicopter.vsuCraneFactor)
 			{
-				if (localdata.rez_1)//Условие создания объекта
+				if (localdata.p_kran_perekr_vsu)//Условие создания объекта
 					if (!vsuKran)//Если объект не создан 
 						vsuKran = new Sound;//Создаем объект
 				if (vsuKran)//Если объект создан - используем его
 				{
 					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
 					{
-						vsuKran->play(localdata.rez_1, helicopter.fullName["vsu_kran_on"], "NULL", "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						vsuKran->play(localdata.p_kran_perekr_vsu, helicopter.fullName["vsu_kran_on"], "NULL", "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
 					else
 					{
-						vsuKran->play(localdata.rez_1, helicopter.fullName["vsu_kran_on"], helicopter.fullName["vsu_kran_w"], "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
+						vsuKran->play(localdata.p_kran_perekr_vsu, helicopter.fullName["vsu_kran_on"], helicopter.fullName["vsu_kran_w"], "NULL", helicopter.vsuCraneFactor);//Воспроизводим звук - записываем состояние звука в play
 					}
-					if (vsuKran->sourceStatus[0] != AL_PLAYING && !localdata.rez_1)//Условие удаления объекта
+					if (vsuKran->sourceStatus[0] != AL_PLAYING && !localdata.p_kran_perekr_vsu)//Условие удаления объекта
 						Free(vsuKran);//Удаляем объект
 				}
 			}
 			//Зуммер
 			if (helicopter.buzzerFactor)
 			{
-				if (localdata.rez_7)//Условие создания объекта
+				if (localdata.zoomer)//Условие создания объекта
 					if (!beep)//Если объект не создан 
 						beep = new Sound;//Создаем объект
 				if (beep)//Если объект создан - используем его
 				{
-					beep->play(localdata.rez_7, "NULL", helicopter.fullName["beep"], "NULL", helicopter.buzzerFactor);//Воспроизводим звук - записываем состояние звука в play
+					beep->play(localdata.zoomer, "NULL", helicopter.fullName["beep"], "NULL", helicopter.buzzerFactor);//Воспроизводим звук - записываем состояние звука в play
 					if (beep->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 						Free(beep);//Удаляем объект
 				}
@@ -1766,36 +1668,36 @@ int main(int argc, char *argv[])
 			{
 				if (helicopter.modelName == "mi_28")
 				{
-					if (localdata.rez_6)//Условие создания объекта
+					if (localdata.undefined)//Условие создания объекта
 						if (!undefined1)//Если объект не создан 
 							undefined1 = new Sound;//Создаем объект
 					if (undefined1)//Если объект создан - используем его
 					{
-						undefined1->play(localdata.rez_6, "NULL", helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
+						undefined1->play(localdata.undefined, "NULL", helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (undefined1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(undefined1);//Удаляем объект
 					}
 				}
 				else if (helicopter.modelName == "ka_29")
 				{
-					if (localdata.rez_6)//Условие создания объекта
+					if (localdata.undefined)//Условие создания объекта
 						if (!undefined1)//Если объект не создан 
 							undefined1 = new Sound;//Создаем объект
 					if (undefined1)//Если объект создан - используем его
 					{
-						undefined1->play(localdata.rez_6, helicopter.fullName["undefined1_on"], helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
+						undefined1->play(localdata.undefined, helicopter.fullName["undefined1_on"], helicopter.fullName["undefined1_w"], "NULL", helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (undefined1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(undefined1);//Удаляем объект
 					}
 				}
 				else if (helicopter.modelName == "ansat")
 				{
-					if (localdata.rez_6)//Условие создания объекта
+					if (localdata.undefined)//Условие создания объекта
 						if (!undefined1)//Если объект не создан 
 							undefined1 = new Sound;//Создаем объект
 					if (undefined1)//Если объект создан - используем его
 					{
-						undefined1->play(localdata.rez_6, helicopter.fullName["undefined1_on"], helicopter.fullName["undefined1_w"], helicopter.fullName["undefined1_off"], helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
+						undefined1->play(localdata.undefined, helicopter.fullName["undefined1_on"], helicopter.fullName["undefined1_w"], helicopter.fullName["undefined1_off"], helicopter.undefinedFactor);//Воспроизводим звук - записываем состояние звука в play
 						if (undefined1->sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
 							Free(undefined1);//Удаляем объект
 					}
@@ -2821,6 +2723,10 @@ int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, stri
 	alSourcei(*Source, AL_BUFFER, NULL);
 	alDeleteBuffers(1, &*Buffer);
 	alGenBuffers(1, &*Buffer);
+	if (file_path == "NULL")
+	{
+		return 0;
+	}
 	if (!setBuffer(*Buffer, file_path, channelsSetup, channel))
 		return 0;
 	alSourcei(*Source, AL_BUFFER, *Buffer);
@@ -2910,15 +2816,185 @@ Reductor::Reductor() : Sound(4, 4, 3)
 
 int Reductor::play(Helicopter h, SOUNDREAD sr)
 {
+	string mode = "0";
+	//0 -> мг1дв
+	if (sr.reduktor_gl_obor < h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
+	{
+		mode = "on";
+	}
+	//мг1дв
+	else if (sr.reduktor_gl_obor < h.redTurnoverMg1 && !(sr.p_eng1_zap | sr.p_eng2_zap) && !(sr.p_eng1_ostanov && sr.p_eng2_ostanov))
+	{
+		mode = "mg1";
+	}
+	//мг1дв <-> мг2дв
+	else if (sr.reduktor_gl_obor >= h.redTurnoverMg1 && sr.reduktor_gl_obor <= h.redTurnoverMg2)
+	{
+		mode = "mg2";
+	}
+	//мг2дв <-> авт
+	else if (sr.reduktor_gl_obor > h.redTurnoverMg2)
+	{
+		mode = "avt";
+	}
+	//мг2дв -> 0
+	else if (sr.p_eng1_ostanov && sr.p_eng2_ostanov && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg2)
+	{
+		mode = "off";
+	}
+
+	if (engModeSequence.empty())
+	{
+		engModeSequence.push_back(mode);
+		previous = engModeSequence.size() - 1;
+	}
+	if (engModeSequence.back() != mode)
+	{
+		switcher = 0;
+		id = !id;
+		if (mode == "on" || mode == "off")
+		{
+			fileBuffered[id] = "NULL";
+		}
+		engModeSequence.push_back(mode);
+		if (engModeSequence.size() >= 4)
+		{
+			engModeSequence.erase(engModeSequence.begin());
+		}
+		previous = engModeSequence.size() - 2;
+	}
+
+	if (mode == "on")
+	{
+		filetoBuffer[id] = h.fullName["red_on_w"];
+	}
+	else if (mode == "mg1")
+	{
+		filetoBuffer[id] = h.fullName["red_w_w"];
+	}
+	else if (mode == "mg2")
+	{
+		filetoBuffer[id] = h.fullName["red_w_mg_w"];
+	}
+	else if (mode == "avt")
+	{
+		filetoBuffer[id] = h.fullName["red_w_avt_w"];
+		filetoBuffer[!id] = h.fullName["red_w_mg_w"];
+	}
+	else if (mode == "off")
+	{
+		filetoBuffer[id] = h.fullName["red_off_w"];
+	}
+
+	//28
+	/*
+	if (h.modelName == "mi_28")
+	{
+		//авт <-> авт полет
+		if (sr.reduktor_gl_obor > h.redTurnoverAvt)
+		{
+			filetoBuffer[1] = h.fullName["red_w_avt_w"];
+			filetoBuffer[0] = h.fullName["red_w_avt_fly"];
+			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
+			offset[0] = 0;
+			offset[1] = 0;
+
+			double fade = 0, rise = 0;
+			crossFade(&fade, &rise, step, 5.00, 5.01, masterGain*h.redFactor);
+			alSourcef(source[1], AL_GAIN, fade);//
+			alSourcef(source[0], AL_GAIN, rise);//
+
+			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
+			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+		}
+	}
+	*/
+
+	double finalGain = h.redFactor * masterGain;
+	switcher += deltaTime;
+	double rise = 0;
+	if (filetoBuffer[id] == h.fullName["red_w_avt_w"])
+	{
+		rise = getParameterFromVector(vector<point>{ {h.redTurnoverMg2, 0}, { h.redTurnoverAvt, finalGain } }, sr.reduktor_gl_obor);
+	}
+	else if (filetoBuffer[!id] == h.fullName["red_w_avt_w"])
+	{
+		rise = finalGain - getParameterFromVector(vector<point>{ {h.redTurnoverMg2, 0}, { h.redTurnoverAvt, finalGain } }, sr.reduktor_gl_obor);
+	}
+	else if (filetoBuffer[id] == h.fullName["red_w_mg_w"] && filetoBuffer[!id] == h.fullName["red_w_w"])
+	{
+		rise = getParameterFromVector(vector<point>{ {h.redTurnoverMg1, 0}, { h.redTurnoverMg2, finalGain } }, sr.reduktor_gl_obor);
+	}
+	else if (filetoBuffer[!id] == h.fullName["red_w_mg_w"] && filetoBuffer[id] == h.fullName["red_w_w"])
+	{
+		rise = finalGain - getParameterFromVector(vector<point>{ {h.redTurnoverMg1, 0}, { h.redTurnoverMg2, finalGain } }, sr.reduktor_gl_obor);
+	}
+	else if (filetoBuffer[id] == "NULL")
+	{
+		rise = 0;
+	}
+	else if (filetoBuffer[!id] == "NULL")
+	{
+		rise = finalGain;
+	}
+	else if (filetoBuffer[!id] == h.fullName["red_on_w"] && filetoBuffer[id] == h.fullName["red_w_w"])
+	{
+		rise = getParameterFromVector(vector<point>{ {h.redTurnoverMg1 * 0.933, 0}, { h.redTurnoverMg1, finalGain } }, sr.reduktor_gl_obor);
+	}
+	else
+	{
+		rise = getParameterFromVector(vector<point>{ {0, 0}, { 0.5, finalGain } }, switcher);
+	}
+	double fade = finalGain - rise;
+	alSourcef(source[!id], AL_GAIN, fade);
+	alSourcef(source[id], AL_GAIN, rise);
+
+	float g0;
+	float g1;
+	alGetSourcef(source[0], AL_GAIN, &g0);
+	alGetSourcef(source[1], AL_GAIN, &g1);
+	cout.precision(3);
+	cout << fixed << " g0: " << g0 << " g1: " << g1 << " %: " << sr.vsu_obor << "\r";
+
 	for (size_t i = 0; i < 2; i++)
 	{
-		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+		if (filetoBuffer[i] == h.fullName["red_on_w"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+			offset[i] = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
+			alSourcef(source[i], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
+		}
+		else if (filetoBuffer[i] == h.fullName["red_w_w"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_TRUE);
+			offset[i] = 0;
+			alSourcef(source[i], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
+		}
+		else if (filetoBuffer[i] == h.fullName["red_w_mg_w"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_TRUE);
+			offset[i] = 0;
+			alSourcef(source[i], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+		}
+		else if (filetoBuffer[i] == h.fullName["red_w_avt_w"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_TRUE);
+			offset[i] = 0;
+			alSourcef(source[i], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+		}
+		else if (filetoBuffer[i] == h.fullName["red_off_w"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+			offset[i] = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
+			alSourcef(source[i], AL_PITCH, getPitch(offsetOff, h.fullName["red_off"], sr.reduktor_gl_obor));
+		}
+
 		//При оборотах редуктора = 0 и незапущенных двигателях, останавиваем источники
 		if (sr.reduktor_gl_obor == 0 && !sr.p_eng1_zap && !sr.p_eng2_zap)
 		{
 			alSourceStop(source[i]);
 			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);		// перезабили признак 
-			fileBuffered[i] = filetoBuffer[i] = "NULL";
 		}
 		//Подключаем эквалайзер
 		if (eq[i] != "set")
@@ -2937,258 +3013,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
 			fileBuffered[i] = filetoBuffer[i];
 		}
-	}
-	//РЕДУКТОР АНСАТА
-	if (h.modelName == "ansat")
-	{
-		//0 -> мг
-		if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
-		{
-			filetoBuffer[0] = h.fullName["red_on_w"];
-			filetoBuffer[1] = h.fullName["red_w_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-			offset[0] = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-			offset[1] = 0;
-
-			double fade = 0;
-			double rise = 0;
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-
-			//Если запуск проигрывается - плавно переходим на цикл
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				//Оцениваем выходную громкость источников по параметрам оборотов и времени проигрывания,
-				//чтобы обеспечить нормальное звучание, если обороты по какимто причинам не вышли на малый газ,
-				//до окончания проигрывания записи запуска
-				double fadeTurn = 0;
-				double fadeTime = 0;
-				double riseTurn = 0;
-				double riseTime = 0;
-				lengthOn = getLengthWAV(h.fullName["red_on_w"]);
-				lengthOff = getLengthWAV(h.fullName["red_w_w"]);
-				crossFade(&fadeTurn, &riseTurn, sr.reduktor_gl_obor, h.redTurnoverMg1 - 3, h.redTurnoverMg1, masterGain * h.redFactor);
-				if (offsetOn != 0)
-					crossFade(&fadeTime, &riseTime, offsetOn, lengthOn - lengthOff, lengthOn, masterGain * h.redFactor);
-				fade = min(fadeTurn,fadeTime);
-				rise = (masterGain * h.redFactor) - fade;
-			}
-			//Иначе используем цикл
-			else
-			{
-				fade = 0;
-				rise = masterGain * h.redFactor;
-			}
-			alSourcef(source[0], AL_GAIN, fade);//0
-			alSourcef(source[1], AL_GAIN, rise);//1
-
-
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-			if (sr.reduktor_gl_obor >= 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-		}
-		//мг <-> авт
-		if (sr.reduktor_gl_obor > h.redTurnoverMg2)
-		{
-			filetoBuffer[0] = h.fullName["red_w_avt_w"];
-			filetoBuffer[1] = h.fullName["red_w_w"];
-
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_TRUE);
-			offset[0] = 0;
-			offset[1] = 0;
-
-			double fade = 0;
-			double rise = 0;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
-			alSourcef(source[1], AL_GAIN, fade);//
-			alSourcef(source[0], AL_GAIN, rise);//
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-
-		}
-		//мг -> 0
-		if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1)
-		{
-			filetoBuffer[0] = h.fullName["red_off_w"];
-			filetoBuffer[1] = h.fullName["red_w_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-			offset[0] = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
-			offset[1] = 0;
-
-			double fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 3, masterGain*h.redFactor);
-			alSourcef(source[1], AL_GAIN, fade);//
-			alSourcef(source[0], AL_GAIN, rise);//
-
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOff);
-
-			if (sr.reduktor_gl_obor > 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["red_off"], sr.reduktor_gl_obor));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-
-
-		}
-	}
-	else
-	{
-		//0 -> мг 1дв
-		if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap))
-		{
-			filetoBuffer[0] = h.fullName["red_on_w"];
-			filetoBuffer[1] = h.fullName["red_w_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-			offset[0] = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
-			offset[1] = 0;
-
-			double fade = 0;
-			double rise = 0;
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-
-			//Если запуск проигрывается - плавно переходим на цикл
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				//Оцениваем выходную громкость источников по параметрам оборотов и времени проигрывания,
-				//чтобы обеспечить нормальное звучание, если обороты по какимто причинам не вышли на малый газ,
-				//до окончания проигрывания записи запуска
-				double fadeTurn = 0;
-				double fadeTime = 0;
-				double riseTurn = 0;
-				double riseTime = 0;
-				lengthOn = getLengthWAV(h.fullName["red_on_w"]);
-				lengthOff = getLengthWAV(h.fullName["red_w_w"]);
-				crossFade(&fadeTurn, &riseTurn, sr.reduktor_gl_obor, h.redTurnoverMg1 - 2, h.redTurnoverMg1, masterGain*h.redFactor);
-				if (offsetOn != 0)
-					crossFade(&fadeTime, &riseTime, offsetOn, lengthOn - lengthOff, lengthOn, masterGain*h.redFactor);
-				fade = min(fadeTurn,fadeTime);
-				rise = (masterGain * h.engFactor) - fade;
-			}
-			//Иначе используем цикл
-			else
-			{
-				fade = 0;
-				rise = masterGain * h.engFactor;
-			}
-
-			alSourcef(source[0], AL_GAIN, fade);//0
-			alSourcef(source[1], AL_GAIN, rise);//1
-
-			if (sr.reduktor_gl_obor >= 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-		}
-		//мг1дв <-> мг2дв
-		if (sr.reduktor_gl_obor > h.redTurnoverMg1 && sr.reduktor_gl_obor <= h.redTurnoverMg2)
-		{
-			filetoBuffer[1] = h.fullName["red_w_w"];
-			filetoBuffer[0] = h.fullName["red_w_mg_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_TRUE);
-			offset[0] = 0;
-			offset[1] = 0;
-
-			double fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg2, masterGain*h.redFactor);
-			alSourcef(source[1], AL_GAIN, fade);//0
-			alSourcef(source[0], AL_GAIN, rise);//1
-
-			alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
-			alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-		}
-		//мг2дв <-> авт
-		if (h.modelName == "mi_28")
-		{
-			if (sr.reduktor_gl_obor > h.redTurnoverMg2 && sr.reduktor_gl_obor <= h.redTurnoverAvt - 2)
-			{
-				filetoBuffer[1] = h.fullName["red_w_avt_w"];
-				filetoBuffer[0] = h.fullName["red_w_mg_w"];
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				offset[0] = 0;
-				offset[1] = 0;
-
-				double fade, rise;
-				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
-				alSourcef(source[0], AL_GAIN, fade);//
-				alSourcef(source[1], AL_GAIN, rise);//
-
-				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-			}
-			//авт <-> авт полет
-			if (sr.reduktor_gl_obor > h.redTurnoverAvt - 2)
-			{
-				filetoBuffer[1] = h.fullName["red_w_avt_w"];
-				filetoBuffer[0] = h.fullName["red_w_avt_fly"];
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				offset[0] = 0;
-				offset[1] = 0;
-
-				double fade = 0, rise = 0;
-				crossFade(&fade, &rise, step, 5.00, 5.01, masterGain*h.redFactor);
-				alSourcef(source[1], AL_GAIN, fade);//
-				alSourcef(source[0], AL_GAIN, rise);//
-
-				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-
-			}
-		}
-		else
-		{
-			if (sr.reduktor_gl_obor > h.redTurnoverMg2)
-			{
-				filetoBuffer[1] = h.fullName["red_w_avt_w"];
-				filetoBuffer[0] = h.fullName["red_w_mg_w"];
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
-				alSourcei(source[0], AL_LOOPING, AL_TRUE);
-				offset[0] = 0;
-				offset[1] = 0;
-
-				double fade, rise;
-				crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg2, h.redTurnoverAvt, masterGain*h.redFactor);
-				alSourcef(source[0], AL_GAIN, fade);//
-				alSourcef(source[1], AL_GAIN, rise);//
-
-				alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);
-				alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-			}
-		}
-		//мг1дв -> 0
-		if (!sr.p_eng1_zap && !sr.p_eng2_zap && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor < h.redTurnoverMg1)
-		{
-			filetoBuffer[0] = h.fullName["red_off_w"];
-			filetoBuffer[1] = h.fullName["red_w_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-			offset[0] = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
-			offset[1] = 0;
-
-			double fade, rise;
-			crossFade(&fade, &rise, sr.reduktor_gl_obor, h.redTurnoverMg1, h.redTurnoverMg1 - 2, masterGain*h.redFactor);
-			alSourcef(source[1], AL_GAIN, fade);//
-			alSourcef(source[0], AL_GAIN, rise);//
-
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOff);
-
-			if (sr.reduktor_gl_obor > 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["red_off"], sr.reduktor_gl_obor));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-		}
+		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
 	}
 
 	double lowFreqGain = AL_EQUALIZER_DEFAULT_LOW_GAIN;
@@ -3201,11 +3026,13 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	double mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;//купол 2 1000-8000
 	double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;//ВЧ 4000-16000
 
+	double avrTurnRestrict = max(getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, step), getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, high));
+
 	//Полеты ми 28
 	if (h.modelName == "mi_28")
 	{
 		//Вычисляем средние обороты за последние 30с
-		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
+		double averangeTurn = getAverange("redTurns", 30);
 
 		//Усиление по атаке
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
@@ -3239,7 +3066,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//усиление от оборотов
-		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
 		//усиление НЧ когда нет хлопков на границе 2го условия
 		if (abs(velocityX) <= 16.67) //ниже 60ти висение
@@ -3291,14 +3118,14 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	else if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
 		//Вычисляем средние обороты за последние 30с
-		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
+		double averangeTurn = getAverange("redTurns", 30);
 
 		//усиление от оборотов выше 10000
-		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1.5;
+		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1.5 * avrTurnRestrict;
 		highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 
 		//усиление от оборотов
-		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
 		//Общее усиление от скорости выше 28м/с
 		double velocityGain = (abs(velocityX) >= 28) ? (abs(velocityX) - 28)* 0.1 : 0;//0.1дб на 1 м/с
@@ -3361,7 +3188,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	else if (h.modelName == "ka_29")
 	{
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
+		double averangeTurn = getAverange("redTurns", 30);
 
 		//Общее усиление от скорости выше 50м/с
 		double velocityGain = (abs(velocityX) >= 50) ? (abs(velocityX) - 50)* 0.2 : 0;//0.1дб на 1 м/с
@@ -3379,10 +3206,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
 
 		//усиление от оборотов выше 10000
-		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1;
+		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1 * avrTurnRestrict;
 		highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 		//усиление от оборотов
-		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
 		//усиление НЧ когда нет хлопков на границе 2го условия
 		if (abs(velocityX) <= 16.67) //ниже 60ти висение
@@ -3433,7 +3260,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	else if (h.modelName == "ka_27")
 	{
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
+		double averangeTurn = getAverange("redTurns", 30);
 
 		//усиление от скорости выше 50км/ч (14м/c)
 		double velocityGain = 0;
@@ -3464,10 +3291,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
 
 		//усиление от оборотов выше 10000
-		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1;
+		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1 * avrTurnRestrict;
 		highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 		//усиление от оборотов
-		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
 		//усиление НЧ когда нет хлопков на границе 2го условия
 		if (abs(velocityX) <= 16.67) //ниже 60ти висение
@@ -3536,14 +3363,14 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
 		alSourcef(source[2], AL_GAIN, beatsGain);
 
-		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
+		double averangeTurn = getAverange("redTurns", 30);
 
 		//усиление от оборотов выше 10000
-		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1.5;
+		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1.5 * avrTurnRestrict;
 		highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 
 		//усиление от оборотов
-		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75;
+		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
 		double averangeStep = getAverange("step", 20);
 
@@ -3695,7 +3522,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double takeOffVelY = toCoef(getParameterFromVector(vector<point>{ { -9, -3 }, { -4, -15 }}, velocityY))
 			* getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 1 }}, calcA)
 			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step);
-		
+
 		double takeOffGain = max(takeOffStep, takeOffVelY);
 
 		alSourcef(source[3], AL_GAIN, takeOffGain * masterGain);
@@ -3724,7 +3551,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double highFreqGainVelX = getParameterFromVector(vector<point>{ { 44.44, 0 }, { 56, 4 }, { 70, 6 }}, abs(velocityX));
 
 		//НЧ во время треска винта
-		double lowFreqCrunchGain = getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 6 }}, calcA) 
+		double lowFreqCrunchGain = getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 6 }}, calcA)
 			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
 			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step)
 			* getParameterFromVector(vector<point>{ { -1.3, 0 }, { -0.7, 1 }}, velocityY);
@@ -3789,11 +3616,208 @@ Engine::~Engine()
 	engCount--;
 }
 
-int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h)
+int Engine::play(bool status_on, bool status_off, bool status_hp, double parameter, Helicopter h)
 {
+
+	double lengthHpOn = getLengthWAV(h.fullName["eng_on_hp_w"]);
+	double lengthW = getLengthWAV(h.fullName["eng_w_w"]);
+	double lengthWAavt = getLengthWAV(h.fullName["eng_w_avt_w"]);
+	double lengthHpW = getLengthWAV(h.fullName["eng_w_hp_w"]);
+	double lengthHpOff = getLengthWAV(h.fullName["eng_off_hp_w"]);
+
+	string mode = "0";
+	if (status_hp)
+	{
+		mode = "hp";
+	}
+	else if (status_on)
+	{
+		mode = "on";
+	}
+	else if (status_off)
+	{
+		mode = "off";
+	}
+	else if (parameter < h.engTurnoverMg)
+	{
+		mode = "mg";
+	}
+	else if (parameter >= h.engTurnoverMg)
+	{
+		mode = "avt";
+	}
+
+	if (engModeSequence.empty())
+	{
+		engModeSequence.push_back(mode);
+		previous = engModeSequence.size() - 1;
+	}
+	if (engModeSequence.back() != mode)
+	{
+		switcher = 0;
+		id = !id;
+		if (mode == "on" || mode == "off" || mode == "hp")
+		{
+			fileBuffered[id] = "NULL";
+		}
+		engModeSequence.push_back(mode);
+		if (engModeSequence.size() >= 4)
+		{
+			engModeSequence.erase(engModeSequence.begin());
+		}
+		previous = engModeSequence.size() - 2;
+	}
+
+	bool modeHp = engModeSequence[previous] == "hp" || engModeSequence[previous - 1] == "hp";
+	bool modeOn = !modeHp;
+
+	//0 -> мг
+	if (status_on)
+	{
+		filetoBuffer[id] = h.fullName["eng_on_w"];
+	}
+	//0 -> хп
+	else if (status_hp)
+	{
+		filetoBuffer[id] = h.fullName["eng_on_hp_w"];
+	}
+	//мг || хп
+	else if (!status_on && !status_off && parameter < h.engTurnoverMg)
+	{
+		if (modeOn)
+		{
+			filetoBuffer[id] = h.fullName["eng_w_w"];
+		}
+		else if (modeHp)
+		{
+			filetoBuffer[id] = h.fullName["eng_w_hp_w"];
+		}
+	}
+	//мг <-> авт
+	else if ((!status_on || status_off) && parameter >= h.engTurnoverMg)
+	{
+		if (h.modelName == "ansat")
+		{
+			filetoBuffer[id] = h.fullName["eng_w_w"];
+		}
+		else
+		{
+			filetoBuffer[id] = h.fullName["eng_w_avt_w"];
+			filetoBuffer[!id] = h.fullName["eng_w_w"];
+		}
+	}
+	//мг -> 0 || хп -> 0
+	else if (status_off && parameter < h.engTurnoverMg)
+	{
+		if (modeOn)
+		{
+			filetoBuffer[id] = h.fullName["eng_off_w"];
+		}
+		else if (modeHp)
+		{
+			filetoBuffer[id] = h.fullName["eng_off_hp_w"];
+		}
+	}
+
+	double finalGain = 0;
+	if (modeOn)
+	{
+		finalGain = masterGain * h.engFactor;
+	}
+	else if (modeHp)
+	{
+		finalGain = masterGain * h.engHpFactor;
+	}
+
+	switcher += deltaTime;
+	double rise = 0;
+	if (filetoBuffer[id] == h.fullName["eng_w_avt_w"])
+	{
+		rise = getParameterFromVector(vector<point>{ {h.engTurnoverMg, 0}, { h.engTurnoverAvt, finalGain } }, parameter);
+	}
+	else if (filetoBuffer[!id] == h.fullName["eng_w_avt_w"])
+	{
+		rise = finalGain - getParameterFromVector(vector<point>{ {h.engTurnoverMg, 0}, { h.engTurnoverAvt, finalGain } }, parameter);
+	}
+	else
+	{
+		rise = getParameterFromVector(vector<point>{ {0, 0}, { 0.5, finalGain } }, switcher);
+	}
+	if (filetoBuffer[id] == "NULL")
+	{
+		rise = 0;
+	}
+	else if (filetoBuffer[!id] == "NULL")
+	{
+		rise = finalGain;
+	}
+	double fade = finalGain - rise;
+	alSourcef(source[!id], AL_GAIN, fade);
+	alSourcef(source[id], AL_GAIN, rise);
+
+	/*float g0;
+	float g1;
+	alGetSourcef(source[0], AL_GAIN, &g0);
+	alGetSourcef(source[1], AL_GAIN, &g1);
+	cout.precision(3);
+	cout << fixed << " g0: " << g0 << " g1: " << g1 << " %: " << parameter << "\r";*/
+
 	for (size_t i = 0; i < 2; i++)
 	{
-		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+		if (filetoBuffer[i] == h.fullName["eng_on_w"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+			offset[i] = getOffset(1, h.fullName["eng_on"], parameter);
+			alSourcef(source[i], AL_PITCH, getPitch(offsetOn, h.fullName["eng_on"], parameter));
+		}
+		else if (filetoBuffer[i] == h.fullName["eng_on_hp_w"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+			offset[i] = lengthHpOn / h.engTurnoverHp * parameter;
+			alSourcef(source[i], AL_PITCH, 1);
+		}
+		else if (filetoBuffer[i] == h.fullName["eng_w_w"])
+		{
+			offset[i] = lengthW * phase;
+			if (h.modelName == "ansat")
+			{
+				alSourcef(source[i], AL_PITCH, parameter / h.engTurnoverAvt);
+			}
+			else
+			{
+				alSourcef(source[i], AL_PITCH, parameter / h.engTurnoverMg);
+			}
+			alSourcei(source[i], AL_LOOPING, AL_TRUE);
+		}
+		else if (filetoBuffer[i] == h.fullName["eng_w_hp_w"])
+		{
+			offset[i] = lengthHpW * phase;
+			alSourcef(source[i], AL_PITCH, parameter / h.engTurnoverHp);
+			alSourcei(source[i], AL_LOOPING, AL_TRUE);
+		}
+		else if (filetoBuffer[i] == h.fullName["eng_w_avt_w"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_TRUE);
+			offset[i] = lengthWAavt * phase;
+			alSourcef(source[i], AL_PITCH, parameter / h.engTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
+
+			offset[!i] = lengthW * phase;
+			alSourcef(source[!i], AL_PITCH, parameter / h.engTurnoverMg);
+			alSourcei(source[!i], AL_LOOPING, AL_TRUE);
+		}
+		else if (filetoBuffer[i] == h.fullName["eng_off_w"])
+		{
+			offset[i] = getOffset(1, h.fullName["eng_off"], parameter);
+			alSourcef(source[i], AL_PITCH, getPitch(offsetOff, h.fullName["eng_off"], parameter));
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+		}
+		else if (filetoBuffer[i] == h.fullName["eng_off_hp_w"])
+		{
+			offset[i] = lengthHpOff / h.engTurnoverHp * abs(h.engTurnoverHp - parameter);
+			alSourcef(source[i], AL_PITCH, 1);
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+		}
+
 		//Подключаем эквалайзер
 		if (eq[i] != "set")
 		{
@@ -3805,202 +3829,22 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 			alSourcei(source[i], AL_DIRECT_FILTER, filter[i]);//подключаем фильтр к источнику
 			eq[i] = "set";
 		}
+
 		//Загружаем буферы и запускам источники
 		if (fileBuffered[i] != filetoBuffer[i])
 		{
 			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
 			fileBuffered[i] = filetoBuffer[i];
 		}
+
 		//Выключаем источники если обороты равны 0 и двигатель не запускается
-		if (!status_on && parameter == 0)
+		if (!status_on && !status_off && !status_hp && parameter == 0)
 		{
 			alSourceStop(source[i]);
 			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);		// перезабили признак 
-			fileBuffered[i] = filetoBuffer[i] = "NULL";
 		}
-	}
 
-	//ДВИГАТЕЛЬ АНСАТА
-	if (h.modelName == "ansat")
-	{
-		const double ansatSoundTurns = 73;//обороты при которых записывался звук двигателя 
-		//0 -> мг
-		if (/*parameter <= h.engTurnoverMg &&*/ status_on && parameter > 0)
-		{
-			filetoBuffer[0] = h.fullName["eng_on_w"];
-			filetoBuffer[1] = h.fullName["eng_w_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-			offset[0] = getOffset(1, h.fullName["eng_on"], parameter);
-			offset[1] = getLengthWAV(h.fullName["eng_w_w"]) * phase;
-
-			double fade = 0;
-			double rise = 0;
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-
-			//Если запуск проигрывается - плавно переходим на цикл
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				//Оцениваем выходную громкость источников по параметрам оборотов и времени проигрывания,
-				//чтобы обеспечить нормальное звучание, если обороты по какимто причинам не вышли на малый газ,
-				//до окончания проигрывания записи запуска
-				double fadeTurn = 0;
-				double fadeTime = 0;
-				double riseTurn = 0;
-				double riseTime = 0;
-				lengthOn = getLengthWAV(h.fullName["eng_on_w"]);
-				lengthOff = getLengthWAV(h.fullName["eng_w_w"]);
-				crossFade(&fadeTurn, &riseTurn, parameter, h.engTurnoverMg - 3, h.engTurnoverMg, masterGain*h.engFactor);
-				if (offsetOn != 0)
-					crossFade(&fadeTime, &riseTime, offsetOn, lengthOn - lengthOff, lengthOn, masterGain*h.engFactor);
-				fade = min(fadeTurn,fadeTime);
-				rise = (masterGain * h.engFactor) - fade;
-			}
-			//Иначе используем цикл
-			else
-			{
-				fade = 0;
-				rise = masterGain * h.engFactor;
-			}
-
-			alSourcef(source[0], AL_GAIN, fade);
-			alSourcef(source[1], AL_GAIN, rise);
-
-			if (parameter > 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["eng_on"], parameter));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-
-			alSourcef(source[1], AL_PITCH, parameter / ansatSoundTurns);//меняем pitch 
-
-
-		}
-		//мг -> 0
-		if (status_off && parameter > 0 /*&& parameter < h.engTurnoverMg*/)
-		{
-			filetoBuffer[1] = h.fullName["eng_w_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-			offset[0] = getOffset(1, h.fullName["eng_off"], parameter);
-			offset[1] = getLengthWAV(h.fullName["eng_w_w"]) * phase;
-
-			//файл остановки начинается с МГ, ждем до этих оборотов
-			if (parameter < h.engTurnoverMg)
-			{
-				filetoBuffer[0] = h.fullName["eng_off_w"];
-			}
-
-			float off = 0;
-			alGetSourcef(source[0], AL_SEC_OFFSET, &off);
-			cout << "off: " << off << "\r";
-
-			double fade = 0, rise = 0;
-			crossFade(&rise, &fade, parameter, h.engTurnoverMg - 3, h.engTurnoverMg, masterGain * h.engFactor);
-			alSourcef(source[1], AL_GAIN, fade);
-			alSourcef(source[0], AL_GAIN, rise);
-
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOff);
-
-			if (parameter > 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["eng_off"], parameter));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-
-			alSourcef(source[1], AL_PITCH, parameter / ansatSoundTurns);//меняем pitch 
-		}
-	}
-	else
-	{
-		//0 -> мг
-		if (parameter <= h.engTurnoverMg && status_on)
-		{
-			filetoBuffer[0] = h.fullName["eng_on_w"];
-			filetoBuffer[1] = h.fullName["eng_w_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-			offset[0] = getOffset(1, h.fullName["eng_on"], parameter);
-			offset[1] = getLengthWAV(h.fullName["eng_w_w"]) * phase;
-
-			double fade = 0;
-			double rise = 0;
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-
-			//Если запуск проигрывается - плавно переходим на цикл
-			if (sourceStatus[0] == AL_PLAYING)
-			{
-				//Оцениваем выходную громкость источников по параметрам оборотов и времени проигрывания,
-				//чтобы обеспечить нормальное звучание, если обороты по какимто причинам не вышли на малый газ,
-				//до окончания проигрывания записи запуска
-				double fadeTurn = 0;
-				double fadeTime = 0;
-				double riseTurn = 0;
-				double riseTime = 0;
-				lengthOn = getLengthWAV(h.fullName["eng_on_w"]);
-				lengthOff = getLengthWAV(h.fullName["eng_w_w"]);
-				crossFade(&fadeTurn, &riseTurn, parameter, h.engTurnoverMg - 2, h.engTurnoverMg, masterGain*h.engFactor);
-				if (offsetOn != 0)
-					crossFade(&fadeTime, &riseTime, offsetOn, lengthOn - lengthOff, lengthOn, masterGain*h.engFactor);
-				fade = (fadeTurn < fadeTime) ? fadeTurn : fadeTime;
-				rise = (1 * masterGain * h.engFactor) - fade;
-			}
-			//Иначе используем цикл
-			else
-			{
-				fade = 0;
-				rise = 1 * masterGain * h.engFactor;
-			}
-
-			alSourcef(source[0], AL_GAIN, fade);
-			alSourcef(source[1], AL_GAIN, rise);
-
-			//alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOn);
-
-			if (parameter > 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOn, h.fullName["eng_on"], parameter));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-			alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-		}
-		//мг <-> авт
-		if (parameter > h.engTurnoverMg)
-		{
-			filetoBuffer[0] = h.fullName["eng_w_avt_w"];
-			filetoBuffer[1] = h.fullName["eng_w_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_TRUE);
-			offset[0] = getLengthWAV(h.fullName["eng_w_avt_w"]) * phase;
-			offset[1] = getLengthWAV(h.fullName["eng_w_w"]) * phase;
-
-			double fade, rise;
-			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverAvt, masterGain*h.engFactor);
-			alSourcef(source[1], AL_GAIN, fade);
-			alSourcef(source[0], AL_GAIN, rise);
-
-			alSourcef(source[1], AL_PITCH, parameter / h.engTurnoverMg);
-			alSourcef(source[0], AL_PITCH, parameter / h.engTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-		}
-		//мг -> 0
-		if (status_off && parameter > 0 && parameter < h.engTurnoverMg)
-		{
-			filetoBuffer[0] = h.fullName["eng_off_w"];
-			filetoBuffer[1] = h.fullName["eng_w_w"];
-			alSourcei(source[1], AL_LOOPING, AL_TRUE);
-			alSourcei(source[0], AL_LOOPING, AL_FALSE);
-			offset[0] = getOffset(1, h.fullName["eng_off"], parameter);
-			offset[1] = getLengthWAV(h.fullName["eng_w_w"]) * phase;
-
-			double fade, rise;
-			crossFade(&fade, &rise, parameter, h.engTurnoverMg, h.engTurnoverMg - 2, masterGain*h.engFactor);
-			alSourcef(source[1], AL_GAIN, fade);
-			alSourcef(source[0], AL_GAIN, rise);
-
-			alGetSourcef(source[0], AL_SEC_OFFSET, &offsetOff);
-
-			if (parameter > 5)
-				alSourcef(source[0], AL_PITCH, getPitch(offsetOff, h.fullName["eng_off"], parameter));
-			else
-				alSourcef(source[0], AL_PITCH, 1);
-		}
+		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
 	}
 
 	double lowFreqGain = AL_EQUALIZER_DEFAULT_LOW_GAIN;
@@ -4013,17 +3857,19 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 	double mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;//купол 2 1000-8000
 	double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;//ВЧ 4000-16000
 
+	double avrTurnRestrict = max(getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, step), getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, high));
+
 	//Полеты 8 мтв5, 8 амтш, ка 27м, ка 29
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "mi_26" || h.modelName == "ka_27" || h.modelName == "ka_29")
 	{
-		double averangeTurn = getAverange("eng" + to_string(engNum) + "Turns", 25 * interpolation(0, 0.01, h.engTurnoverAvt, 1, parameter));
+		double averangeTurn = getAverange("eng" + to_string(engNum) + "Turns", 25);
 
 		////усиление от оборотов выше 10000
 		//double highFreqTurnGain = (parameter - averangeTurn) * 0.35;
 		//highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 
 		//усиление от оборотов
-		double turnGain = toCoef((parameter - averangeTurn) * 0.35);
+		double turnGain = toCoef((parameter - averangeTurn) * 0.35) * avrTurnRestrict;
 
 		lowFreqGain = turnGain;
 		mid1FreqGain = turnGain;
@@ -4034,7 +3880,7 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 	{
 		//Громкость двигателей в зависимости от оборотов
 		double turnsGainControl = toCoef(getParameterFromVector(vector<point>{ { 60, -6 }, { 80, -4 }, { 100, 0 }}, parameter)
-			/** getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, velocityX)*/);
+		/** getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, velocityX)*/);
 
 		lowFreqGain = turnsGainControl;
 		mid1FreqGain = turnsGainControl;
@@ -4060,6 +3906,217 @@ int Engine::play(bool status_on, bool status_off, double parameter, Helicopter h
 
 		alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 	}
+
+	return 1;
+}
+
+Vsu::Vsu() : Sound(2, 2, 2)
+{
+
+}
+
+Vsu::~Vsu()
+{
+
+}
+
+int Vsu::play(SOUNDREAD sr, Helicopter h)
+{
+	//Для 27 29 и 8
+	if (h.modelName == "ka_27" || h.modelName == "ka_29" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_8_amtsh")
+	{
+		//Подсадка ВСУ при запущенном двигателе, но до запуска редуктора
+		if (sr.reduktor_gl_obor > 0)
+		{
+			gain = interpolation(0, 0.7, 2.5, 0.85, 5, 1, vsuUpTimer);
+			vsuUpTimer += Sound::deltaTime;
+			vsuDownTimer = 0;
+		}
+		else
+		{
+			if (sr.p_eng1_zap || sr.p_eng1_hp || sr.p_eng2_zap || sr.p_eng2_hp)
+			{
+				gain = interpolation(0, 1, 0.25, 0.85, 0.5, 0.7, vsuDownTimer);
+				vsuDownTimer += Sound::deltaTime;
+				vsuUpTimer = 0;
+			}
+			else
+			{
+				gain = interpolation(0, 0.7, 2.5, 0.85, 5, 1, vsuUpTimer);
+				vsuUpTimer += Sound::deltaTime;
+				vsuDownTimer = 0;
+			}
+		}
+	}
+
+	double lengthOn = getLengthWAV(h.fullName["vsu_on"]);
+	double lengthHpOn = getLengthWAV(h.fullName["vsu_hp_on"]);
+	double lengthOff = getLengthWAV(h.fullName["vsu_off"]);
+	double lengthHpOff = getLengthWAV(h.fullName["vsu_hp_off"]);
+
+	string mode = "0";
+	if (sr.p_vsu_hp)
+	{
+		mode = "hp";
+	}
+	else if (sr.p_vsu_zap)
+	{
+		mode = "on";
+	}
+	else if (sr.p_vsu_ostanov)
+	{
+		mode = "off";
+	}
+	else
+	{
+		mode = "0";
+	}
+
+	if (vsuModeSequence.empty())
+	{
+		vsuModeSequence.push_back(mode);
+		previous = vsuModeSequence.size() - 1;
+	}
+	if (vsuModeSequence.back() != mode)
+	{
+		switcher = 0;
+		id = !id;
+		if (mode == "on" || mode == "off" || mode == "hp")
+		{
+			fileBuffered[id] = "NULL";
+		}
+		vsuModeSequence.push_back(mode);
+		if (vsuModeSequence.size() >= 4)
+		{
+			vsuModeSequence.erase(vsuModeSequence.begin());
+		}
+		previous = vsuModeSequence.size() - 2;
+	}
+
+	bool modeHp = vsuModeSequence[previous] == "hp" || vsuModeSequence[previous - 1] == "hp";
+	bool modeOn = !modeHp;
+
+	//0 -> 100
+	if (sr.p_vsu_hp)
+	{
+		filetoBuffer[id] = h.fullName["vsu_hp_on"];
+	}
+	//0 -> хп
+	else if (sr.p_vsu_zap)
+	{
+		filetoBuffer[id] = h.fullName["vsu_on"];
+	}
+	//100
+	else if (!sr.p_vsu_zap && !sr.p_vsu_ostanov)
+	{
+		if (modeOn)
+		{
+			filetoBuffer[id] = h.fullName["vsu_w"];
+		}
+		else if (modeHp)
+		{
+			filetoBuffer[id] = h.fullName["vsu_hp_w"];
+		}
+	}
+	//100 -> 0 || хп -> 0
+	else if (sr.p_vsu_ostanov)
+	{
+		if (modeOn)
+		{
+			filetoBuffer[id] = h.fullName["vsu_off"];
+		}
+		else if (modeHp)
+		{
+			filetoBuffer[id] = h.fullName["vsu_hp_off"];
+		}
+	}
+
+	double finalGain = 0;
+	if (modeOn)
+	{
+		finalGain = masterGain * h.vsuFactor * gain;
+	}
+	else if (modeHp)
+	{
+		finalGain = masterGain * h.vsuHpFactor * gain;
+	}
+
+	switcher += deltaTime;
+	double rise = getParameterFromVector(vector<point>{ {0, 0}, { 0.5, finalGain } }, switcher);
+	if (filetoBuffer[id] == "NULL")
+	{
+		rise = 0;
+	}
+	else if (filetoBuffer[!id] == "NULL")
+	{
+		rise = finalGain;
+	}
+	double fade = finalGain - rise;
+	alSourcef(source[!id], AL_GAIN, fade);
+	alSourcef(source[id], AL_GAIN, rise);
+
+	for (size_t i = 0; i < 2; i++)
+	{
+		if (filetoBuffer[i] == h.fullName["vsu_on"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+			offset[i] = lengthOn / h.vsuTurnoverFull * sr.vsu_obor;
+			alSourcef(source[i], AL_PITCH, 1);
+		}
+		else if (filetoBuffer[i] == h.fullName["vsu_hp_on"])
+		{
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+			offset[i] = lengthHpOn / h.vsuTurnoverHp * sr.vsu_obor;
+			alSourcef(source[i], AL_PITCH, 1);
+		}
+		else if (filetoBuffer[i] == h.fullName["vsu_w"])
+		{
+			alSourcef(source[i], AL_PITCH, sr.vsu_obor / h.vsuTurnoverFull);
+			alSourcei(source[i], AL_LOOPING, AL_TRUE);
+			offset[i] = 0;
+		}
+		else if (filetoBuffer[i] == h.fullName["vsu_hp_w"])
+		{
+			alSourcef(source[i], AL_PITCH, sr.vsu_obor / h.vsuTurnoverHp);
+			alSourcei(source[i], AL_LOOPING, AL_TRUE);
+			offset[i] = 0;
+		}
+		else if (filetoBuffer[i] == h.fullName["vsu_off"])
+		{
+			offset[i] = lengthOff / h.vsuTurnoverFull * abs(h.vsuTurnoverFull - sr.vsu_obor);
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+			alSourcef(source[i], AL_PITCH, 1);
+		}
+		else if (filetoBuffer[i] == h.fullName["vsu_hp_off"])
+		{
+			offset[i] = lengthHpOff / h.vsuTurnoverHp * abs(h.vsuTurnoverHp - sr.vsu_obor);
+			alSourcei(source[i], AL_LOOPING, AL_FALSE);
+			alSourcef(source[i], AL_PITCH, 1);
+		}
+
+		//Загружаем буферы и запускам источники
+		if (fileBuffered[i] != filetoBuffer[i])
+		{
+			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
+			fileBuffered[i] = filetoBuffer[i];
+		}
+
+		//Выключаем источники если обороты равны 0 и не запускается
+		if (!sr.p_vsu_zap && !sr.p_vsu_ostanov && !sr.p_vsu_hp && sr.vsu_obor == 0)
+		{
+			alSourceStop(source[i]);
+			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);		// перезабили признак 
+		}
+
+		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+	}
+
+	/*float g0;
+	float g1;
+	alGetSourcef(source[0], AL_GAIN, &g0);
+	alGetSourcef(source[1], AL_GAIN, &g1);
+	cout.precision(3);
+	cout << fixed << " g0: " << g0 << " g1: " << g1 << " %: " << sr.vsu_obor << "\r";*/
 
 	return 1;
 }
@@ -4514,7 +4571,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double turnsGain = 0;
 		if (sr.reduktor_gl_obor <= 91)
 		{
-			turnsGain = (91 - sr.reduktor_gl_obor) * (-3);//рассчитываем усиление от оборотов винта - 3дб на оборот
+			turnsGain = (91 - sr.reduktor_gl_obor) * (-3);//расчитываем усиление от оборотов винта - 3дб на оборот
 		}
 
 		//Условие затухания хлопков
@@ -4732,7 +4789,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step)
 			* getParameterFromVector(vector<point>{ { 0, 0 }, { 1, 1 }}, high)
 			* getParameterFromVector(vector<point>{ { 3, 0 }, { 5, 1 }}, calcA);
-		
+
 		//Ослабление хлопков при верт скор
 		double velYGainMod = getParameterFromVector(vector<point>{ { -8, -3 }, { -4, 0 }}, velocityY)
 			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step)
@@ -4749,7 +4806,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		//Результирующая громкость хлопков 
 		double vintFlapGain = max(toCoef(lowShelf), attackFlapGain) * toCoef(crunchGainMod + velYGainMod + vintFlapCrunchHoveringGain);
-		
+
 		//треск на висении
 		double vintFlapHiCrunchHoveringGain = toCoef(getParameterFromVector(vector<point>{ { 4, -13 }, { 6, 0 }}, tangaz))
 			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityX));
@@ -5107,16 +5164,16 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
-double attack(double velocityX, double velocityXPrevious, double tangaz, double deltaHigh, double periodCalc)
+double attack(double velocityX, double velocityXPrevious, double tangaz, double velocityY)
 {
 	double calcA = 0;
 	if ((velocityX + velocityXPrevious) == 0)
 	{
-		if (deltaHigh < 0)
+		if (velocityY < 0)
 		{
 			calcA = 90;
 		}
-		else if (deltaHigh > 0)
+		else if (velocityY > 0)
 		{
 			calcA = -90;
 		}
@@ -5127,7 +5184,7 @@ double attack(double velocityX, double velocityXPrevious, double tangaz, double 
 	}
 	else if (tangaz == 90 || tangaz == -90)
 	{
-		if (deltaHigh != 0)
+		if (velocityY != 0)
 		{
 			calcA = 0;
 		}
@@ -5139,15 +5196,16 @@ double attack(double velocityX, double velocityXPrevious, double tangaz, double 
 	else
 	{
 		tangaz = tangaz * M_PI / 180.0;
-		calcA = atan(tan(tangaz) - (2 * deltaHigh) / ((velocityXPrevious + velocityX) * cos(tangaz) * periodCalc));
+		calcA = atan(tan(tangaz) - (2 * velocityY) / ((velocityXPrevious + velocityX) * cos(tangaz)));
 		calcA = calcA * 180 / M_PI;
 	}
 	return calcA;
 }
 
-Sound::Sound() : sourceStatus(new int), source(new ALuint), buffer(new ALuint[3]), effectSlot(new ALuint), effect(new ALuint), filter(new ALuint)
+Sound::Sound() : sourceStatus(new int[2]), source(new ALuint[2]), buffer(new ALuint[3]), effectSlot(new ALuint), effect(new ALuint), filter(new ALuint)
 {
 	sourceStatus[0] = 0;
+	sourceStatus[1] = 0;
 	try
 	{
 		if (sourcesInUse == maxSources)
@@ -5157,7 +5215,7 @@ Sound::Sound() : sourceStatus(new int), source(new ALuint), buffer(new ALuint[3]
 	{
 		cout << " [" << e << "] Sources exist...cant gen more sources...\n" << endl;
 	}
-	alGenSources(1, source.get());
+	alGenSources(2, source.get());
 	alGenEffects(1, effect.get());
 	alGenBuffers(3, buffer.get());
 	alGenFilters(1, filter.get());
