@@ -96,6 +96,8 @@ public:
 	static double globalWindow;//!<Переменная времени для набора значений в массивы для рассчета среднего
 
 	unique_ptr<int[]> sourceStatus;//!< Переменная для статуса источника
+	unique_ptr<double[]> pitch;//!< Переменная для параметра высоты тона звука агрегата
+	unique_ptr<double[]> gain;//!< Переменная для параметра громкости звука агрегата
 	unique_ptr<ALuint[]> source;//!< Переменная для источника
 	unique_ptr<ALuint[]> buffer;//!< Переменная для буффера
 	unique_ptr<ALuint[]> effectSlot;//!< Переменная для слота эффекта
@@ -109,17 +111,20 @@ public:
 	float offsetOff = 0;//!< Переменная для хранения отступа от начала файла в секундах, как правило для файла остановки агрегата
 	double lengthOn = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла запуска агрегата
 	double lengthOff = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата
-	double pitch = 1;//!< Переменная для параметра высоты тона звука агрегата
-	double gain = 1;//!< Переменная для параметра громкости звука агрегата
+	
 	vector<double> channel = { 1,1,0,0,0,0,0 };//!< массив для поканального вывода звука
 	int sourceNumber = 2;//!< Переменная для хранения количества источников используемых объектом звука агрегата
 	int bufferNumber = 3;//!< Переменная для хранения количества буфферов используемых объектом звука агрегата
 	int effectSlotNumber = 0;//!< Переменная для хранения количества слотов эффектов используемых объектом звука агрегата
 
+	Smoother *smooth = nullptr;
+
 	Sound();//!< Конструктор по умолчанию, для объекта с 1им источником
 	Sound(const Sound &copy);//!< Конструктор копирования*/
 	Sound(int sources, int buffers, int effectslots);//!< Конструктор для объекта с sources источниками, buffers буферами и effectslots слотами эффектов
 	~Sound();//!< Деструктор (да неужели)
+
+
 
 	/*!
 	\brief Вычисляет длительность WAVE файла
@@ -217,7 +222,7 @@ public:
 	string pinkNoise;/*!< Переменная для однократной загрузки буфера */
 	string beats;/*!< Переменная для однократной загрузки буфера */
 	string takeOff;/*!< Переменная для однократной загрузки буфера */
-	string filetoBuffer[2] = {"NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
+	string filetoBuffer[2] = { "NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
 	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = { 0 };
 	vector<string> redModeSequence = { "0","0","0" };
@@ -253,7 +258,7 @@ public:
 	static int engCount;/*!< Переменная для количества инициализированных двигателей в программе */
 	double phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
 	int engNum;//!<Номер двигателя
-	vector<string> engModeSequence = {"0","0","0"};
+	vector<string> engModeSequence = { "0","0","0" };
 	int engModeCounter = 0;
 	int previous = 1;
 	double switcher = 0;
@@ -294,7 +299,7 @@ public:
 
 	double vsuDownTimer = 0;
 	double vsuUpTimer = 0;
-	vector<string> vsuModeSequence = {"0", "0", "0"};
+	vector<string> vsuModeSequence = { "0", "0", "0" };
 	int vsuModeCounter = 0;
 	int previous = 1;
 	double switcher = 0;
@@ -477,7 +482,7 @@ double getValue(double parameter, int n, point p, ...);
 \param[in] x Значение переменной в искомой точке
 \return Возвращает значение функции
 */
-double getValue(point p1, point p2 , double x);
+double getValue(point p1, point p2, double x);
 
 /*!
 \brief Возвращает значение функции
@@ -683,5 +688,18 @@ double toDb(double coef);
 */
 double toCoef(double db);
 
-double delay(double deltaPar, double deltaTime);
+
+class Smoother : public Sound
+{
+public:
+
+	double agregator = 0;
+	float previousGain = 0;
+	double newDbGain = 0;
+	double dbPerSec = 3;
+
+	double delay(double nsGain);
+};
+
+
 
