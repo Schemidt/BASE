@@ -225,7 +225,6 @@ public:
 	int previous = 1;
 	double switcher = 0;
 	int id = 0;
-	double deltaTakeOffGain = 0;
 
 	Reductor();
 
@@ -683,4 +682,6 @@ double toDb(double coef);
 \return коэффициент громкости
 */
 double toCoef(double db);
+
+double delay(double deltaPar, double deltaTime);
 

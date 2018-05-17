@@ -3035,6 +3035,9 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 	double avrTurnRestrict = max(getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, step), getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, hight));
 
+	//Плавная высота
+	double smoothHight = delay(velocityY * deltaTime, deltaTime);
+
 	//Полеты ми 28
 	if (h.modelName == "mi_28")
 	{
@@ -3202,10 +3205,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			takeOff = h.fullName["takeOff"];
 		}
 
-		double takeOffStep = toCoef(getParameterFromVector(vector<point>{ { 0, -18 }, { 16, 0 }}, step))
+		double takeOffGain = toCoef(getParameterFromVector(vector<point>{ { 0, -18 }, { 16, 0 }}, step))
 			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, hight);
-
-		double takeOffGain = takeOffStep/* * sth*/;
 
 		alSourcef(source[3], AL_GAIN, takeOffGain * masterGain);
 
@@ -3281,6 +3282,19 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	//Полеты ка 27
 	else if (h.modelName == "ka_27")
 	{
+		//добавляем отдельный звук взлета
+		if (takeOff != h.fullName["takeOff"])
+		{
+			setAndDeploySound(&buffer[3], &source[3], 0, h.fullName["takeOff"]);
+			alSourcei(source[3], AL_LOOPING, AL_TRUE);
+			takeOff = h.fullName["takeOff"];
+		}
+
+		double takeOffGain = toCoef(getParameterFromVector(vector<point>{ { 0, -18 }, { 16, 0 }}, step))
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, hight);
+
+		alSourcef(source[3], AL_GAIN, takeOffGain * masterGain);
+
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 		double averangeTurn = getAverange("redTurns", 30);
 
@@ -3348,7 +3362,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
 		}
 
-		lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 + mid2FreqStepGain * 0.3 + flapCGain + velocityGain) * 0.05); //0.15 -> 0.15
+		lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 /*+ mid2FreqStepGain * 0.3*/ + flapCGain + velocityGain) * 0.05); //0.15 -> 0.15
 		mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.1 + mid2FreqStepGain * 0.2 + flapCGain) * 0.05);//0.3 -> 0.2
 		mid2FreqGain = pow(10, (turnGain + stepGain * 0.3 + absStepGain * 0.1 + velocityGain * 0.75) * 0.05);//0.4 -> 0.3
 		highFreqGain = pow(10, (turnGain + stepGain * 0.5 + absStepGain * 0.3 + highFreqTurnGain) * 0.05);//
@@ -4483,12 +4497,15 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 	{
 		if (key[0] != h.fullName["vint_flap_A"] || key[1] != h.fullName["vint_flap_B"] || key[2] != h.fullName["vint_flap_C"])
 		{
-			//загружаем НЧ хлопки
-			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["vint_flap_C"]);
-			alSourcei(source[2], AL_LOOPING, AL_TRUE);
+			//загружаем равномерные ВЧ хлопки
+			setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap_A"]);
+			alSourcei(source[0], AL_LOOPING, AL_TRUE);
 			//загружаем неравномерные ВЧ хлопки
 			setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_B"]);
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
+			//загружаем НЧ хлопки
+			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["vint_flap_C"]);
+			alSourcei(source[2], AL_LOOPING, AL_TRUE);
 
 			alEffecti(effect[1], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
 			alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[1]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
@@ -4496,10 +4513,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			alFilterf(filter[1], AL_LOWPASS_GAIN, 0);
 			alSource3i(source[1], AL_AUXILIARY_SEND_FILTER, effectSlot[1], 0, 0);
 			alSourcei(source[1], AL_DIRECT_FILTER, filter[1]);
-			//загружаем равномерные ВЧ хлопки
-			setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap_A"]);
-			alSourcei(source[0], AL_LOOPING, AL_TRUE);
-
+			
 			alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
 			alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 			alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
@@ -4575,7 +4589,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
 		//Условие и громкость НЧ хлопков в некоторых случаях определяется ускорением и высокой скоростью
-		double accelerationGain = (3 * abs(accelerationX)) - 15;
+		double accelerationGain = (3 * (abs(accelerationX) / 0.277)) - 15;
 		accelerationGain = (accelerationGain > 5) ? -accelerationGain : accelerationGain;//дб
 		accelerationGain = pow(10, accelerationGain * 0.05);//коэф
 
@@ -4641,7 +4655,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[0], AL_GAIN, flapAGain);//равномерные
 		alSourcef(source[1], AL_GAIN, flapBGain);//неравномерные
 		alSourcef(source[2], AL_GAIN, flapCGain);//тупые
-
 	}
 	//Полеты ми 26
 	else if (h.modelName == "mi_26")
@@ -5476,4 +5489,19 @@ double toDb(double coef)
 double toCoef(double db)
 {
 	return pow(10, db * 0.05);
+}
+
+double delay(double deltaPar, double deltaTime)
+{
+	static double newDbGain = 0;
+	static double agregator = 0;
+	double dbPerSec = 3;
+
+	agregator += deltaPar;
+
+	dbPerSec = (newDbGain < agregator) ? dbPerSec : -dbPerSec;
+
+	newDbGain += dbPerSec * deltaTime;
+
+	return newDbGain;
 }
