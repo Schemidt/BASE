@@ -646,7 +646,7 @@ int main(int argc, char *argv[])
 			Sound::masterGain = localdata.master_gain;
 			Sound::tangaz = localdata.tangaz;//тангаж (временно используем параметр инт осадков)
 			Sound::velocityX = localdata.v;//приборная скорость
-			Sound::hight = localdata.hight;
+			Sound::hight = localdata.high;
 			Sound::step = localdata.step; //шаг (временно используем параметр перегрузки)
 
 			//Если не пришел признак остановки модели - вычисляем переменные
@@ -1389,7 +1389,7 @@ int main(int argc, char *argv[])
 			//Если НАР13 имеется на борту
 			if (helicopter.rocketNar13Factor)
 			{
-				if (localdata.p_nar_c13)//Условие создания объекта
+				if (localdata.p_nar_s13)//Условие создания объекта
 				{
 					timerNar13 += Sound::deltaTime;
 					for (int i = 0; i < 5; i++)
@@ -1404,7 +1404,7 @@ int main(int argc, char *argv[])
 								nar13[i] = new Sound;//Создаем объект
 							if (nar13[i])//Если объект создан - используем его
 							{
-								nar13[i]->play(localdata.p_nar_c13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);//Воспроизводим звук - записываем состояние звука в play
+								nar13[i]->play(localdata.p_nar_s13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);//Воспроизводим звук - записываем состояние звука в play
 								nar13[i]->soundOn = 0;
 							}
 							counterNar13++;
