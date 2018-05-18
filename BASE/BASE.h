@@ -69,10 +69,10 @@ public:
 	static double tangaz;//!< Тангаж
 	static double derivTangaz;//!<скорость изменения Тангажа (dtangaz/dt)
 	static double hight;//!< Высота
-	static double velocityX;//!< приборная скорость
-	static double accelerationX;//!< Ускорение по приборной скорости (dvx/dt)
+	static double velocityVectorXZ;//!< суммарный вектор скорости в плоскости vx-vz
+	static double accelerationVectorXZ;//!< Ускорение по вектору скорости (dv/dt)
 	static double velocityY;//!< вертикальная скорость
-	static double dash;//!< Рывок (d2vx/dt)
+	static double dashVectorXZ;//!< Рывок (d2v/dt)
 	static double accelerationVy;//!< Вертикальное ускорение (dvy/dt)
 	static double derivStep;//!< Скорость изменения шага
 	static double calcA;//!< Атака винта
@@ -80,8 +80,8 @@ public:
 
 	static vector<double> vectorHight;//!<Массив для рассчета производной от высоты
 	static vector<double> vectorVy;//!<Массив для рассчета производной от вертикальной скорости
-	static vector<double> vectorVx;//!<Массив для рассчета производной от горизонтальной скорости
-	static vector<double> vectorAcc;//!<Массив для рассчета производной от горизонтального ускорения
+	static vector<double> vectorVXZ;//!<Массив для рассчета производной от горизонтальной скорости
+	static vector<double> vectorAccXZ;//!<Массив для рассчета производной от горизонтального ускорения
 	static vector<double> vectorStep;//!<Массив для рассчета производной от шага
 	static vector<double> vectorTangaz;//!<Массив для рассчета производной от тангажа
 	static vector<double> vectorTime;//!<Массив для рассчета производной
@@ -649,18 +649,18 @@ int getMaxAvaliableSources();
 Код вычисления атаки:
 \code
 tangaz = tangaz * M_PI / 180.0;
-calcA = atan(tan(tangaz) - (2 * deltaHigh) / ((velocityXPrevious + velocityX) * cos(tangaz) * periodCalc));
+calcA = atan(tan(tangaz) - (2 * deltaHigh) / ((velocityXPrevious + velocityVectorXZ) * cos(tangaz) * periodCalc));
 calcA = calcA * 180 / M_PI;
 \endcode
 
-\param[in] velocityX Приборная скорость в прошлый момент времени t0
+\param[in] velocityVectorXZ Приборная скорость в прошлый момент времени t0
 \param[in] velocityXPrevious Приборная скорость в момент времени t0 + periodCalc
 \param[in] tangaz Тангаж в момент времени t0 + periodCalc
 \param[in] deltaHigh Разница высоты между выбранными моментами
 \param[in] periodCalc Разница по времени между выбранными моментами
 \return Значение атаки при данных параметрах
 */
-double attack(double velocityX, double velocityXPrevious, double tangaz, double velocityY);
+double attack(double velocityVectorXZ, double velocityXPrevious, double tangaz, double velocityY);
 /*!
 \brief Проверяет наличие процесса
 \details Проверяет наличие процесса

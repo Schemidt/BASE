@@ -453,17 +453,17 @@ double Sound::step = 0;
 double Sound::tangaz = 0;
 double Sound::derivTangaz = 0;
 double Sound::hight = 0;
-double Sound::velocityX = 0;
-double Sound::accelerationX = 0;
+double Sound::velocityVectorXZ = 0;
+double Sound::accelerationVectorXZ = 0;
 double Sound::velocityY = 0;
-double Sound::dash = 0;
+double Sound::dashVectorXZ = 0;
 double Sound::accelerationVy = 0;
 double Sound::derivStep = 0;
 double Sound::calcA = 0;
 double Sound::RedTurnAcc = 0;
 int Engine::engCount = 0;
 
-vector<double> Sound::vectorHight, Sound::vectorVy, Sound::vectorVx, Sound::vectorAcc, Sound::vectorStep, Sound::vectorTangaz, Sound::vectorTime, Sound::vectorRedTurn;
+vector<double> Sound::vectorHight, Sound::vectorVy, Sound::vectorVXZ, Sound::vectorAccXZ, Sound::vectorStep, Sound::vectorTangaz, Sound::vectorTime, Sound::vectorRedTurn;
 vector<double> Sound::vectorAvrEng1Turn, Sound::vectorAvrEng2Turn, Sound::vectorAvrRedTurn, Sound::vectorAvrStep, Sound::vectorAvrAtk;
 double Sound::globalWindow = 50;
 
@@ -593,7 +593,6 @@ int main(int argc, char *argv[])
 	Engine *eng[2] = { nullptr };
 	Reductor *red = nullptr;
 	Sound *beep = nullptr;
-	/*Sound *undefined0 = nullptr;*/
 	Sound *undefined1 = nullptr;
 	Sound *kranKolc = nullptr;
 	Sound *vpryam = nullptr;
@@ -604,8 +603,8 @@ int main(int argc, char *argv[])
 	Sound::vectorTime.push_back(Sound::currentTime);
 	Sound::vectorHight.push_back(Sound::hight);
 	Sound::vectorVy.push_back(Sound::velocityY);
-	Sound::vectorVx.push_back(Sound::velocityX);
-	Sound::vectorAcc.push_back(Sound::accelerationX);
+	Sound::vectorVXZ.push_back(Sound::velocityVectorXZ);
+	Sound::vectorAccXZ.push_back(Sound::accelerationVectorXZ);
 	Sound::vectorStep.push_back(Sound::step);
 	Sound::vectorTangaz.push_back(Sound::tangaz);
 	Sound::vectorRedTurn.push_back(localdata.reduktor_gl_obor);
@@ -645,7 +644,7 @@ int main(int argc, char *argv[])
 			Sound::currentTime = localdata.time;
 			Sound::masterGain = localdata.master_gain;
 			Sound::tangaz = localdata.tangaz;//тангаж (временно используем параметр инт осадков)
-			Sound::velocityX = localdata.v;//приборная скорость
+			Sound::velocityVectorXZ = sqrt(pow(localdata.v_atm_x, 2) + pow(localdata.v_atm_z, 2));//приборная скорость
 			Sound::hight = localdata.high;
 			Sound::step = localdata.step; //шаг (временно используем параметр перегрузки)
 
@@ -657,8 +656,8 @@ int main(int argc, char *argv[])
 				{
 					Sound::vectorHight.erase(Sound::vectorHight.begin());
 					Sound::vectorVy.erase(Sound::vectorVy.begin());
-					Sound::vectorVx.erase(Sound::vectorVx.begin());
-					Sound::vectorAcc.erase(Sound::vectorAcc.begin());
+					Sound::vectorVXZ.erase(Sound::vectorVXZ.begin());
+					Sound::vectorAccXZ.erase(Sound::vectorAccXZ.begin());
 					Sound::vectorTangaz.erase(Sound::vectorTangaz.begin());
 					Sound::vectorStep.erase(Sound::vectorStep.begin());
 					Sound::vectorTime.erase(Sound::vectorTime.begin());
@@ -672,8 +671,8 @@ int main(int argc, char *argv[])
 				Sound::vectorTime.push_back(Sound::currentTime);
 				Sound::vectorHight.push_back(Sound::hight);
 				Sound::vectorVy.push_back(Sound::velocityY);
-				Sound::vectorVx.push_back(Sound::velocityX);
-				Sound::vectorAcc.push_back(Sound::accelerationX);
+				Sound::vectorVXZ.push_back(Sound::velocityVectorXZ);
+				Sound::vectorAccXZ.push_back(Sound::accelerationVectorXZ);
 				Sound::vectorTangaz.push_back(Sound::tangaz);
 				Sound::vectorStep.push_back(Sound::step);
 				Sound::vectorRedTurn.push_back(localdata.reduktor_gl_obor);
@@ -687,11 +686,11 @@ int main(int argc, char *argv[])
 				{
 					Sound::velocityY = (Sound::hight - Sound::vectorHight.front()) / periodCalc;
 					Sound::accelerationVy = (Sound::velocityY - Sound::vectorVy.front()) / periodCalc;
-					Sound::accelerationX = (Sound::velocityX - Sound::vectorVx.front()) / periodCalc;
-					Sound::dash = (Sound::accelerationX - Sound::vectorAcc.front()) / periodCalc;
+					Sound::accelerationVectorXZ = (Sound::velocityVectorXZ - Sound::vectorVXZ.front()) / periodCalc;
+					Sound::dashVectorXZ = (Sound::accelerationVectorXZ - Sound::vectorAccXZ.front()) / periodCalc;
 					Sound::derivStep = (Sound::step - Sound::vectorStep.front()) / periodCalc;
 					Sound::derivTangaz = (Sound::tangaz - Sound::vectorTangaz.front()) / periodCalc;
-					Sound::calcA = attack(Sound::velocityX, Sound::vectorVx.front(), Sound::tangaz, Sound::velocityY);
+					Sound::calcA = attack(Sound::velocityVectorXZ, Sound::vectorVXZ.front(), Sound::tangaz, Sound::velocityY);
 					Sound::RedTurnAcc = (localdata.reduktor_gl_obor - Sound::vectorRedTurn.front()) / periodCalc;
 				}
 			}
@@ -1728,13 +1727,13 @@ int main(int argc, char *argv[])
 			{
 				Sound::vectorVy.clear();
 			}
-			if (!Sound::vectorVx.empty())
+			if (!Sound::vectorVXZ.empty())
 			{
-				Sound::vectorVx.clear();
+				Sound::vectorVXZ.clear();
 			}
-			if (!Sound::vectorAcc.empty())
+			if (!Sound::vectorAccXZ.empty())
 			{
-				Sound::vectorAcc.clear();
+				Sound::vectorAccXZ.clear();
 			}
 			if (!Sound::vectorStep.empty())
 			{
@@ -3045,9 +3044,9 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double averangeTurn = getAverange("redTurns", 30);
 
 		//Усиление по атаке
-		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
-		double averangeAtk = getAverange("attack", 20) * interpolation(0, 0, 16.67, 1, abs(velocityX));
+		double averangeAtk = getAverange("attack", 20) * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
 		double atkGain = (atkXvel - averangeAtk) * -0.4;
 		atkGain = (atkGain < -2) ? -2 : atkGain;
@@ -3055,13 +3054,13 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//Общее усиление от скорости 
 		double velocityGain = 0;
-		if (velocityX < 70)
+		if (velocityVectorXZ < 70)
 		{
-			velocityGain = interpolation(20, 0, 50, 2, 70, 5, velocityX) / 5;
+			velocityGain = interpolation(20, 0, 50, 2, 70, 5, velocityVectorXZ) / 5;
 		}
 		else
 		{
-			velocityGain = (velocityX  * 0.15 - 5.5) / 5;
+			velocityGain = (velocityVectorXZ  * 0.15 - 5.5) / 5;
 		}
 
 		//Общее усиление от шага
@@ -3079,17 +3078,17 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
 		//усиление НЧ когда нет хлопков на границе 2го условия
-		if (abs(velocityX) <= 16.67) //ниже 60ти висение
+		if (abs(velocityVectorXZ) <= 16.67) //ниже 60ти висение
 		{
-			if (vectorVx.size() > 2)
+			if (vectorVXZ.size() > 2)
 			{
-				if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
+				if (vectorVXZ.at(vectorVXZ.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
 				{
 					hovering = 0;
 				}
 				else //предыдущая точка была на висениии - висение
 				{
-					if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
+					if (abs(accelerationVectorXZ) < 0.56) // условие висение возникает когда ускорение падает ниже условия
 					{
 						hovering = 1;
 					}
@@ -3103,9 +3102,9 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//Если рывок слишком большой и бьет по ушам
 		double flapCGain = 0;
-		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
+		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)) && abs(velocityVectorXZ) <= 16.67 /*&& velocityY < 4*/)
 		{
-			flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
+			flapCGain = ((abs(accelerationVectorXZ) - 0.56) * 4) * interpolation(-0.25, 0, 0.5, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
 			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
 		}
 
@@ -3138,7 +3137,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
 		//Общее усиление от скорости выше 28м/с
-		double velocityGain = (abs(velocityX) >= 28) ? (abs(velocityX) - 28)* 0.1 : 0;//0.1дб на 1 м/с
+		double velocityGain = (abs(velocityVectorXZ) >= 28) ? (abs(velocityVectorXZ) - 28)* 0.1 : 0;//0.1дб на 1 м/с
 
 		//Вычисляем средний шаг за 35с
 		double averangeStep = getAverange("step", 35);
@@ -3151,17 +3150,17 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//Висение
 		//усиление НЧ когда нет хлопков на границе 2го условия
-		if (abs(velocityX) <= 16.67) //ниже 60ти висение
+		if (abs(velocityVectorXZ) <= 16.67) //ниже 60ти висение
 		{
-			if (vectorVx.size() > 2)
+			if (vectorVXZ.size() > 2)
 			{
-				if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
+				if (vectorVXZ.at(vectorVXZ.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
 				{
 					hovering = 0;
 				}
 				else //предыдущая точка была на висениии - висение
 				{
-					if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
+					if (abs(accelerationVectorXZ) < 0.56) // условие висение возникает когда ускорение падает ниже условия
 					{
 						hovering = 1;
 					}
@@ -3174,15 +3173,15 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 		//Если рывок слишком большой и бьет по ушам
 		double flapCGain = 0;
-		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
+		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)) && abs(velocityVectorXZ) <= 16.67 /*&& velocityY < 4*/)
 		{
-			flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
+			flapCGain = ((abs(accelerationVectorXZ) - 0.56) * 4) * interpolation(-0.25, 0, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
 			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
 		}
 
 		//Страгивание
 		//Усиление редуктора в НЧ в начале движения по ВПП
-		double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !hight : 0;
+		double stalkingGain = (accelerationVectorXZ > 0) ? accelerationVectorXZ * 5 * interpolation(0, 1, 8.3, 0, velocityVectorXZ) * !hight : 0;
 
 		lowFreqGain = pow(10, (mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
 		mid1FreqGain = pow(10, (turnGain + stepGain + velocityGain + mid2FreqStepGain + flapCGain + stalkingGain)*0.05);
@@ -3214,7 +3213,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double averangeTurn = getAverange("redTurns", 30);
 
 		//Общее усиление от скорости выше 50м/с
-		double velocityGain = (abs(velocityX) >= 50) ? (abs(velocityX) - 50)* 0.2 : 0;//0.1дб на 1 м/с
+		double velocityGain = (abs(velocityVectorXZ) >= 50) ? (abs(velocityVectorXZ) - 50)* 0.2 : 0;//0.1дб на 1 м/с
 
 		//Набираем массив для рассчета усиления от среднего значения шага за 50с
 		double averangeStep = getAverange("step", 50);
@@ -3226,7 +3225,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, hight);
 
 		//усиление по шагу в Средних чатотах
-		double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
+		double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityVectorXZ));
 
 		//усиление от оборотов выше 10000
 		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1 * avrTurnRestrict;
@@ -3235,17 +3234,17 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
 		//усиление НЧ когда нет хлопков на границе 2го условия
-		if (abs(velocityX) <= 16.67) //ниже 60ти висение
+		if (abs(velocityVectorXZ) <= 16.67) //ниже 60ти висение
 		{
-			if (vectorVx.size() > 2)
+			if (vectorVXZ.size() > 2)
 			{
-				if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
+				if (vectorVXZ.at(vectorVXZ.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
 				{
 					hovering = 0;
 				}
 				else //предыдущая точка была на висениии - висение
 				{
-					if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
+					if (abs(accelerationVectorXZ) < 0.56) // условие висение возникает когда ускорение падает ниже условия
 					{
 						hovering = 1;
 					}
@@ -3258,9 +3257,9 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 		//Если рывок слишком большой и бьет по ушам
 		double flapCGain = 0;
-		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
+		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)) && abs(velocityVectorXZ) <= 16.67 /*&& velocityY < 4*/)
 		{
-			flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
+			flapCGain = ((abs(accelerationVectorXZ) - 0.56) * 4) * interpolation(-0.25, 0, 0, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
 			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
 		}
 
@@ -3300,17 +3299,17 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//усиление от скорости выше 50км/ч (14м/c)
 		double velocityGain = 0;
-		if (abs(velocityX) < 42)
+		if (abs(velocityVectorXZ) < 42)
 		{
-			velocityGain = interpolation(14, 0, 42, 3, abs(velocityX));
+			velocityGain = interpolation(14, 0, 42, 3, abs(velocityVectorXZ));
 		}
-		else if (abs(velocityX) >= 42 && abs(velocityX) < 56)
+		else if (abs(velocityVectorXZ) >= 42 && abs(velocityVectorXZ) < 56)
 		{
-			velocityGain = interpolation(42, 3, 56, 7, abs(velocityX));
+			velocityGain = interpolation(42, 3, 56, 7, abs(velocityVectorXZ));
 		}
 		else
 		{
-			velocityGain = 7 + (abs(velocityX) - 56) * 0.071;
+			velocityGain = 7 + (abs(velocityVectorXZ) - 56) * 0.071;
 			velocityGain = (velocityGain > 9) ? 9 : velocityGain;
 		}
 
@@ -3324,7 +3323,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, hight);
 
 		//усиление по шагу в Средних чатотах
-		double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityX));
+		double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityVectorXZ));
 
 		//усиление от оборотов выше 10000
 		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1 * avrTurnRestrict;
@@ -3333,17 +3332,17 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
 		//усиление НЧ когда нет хлопков на границе 2го условия
-		if (abs(velocityX) <= 16.67) //ниже 60ти висение
+		if (abs(velocityVectorXZ) <= 16.67) //ниже 60ти висение
 		{
-			if (vectorVx.size() > 2)
+			if (vectorVXZ.size() > 2)
 			{
-				if (vectorVx.at(vectorVx.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
+				if (vectorVXZ.at(vectorVXZ.size() - 2) > 16.67) //предыдущая точка была не на висении - не висение
 				{
 					hovering = 0;
 				}
 				else //предыдущая точка была на висениии - висение
 				{
-					if (abs(accelerationX) < 0.56) // условие висение возникает когда ускорение падает ниже условия
+					if (abs(accelerationVectorXZ) < 0.56) // условие висение возникает когда ускорение падает ниже условия
 					{
 						hovering = 1;
 					}
@@ -3356,9 +3355,9 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 		//Если рывок слишком большой и бьет по ушам
 		double flapCGain = 0;
-		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) <= 16.67 /*&& velocityY < 4*/)
+		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)) && abs(velocityVectorXZ) <= 16.67 /*&& velocityY < 4*/)
 		{
-			flapCGain = ((abs(accelerationX) - 0.56) * 4) * interpolation(-0.25, 0, 0, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
+			flapCGain = ((abs(accelerationVectorXZ) - 0.56) * 4) * interpolation(-0.25, 0, 0, 0.5, 0.25, 1, velocityY) * hovering;//переходит в усиление нч по vy
 			flapCGain = (flapCGain > 4) ? 4 : flapCGain;
 		}
 
@@ -3419,11 +3418,11 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		//Усиление по Vy
 		double vyG = (velocityY * (-2) - 10) - 4.43/*коэф 0.6*/;
 		vyG = (vyG > 0) ? 0 : vyG;
-		double velocityYGain = vyG * interpolation(0, 1, 22.22, 0, abs(velocityX)) * ((velocityY < 0) ? 1 : 0);
+		double velocityYGain = vyG * interpolation(0, 1, 22.22, 0, abs(velocityVectorXZ)) * ((velocityY < 0) ? 1 : 0);
 
 		//Страгивание
 		//Усиление редуктора в НЧ в начале движения по ВПП
-		double stalkingGain = (accelerationX > 0) ? accelerationX * 5 * interpolation(0, 1, 8.3, 0, velocityX) * !hight : 0;
+		double stalkingGain = (accelerationVectorXZ > 0) ? accelerationVectorXZ * 5 * interpolation(0, 1, 8.3, 0, velocityVectorXZ) * !hight : 0;
 
 		lowFreqGain = pow(10, (velocityYGain + stepGain * 0.25 + stalkingGain + mid2FreqStepGain) * 0.05);
 		mid1FreqGain = pow(10, (turnGain + stepGain * 1 + stalkingGain + mid2FreqStepGain) * 0.05);
@@ -3480,7 +3479,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange("eng1Turns", 2) : sr.eng2_obor - getAverange("eng2Turns", 2);
 
 		//усиление 1го купола
-		double harmMid1Gain = getParameterFromVector(vector<point>{ { 9, 0 }, { 10, 6 }, { 12, 12 }}, step) * getParameterFromVector(vector<point>{ { 0, 1.6 }, { 50, 0.7 }}, velocityX);
+		double harmMid1Gain = getParameterFromVector(vector<point>{ { 9, 0 }, { 10, 6 }, { 12, 12 }}, step) * getParameterFromVector(vector<point>{ { 0, 1.6 }, { 50, 0.7 }}, velocityVectorXZ);
 
 		//усиление 2го купола
 		double harmMid2Gain = getParameterFromVector(vector<point>{ { -2, -12 }, { -1, -6 }, { 0, 0 }, { 1, 6 }, { 2, 12 }}, avrEngTurns);
@@ -3504,10 +3503,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double lowFreqStepGain1 = getParameterFromVector(vector<point>{ { 0, 0 }, { 9, 15 }, { 16, 26.66 } }, step) * getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, hight);
 
 		//усиление по шагу в НЧ (2)
-		double lowFreqStepGain2 = getParameterFromVector(vector<point>{ { 0, 0 }, { 12, 14 } }, step) * getParameterFromVector(vector<point>{ { 0, 0 }, { 28, 1 } }, abs(velocityX));
+		double lowFreqStepGain2 = getParameterFromVector(vector<point>{ { 0, 0 }, { 12, 14 } }, step) * getParameterFromVector(vector<point>{ { 0, 0 }, { 28, 1 } }, abs(velocityVectorXZ));
 
 		//Усиление на висении
-		double hoveringGain = (hight > 0) ? abs(accelerationX) * 6 * getParameterFromVector(vector<point>{ { 0, 1 }, { 28, 0 } }, velocityX) : 0;
+		double hoveringGain = (hight > 0) ? abs(accelerationVectorXZ) * 6 * getParameterFromVector(vector<point>{ { 0, 1 }, { 28, 0 } }, velocityVectorXZ) : 0;
 
 		//
 		if (velocityY < 0)
@@ -3522,7 +3521,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//0.1 -> 2дб
-		double lowFreqAccGain = (accelerationX <= -0.56) ? (((abs(accelerationX) - 0.56) * 20) * getParameterFromVector(vector<point>{ { 4, 1 }, { 9, 0 } }, step) * getParameterFromVector(vector<point>{ { 8, 0 }, { 16, 1 } }, hight) * offsetOn) : 0;
+		double lowFreqAccGain = (accelerationVectorXZ <= -0.56) ? (((abs(accelerationVectorXZ) - 0.56) * 20) * getParameterFromVector(vector<point>{ { 4, 1 }, { 9, 0 } }, step) * getParameterFromVector(vector<point>{ { 8, 0 }, { 16, 1 } }, hight) * offsetOn) : 0;
 
 		lowFreqGain = toCoef(lowFreqStepGain1 + lowFreqStepGain2 + hoveringGain + lowFreqAccGain);
 		highFreqGain = toCoef(highFreqStepGain);
@@ -3552,7 +3551,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		double takeOffStep = toCoef(getParameterFromVector(vector<point>{ { 0, -60 }, { 7, -18 }, { 60, 0 }}, step))
-			* getParameterFromVector(vector<point>{ { 0, 1 }, { 11.11, 0 } }, abs(velocityX))
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 11.11, 0 } }, abs(velocityVectorXZ))
 			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, hight);
 
 		double takeOffVelY = toCoef(getParameterFromVector(vector<point>{ { -9, -3 }, { -4, -15 }}, velocityY))
@@ -3565,7 +3564,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//Громкость бумбума
 		double bumBumGain = toCoef(getParameterFromVector(vector<point>{ { -15, 0 }, { -10, -6 }, { -7, -15 }, { -5, -20 }, { 0, -60 }}, calcA))
-			* getParameterFromVector(vector<point>{ { 8.3, 0 }, { 14, 1 }}, abs(velocityX));
+			* getParameterFromVector(vector<point>{ { 8.3, 0 }, { 14, 1 }}, abs(velocityVectorXZ));
 
 		alSourcef(source[2], AL_GAIN, bumBumGain * masterGain);
 		//
@@ -3578,17 +3577,17 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		double lowFreqGainStep = trueStep * 0.0755;
 
-		double lowFreqGainVelX = getParameterFromVector(vector<point>{ { 33.33, 0 }, { 56, 6 }, { 70, 3 }}, abs(velocityX));
+		double lowFreqGainVelX = getParameterFromVector(vector<point>{ { 33.33, 0 }, { 56, 6 }, { 70, 3 }}, abs(velocityVectorXZ));
 
 		double mid2GainStep = trueStep * 0.13;
 
-		double mid2FreqGainVelX = getParameterFromVector(vector<point>{ { 33.33, 0 }, { 44.44, 6 }, { 47.2, 6 }, { 56, 3 }}, abs(velocityX));
+		double mid2FreqGainVelX = getParameterFromVector(vector<point>{ { 33.33, 0 }, { 44.44, 6 }, { 47.2, 6 }, { 56, 3 }}, abs(velocityVectorXZ));
 
-		double highFreqGainVelX = getParameterFromVector(vector<point>{ { 44.44, 0 }, { 56, 4 }, { 70, 6 }}, abs(velocityX));
+		double highFreqGainVelX = getParameterFromVector(vector<point>{ { 44.44, 0 }, { 56, 4 }, { 70, 6 }}, abs(velocityVectorXZ));
 
 		//НЧ во время треска винта
 		double lowFreqCrunchGain = getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 6 }}, calcA)
-			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
+			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityVectorXZ))
 			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step)
 			* getParameterFromVector(vector<point>{ { -1.3, 0 }, { -0.7, 1 }}, velocityY);
 
@@ -3599,7 +3598,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//НЧ треск на висении
 		double lowFreqCrunchHoveringGain = getParameterFromVector(vector<point>{ { 4, 0 }, { 6, 4 }}, tangaz)
-			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityX));
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityVectorXZ));
 
 		lowFreqGain = toCoef(lowFreqGainStep + lowFreqGainVelX + lowFreqCrunchGain /*+ lowFreqAutorotation*/ + lowFreqCrunchHoveringGain);
 		//mid1FreqGain = toCoef(0);
@@ -3915,7 +3914,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	{
 		//Громкость двигателей в зависимости от оборотов
 		double turnsGainControl = toCoef(getParameterFromVector(vector<point>{ { 60, -6 }, { 80, -4 }, { 100, 0 }}, parameter)
-		/** getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, velocityX)*/);
+		/** getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, velocityVectorXZ)*/);
 
 		lowFreqGain = turnsGainControl;
 		mid1FreqGain = turnsGainControl;
@@ -4165,12 +4164,12 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 	const double velocityYBorder = -2;//!<мс/с
 	const double dashBorder = -0.672;
 	int flapIndicator = 0;
-	if (velocityX < 0)
+	if (velocityVectorXZ < 0)
 	{
 		//dv>1 и vy<-2
-		if (accelerationX >= -accelerationXBorder && velocityY <= velocityYBorder)//1
+		if (accelerationVectorXZ >= -accelerationXBorder && velocityY <= velocityYBorder)//1
 		{
-			if ((calcA > 0) & (dash < -dashBorder) & (accelerationVy < 3))
+			if ((calcA > 0) & (dashVectorXZ < -dashBorder) & (accelerationVy < 3))
 			{
 				flapIndicator = 1;
 			}
@@ -4180,10 +4179,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			}
 		}
 		//dv>1 и vy>-2
-		if (accelerationX >= -accelerationXBorder && velocityY > velocityYBorder)//2
+		if (accelerationVectorXZ >= -accelerationXBorder && velocityY > velocityYBorder)//2
 		{
 
-			if ((accelerationX > 0.56 & velocityY < 0) || ((velocityY > 4) & (dash > 0.5) & (accelerationVy > 3)))
+			if ((accelerationVectorXZ > 0.56 & velocityY < 0) || ((velocityY > 4) & (dashVectorXZ > 0.5) & (accelerationVy > 3)))
 			{
 				flapIndicator = 2;
 			}
@@ -4193,9 +4192,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			}
 		}
 		//
-		if (accelerationX < -accelerationXBorder && velocityY <= velocityYBorder)//3
+		if (accelerationVectorXZ < -accelerationXBorder && velocityY <= velocityYBorder)//3
 		{
-			if ((accelerationX < -1.4) & (abs(derivStep) > 2))
+			if ((accelerationVectorXZ < -1.4) & (abs(derivStep) > 2))
 			{
 				flapIndicator = 3;
 			}
@@ -4205,9 +4204,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			}
 		}
 		//
-		if (accelerationX < -accelerationXBorder && velocityY > velocityYBorder)//4
+		if (accelerationVectorXZ < -accelerationXBorder && velocityY > velocityYBorder)//4
 		{
-			if ((accelerationX < -0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
+			if ((accelerationVectorXZ < -0.56) & ((velocityY > 2) | ((abs(velocityVectorXZ) > 50) & (step > 20))))
 			{
 				flapIndicator = 4;
 			}
@@ -4220,9 +4219,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 	else
 	{
 		//dv<1 и vy<-2
-		if (accelerationX <= accelerationXBorder && velocityY <= velocityYBorder)//1
+		if (accelerationVectorXZ <= accelerationXBorder && velocityY <= velocityYBorder)//1
 		{
-			if ((calcA > 0) & (dash > dashBorder) & (accelerationVy < 3))
+			if ((calcA > 0) & (dashVectorXZ > dashBorder) & (accelerationVy < 3))
 			{
 				flapIndicator = 1;
 			}
@@ -4232,10 +4231,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			}
 		}
 		//dv<1 и vy>-2
-		if (accelerationX <= accelerationXBorder && velocityY > velocityYBorder)//2
+		if (accelerationVectorXZ <= accelerationXBorder && velocityY > velocityYBorder)//2
 		{
 
-			if ((accelerationX < -0.56 & velocityY < 0) || ((velocityY > 4) & (dash < -0.5) & (accelerationVy > 3)))
+			if ((accelerationVectorXZ < -0.56 & velocityY < 0) || ((velocityY > 4) & (dashVectorXZ < -0.5) & (accelerationVy > 3)))
 			{
 				flapIndicator = 2;
 			}
@@ -4245,9 +4244,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			}
 		}
 		//
-		if (accelerationX > accelerationXBorder && velocityY <= velocityYBorder)//3
+		if (accelerationVectorXZ > accelerationXBorder && velocityY <= velocityYBorder)//3
 		{
-			if ((accelerationX > 1.4) & (abs(derivStep) > 2))
+			if ((accelerationVectorXZ > 1.4) & (abs(derivStep) > 2))
 			{
 				flapIndicator = 3;
 			}
@@ -4257,9 +4256,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			}
 		}
 		//
-		if (accelerationX > accelerationXBorder && velocityY > velocityYBorder)//4
+		if (accelerationVectorXZ > accelerationXBorder && velocityY > velocityYBorder)//4
 		{
-			if ((accelerationX > 0.56) & ((velocityY > 2) | ((abs(velocityX) > 50) & (step > 20))))
+			if ((accelerationVectorXZ > 0.56) & ((velocityY > 2) | ((abs(velocityVectorXZ) > 50) & (step > 20))))
 			{
 				flapIndicator = 4;
 			}
@@ -4281,7 +4280,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		}
 
-		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
 		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
 
@@ -4297,7 +4296,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		//Хлопки плавно появляются
 		double h_g = interpolation(0, 0, 0.5, 0.5, 1, 1, hight);//К 1 метру по высоте
-		double v_g = interpolation(10, 0, 14, 0.25, 28, 1, abs(velocityX));//К 28 м/с
+		double v_g = interpolation(10, 0, 14, 0.25, 28, 1, abs(velocityVectorXZ));//К 28 м/с
 
 		//Громкость хлопков зависит от атаки
 		double gain_a = interpolation(-1, -15, 1, -9, 3, -3, atkXvel);
@@ -4306,7 +4305,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		//При а = 6 м/с^2 громкость хлопков номинальная, при условии, что вертолет летит вниз, а скорость ниже 60 км/ч (16.67)
-		double flapCGainAccX = interpolation(0.56, 0, 6, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
+		double flapCGainAccX = interpolation(0.56, 0, 6, 1, abs(accelerationVectorXZ)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityVectorXZ);//переходит в усиление нч по vy
 
 		if (flapIndicator == 2)//хлопаем
 		{
@@ -4347,7 +4346,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
 
-		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
 		//Осуществляем переход в НЧ хлопки, при малых значениях шага (4-5)
 		double flap_h = 0;
@@ -4357,7 +4356,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Осуществляем переход в НЧ хлопки, при малых значениях скорости (14-16.67м/с)
 		double flap_hv = 0;
 		double flap_lov = 0;
-		crossFade(&flap_lov, &flap_hv, abs(velocityX), 14, 16.67, 1);
+		crossFade(&flap_lov, &flap_hv, abs(velocityVectorXZ), 14, 16.67, 1);
 
 		//Из 2х условия НЧ хлопков выбираем преобладающий
 		double low = max(flap_lo, flap_lov);
@@ -4379,15 +4378,15 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//vH для ВЧ
 		double vL = 0;
 		double vH = 0;
-		if (abs(velocityX) < 11)
+		if (abs(velocityVectorXZ) < 11)
 		{
-			vL = interpolation(10, 0, 11, 0.5, abs(velocityX));//
-			vH = interpolation(10, 0, 11, 0.25, abs(velocityX));//
+			vL = interpolation(10, 0, 11, 0.5, abs(velocityVectorXZ));//
+			vH = interpolation(10, 0, 11, 0.25, abs(velocityVectorXZ));//
 		}
 		else
 		{
-			vL = interpolation(11, 0.5, 21, 1, abs(velocityX));//
-			vH = interpolation(11, 0.25, 21, 1, abs(velocityX));//
+			vL = interpolation(11, 0.5, 21, 1, abs(velocityVectorXZ));//
+			vH = interpolation(11, 0.25, 21, 1, abs(velocityVectorXZ));//
 		}
 		double vG = vL * low + vH * (1 - low);
 
@@ -4410,7 +4409,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		//переходит в усиление НЧ редуктора по vy
-		double flapCGainAccX = interpolation(0.56, 0, 3, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * offsetOn  * interpolation(0, 1, 16.67, 0, velocityX);
+		double flapCGainAccX = interpolation(0.56, 0, 3, 1, abs(accelerationVectorXZ)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * offsetOn  * interpolation(0, 1, 16.67, 0, velocityVectorXZ);
 
 		//Из 2х видов хлопков выбираем более громкие
 		double gainF = max(atkFls, flapCGainAccX);
@@ -4444,14 +4443,14 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		const double floor = 5;//сдвигаем передаточную функцию атаки на floor вправо
 
 		//Игнорируем некорректные значения атаки, при маленьких значениях скоростей
-		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityX));
+		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
 		h_g = interpolation(0, 0, 0.5, 0.5, 1, 1, hight);
-		v_g = interpolation(14, 0, 17, 0.5, 20, 1, abs(velocityX));//72(1) - 50(0)
+		v_g = interpolation(14, 0, 17, 0.5, 20, 1, abs(velocityVectorXZ));//72(1) - 50(0)
 		gain_a = interpolation(-1 + floor, -18, 1 + floor, -12, 3 + floor, -6, atkXvel);
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		double flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityX);//переходит в усиление нч по vy
+		double flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationVectorXZ)) * interpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityVectorXZ);//переходит в усиление нч по vy
 
 		if (flapIndicator == 2)//хлопаем
 		{
@@ -4480,7 +4479,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double flap_hv = 0;
 		double flap_lov = 0;
 		crossFade(&flap_lo, &flap_h, step, 5, 6, 1);
-		crossFade(&flap_lov, &flap_hv, velocityX, 14, 16.67, 1);
+		crossFade(&flap_lov, &flap_hv, velocityVectorXZ, 14, 16.67, 1);
 		double low = max(flap_lo, flap_lov);
 		alSourcef(source[0], AL_GAIN, gainAac * h.vintFlapFactor *masterGain *(h.vintFlapFactor*masterGain - low));
 		alSourcef(source[1], AL_GAIN, gainAac * h.vintFlapFactor *masterGain * low);
@@ -4584,18 +4583,18 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
 		//Условие и громкость НЧ хлопков в некоторых случаях определяется ускорением и высокой скоростью
-		double accelerationGain = (3 * (abs(accelerationX) / 0.277)) - 15;
+		double accelerationGain = (3 * (abs(accelerationVectorXZ) / 0.277)) - 15;
 		accelerationGain = (accelerationGain > 5) ? -accelerationGain : accelerationGain;//дб
 		accelerationGain = pow(10, accelerationGain * 0.05);//коэф
 
 		double hiSpeedGain = 0;
-		if (abs(velocityX) <= 61.6)
+		if (abs(velocityVectorXZ) <= 61.6)
 		{
-			hiSpeedGain = interpolation(50, 0, 61.6, 0.67, abs(velocityX));
+			hiSpeedGain = interpolation(50, 0, 61.6, 0.67, abs(velocityVectorXZ));
 		}
 		else
 		{
-			hiSpeedGain = interpolation(61.6, 0.67, 75, 1, abs(velocityX));
+			hiSpeedGain = interpolation(61.6, 0.67, 75, 1, abs(velocityVectorXZ));
 		}
 		double resFlapCGain = max(hiSpeedGain, accelerationGain);//из двух показателей громкости НЧ хлопков выбираем преобладающий
 
@@ -4606,19 +4605,19 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//Условие затухания хлопков
-		double off = interpolation(14, 1, 0, 0, abs(velocityX));
+		double off = interpolation(14, 1, 0, 0, abs(velocityVectorXZ));
 		//Условие выбора равномерных-неравномерных хлопков
 		double flapA = 0;
 		double flapB = 0;
-		if (velocityX < 0)
+		if (velocityVectorXZ < 0)
 		{
-			flapA = (accelerationX >= -accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
-			flapB = (accelerationX < -accelerationXBorder) ? 1 : 0;//условие неравномерных хлопков
+			flapA = (accelerationVectorXZ >= -accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
+			flapB = (accelerationVectorXZ < -accelerationXBorder) ? 1 : 0;//условие неравномерных хлопков
 		}
 		else
 		{
-			flapA = (accelerationX <= accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
-			flapB = (accelerationX > accelerationXBorder) ? 1 : 0;//условие неравномерных хлопков
+			flapA = (accelerationVectorXZ <= accelerationXBorder) ? 1 : 0;//условие равномерных хлопков
+			flapB = (accelerationVectorXZ > accelerationXBorder) ? 1 : 0;//условие неравномерных хлопков
 		}
 
 		//Плавный переход между НЧ и ВЧ хлопками по шагу
@@ -4626,7 +4625,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double flapCStep = 0;
 		crossFade(&flapCStep, &flapABStep, step, 8, 12, 1);
 		//убираем эффект шага на вид хлопков,определяем по скорости, так как этот параметр более приоритетный
-		if (abs(velocityX) < 16.67)
+		if (abs(velocityVectorXZ) < 16.67)
 		{
 			flapABStep = 1;
 			flapCStep = 1;
@@ -4634,13 +4633,13 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Плавный переход между НЧ и ВЧ хлопками по скорости
 		double flapABVX = 0;
 		double flapCVX = 0;
-		crossFade(&flapCVX, &flapABVX, abs(velocityX), 15.28, 16.67, 1);
+		crossFade(&flapCVX, &flapABVX, abs(velocityVectorXZ), 15.28, 16.67, 1);
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		double flapCGainAccX = 1;
-		if (((velocityX < 0 && accelerationX > 0.56) || (velocityX > 0 && accelerationX < -0.56)) && abs(velocityX) < 16.67)
+		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)) && abs(velocityVectorXZ) < 16.67)
 		{
-			flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationX)) * interpolation(-0.25, 1, 0, 0.5, 0.25, 0, velocityY);//переходит в усиление нч по vy
+			flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationVectorXZ)) * interpolation(-0.25, 1, 0, 0.5, 0.25, 0, velocityY);//переходит в усиление нч по vy
 		}
 		//рассчитываем результирующую громкость хлопков в каждый момент времени
 		double flapAGain = flapA * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
@@ -4668,10 +4667,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//Используем модифицированную атаку
-		double attack = calcA * getValue({ 0, 0 }, { 22.22, 1 }, velocityX, 1, "H")
+		double attack = calcA * getValue({ 0, 0 }, { 22.22, 1 }, velocityVectorXZ, 1, "H")
 			+ (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0)
-			* getValue({ 0, 0 }, { 13.89, 1 }, velocityX, 0, 1)
-			* getValue({ 13.89, 1 }, { 22.22, 0 }, velocityX, 0, 1);
+			* getValue({ 0, 0 }, { 13.89, 1 }, velocityVectorXZ, 0, 1)
+			* getValue({ 13.89, 1 }, { 22.22, 0 }, velocityVectorXZ, 0, 1);
 
 		//Передаточная финкция усиления хлопков от атаки
 		double atkGain = pow(10, (getValue({ 0, -18 }, { 12, 0 }, attack, 0, "H")) * 0.05);
@@ -4685,28 +4684,28 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Усиление по Vy при низких скоростях
 		double vyG = getParameterFromVector(vector<point>{ {-6, 0}, { 0,-11 }, { 6,-24 }}, velocityY);
 		vyG = (vyG > -3) ? -3 : vyG;
-		double flappingVyGain = pow(10, vyG *0.05) * interpolation(0, 1, 22.22, 0, abs(velocityX));
+		double flappingVyGain = pow(10, vyG *0.05) * interpolation(0, 1, 22.22, 0, abs(velocityVectorXZ));
 
 		//Усиление по Vx
-		double flappingVxGain = pow(10, getParameterFromVector(vector<point>{ {0, -60}, { 49,-12 }, { 56,-6 }, { 70,-3 }, { 84,0 } }, abs(velocityX))*0.05);
+		double flappingVxGain = pow(10, getParameterFromVector(vector<point>{ {0, -60}, { 49,-12 }, { 56,-6 }, { 70,-3 }, { 84,0 } }, abs(velocityVectorXZ))*0.05);
 
 		//Берем большее из 3х показателей для flapping
 		double flappingGainUnhover = max(max(flappingVyGain, atkGain), flappingVxGain);
 
 		//Усиление по dvx
-		double accGain = pow(10, (getParameterFromVector(vector<point>{ {2, 0}, { 0,-12 } }, abs(accelerationX)))*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityX));
+		double accGain = pow(10, (getParameterFromVector(vector<point>{ {2, 0}, { 0,-12 } }, abs(accelerationVectorXZ)))*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityVectorXZ));
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		double backFront = accGain * getParameterFromVector(vector<point>{ {0, 1}, { 1,0.5 }, { 2,0 }}, abs(velocityX));
-		double hoveringGain = ((velocityX * accelerationX <= 0) ? accGain
-			: (((velocityX <= 0 && accelerationX <= 0 && dash >= 0) || (velocityX >= 0 && accelerationX >= 0 && dash <= 0)) ? backFront : 0));
+		double backFront = accGain * getParameterFromVector(vector<point>{ {0, 1}, { 1,0.5 }, { 2,0 }}, abs(velocityVectorXZ));
+		double hoveringGain = ((velocityVectorXZ * accelerationVectorXZ <= 0) ? accGain
+			: (((velocityVectorXZ <= 0 && accelerationVectorXZ <= 0 && dashVectorXZ >= 0) || (velocityVectorXZ >= 0 && accelerationVectorXZ >= 0 && dashVectorXZ <= 0)) ? backFront : 0));
 
 		//Ослабление звука при падении шага до 1
 		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((hight > 0) ? 1 : 0);
 
 		//Усиление висения по vy
-		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * (accelerationX != 0) ? 1 : 0;
-		double velocityYGainFlapping = pow(10, velocityY * -1 * 0.05) * (accelerationX != 0) ? 1 : 0;
+		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * (accelerationVectorXZ != 0) ? 1 : 0;
+		double velocityYGainFlapping = pow(10, velocityY * -1 * 0.05) * (accelerationVectorXZ != 0) ? 1 : 0;
 
 		//Выбираем между хлопками на висении и нет
 		double flappingFinalGain = max(hoveringGain * velocityYGainFlapping, flappingGainUnhover * flappingStepGain);
@@ -4720,9 +4719,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 	else if (h.modelName == "ka_226")
 	{
 		//Условия наступления хлопков
-		if (velocityX > 0)
+		if (velocityVectorXZ > 0)
 		{
-			if (velocityX > 28 && accelerationX > -0.28 && velocityY > 2)
+			if (velocityVectorXZ > 28 && accelerationVectorXZ > -0.28 && velocityY > 2)
 			{
 				flapIndicator = 1;
 			}
@@ -4733,7 +4732,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 		else
 		{
-			if (velocityX < -28 && accelerationX < 0.28 && velocityY > 2)
+			if (velocityVectorXZ < -28 && accelerationVectorXZ < 0.28 && velocityY > 2)
 			{
 				flapIndicator = 1;
 			}
@@ -4763,7 +4762,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//Базовый уровень звука хлопков от скорости
-		double flappingVelxGain = toCoef(getParameterFromVector(vector<point>{ { 28, -18 }, { 50, -13 }}, velocityX)) * getParameterFromVector(vector<point>{ { 0, 0 }, { h.redTurnoverAvt, 1 }}, sr.reduktor_gl_obor);
+		double flappingVelxGain = toCoef(getParameterFromVector(vector<point>{ { 28, -18 }, { 50, -13 }}, velocityVectorXZ)) * getParameterFromVector(vector<point>{ { 0, 0 }, { h.redTurnoverAvt, 1 }}, sr.reduktor_gl_obor);
 
 		//Усиливаем хлопки при условии наступлении хлопков
 		double dTangazGain = (derivTangaz > 0) ? derivTangaz * 10 * offsetOn : 0;
@@ -4804,18 +4803,18 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			key[2] = h.fullName["pinkNoise"];
 		}
 
-		double lowShelf = getParameterFromVector(vector<point>{ { 44.44, -15 }, { 56, -12 }, { 61.1, -8 }, { 70, -7 }}, abs(velocityX));
+		double lowShelf = getParameterFromVector(vector<point>{ { 44.44, -15 }, { 56, -12 }, { 61.1, -8 }, { 70, -7 }}, abs(velocityVectorXZ));
 
 		double atkMiddlePoint = getParameterFromVector(vector<point>{ { -15, -2 }, { -12, 0 }, { -8, 3 }, { -6, 4.99 }}, lowShelf);
 
 		double attackFlapGain = toCoef(getParameterFromVector(vector<point>{ { -10, lowShelf }, { atkMiddlePoint, lowShelf }, { 5, -6 }, { 10, -4 }}, calcA))
-			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 8.33, 0.5 }, { 11.11, 1 }}, abs(velocityX))
+			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 8.33, 0.5 }, { 11.11, 1 }}, abs(velocityVectorXZ))
 			* getParameterFromVector(vector<point>{ { 34, 0 }, { 37, 0.5 }, { 40, 1 }}, step)
 			* getParameterFromVector(vector<point>{ { 0, 0 }, { 1, 1 }}, hight);
 
 		//Ослабление хлопков при треске
 		double crunchGainMod = getParameterFromVector(vector<point>{ { -1.3, 0 }, { -0.7, -3 }}, velocityY)
-			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
+			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityVectorXZ))
 			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step)
 			* getParameterFromVector(vector<point>{ { 0, 0 }, { 1, 1 }}, hight)
 			* getParameterFromVector(vector<point>{ { 3, 0 }, { 5, 1 }}, calcA);
@@ -4826,26 +4825,26 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			* getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 1 }}, calcA);
 
 		double velYFlapHiGain = toCoef(getParameterFromVector(vector<point>{ { -1.3, -13 }, { -0.7, 0 }}, velocityY))
-			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
+			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityVectorXZ))
 			* getParameterFromVector(vector<point>{ { 34, 0 }, { 37, 0.5 }, { 40, 1 }}, step)
 			* getParameterFromVector(vector<point>{ { 3, 0 }, { 5, 1 }}, calcA);
 
 		//треск на висении
 		double vintFlapCrunchHoveringGain = getParameterFromVector(vector<point>{ { 3, 0 }, { 6, 8 }}, tangaz)
-			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityX));
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityVectorXZ));
 
 		//Результирующая громкость хлопков 
 		double vintFlapGain = max(toCoef(lowShelf), attackFlapGain) * toCoef(crunchGainMod + velYGainMod + vintFlapCrunchHoveringGain);
 
 		//треск на висении
 		double vintFlapHiCrunchHoveringGain = toCoef(getParameterFromVector(vector<point>{ { 4, -13 }, { 6, 0 }}, tangaz))
-			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityX));
+			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityVectorXZ));
 
 		//Результирующая громкость хлопков 
 		double vintFlapHiGain = max(velYFlapHiGain, vintFlapHiCrunchHoveringGain);
 
 		double vaddGain = toCoef(getParameterFromVector(vector<point>{ { -2, -18 }, { -1.3, -15 }, { -0.7, -6 }}, velocityY))
-			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityX))
+			* getParameterFromVector(vector<point>{ { 5.55, 0 }, { 11.11, 1 }, { 19.4, 1 }, { 25, 0 }}, abs(velocityVectorXZ))
 			* getParameterFromVector(vector<point>{ { 34, 0 }, { 37, 0.5 }, { 40, 1 }}, step)
 			* getParameterFromVector(vector<point>{ { 3, 0 }, { 5, 1 }}, calcA);
 
@@ -5075,7 +5074,7 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 			gain[0] = 0;
 		}
 
-		double velXGainMod = toCoef(getParameterFromVector(vector<point>{ { 0, -7 }, { 14, -1 }}, abs(velocityX)));
+		double velXGainMod = toCoef(getParameterFromVector(vector<point>{ { 0, -7 }, { 14, -1 }}, abs(velocityVectorXZ)));
 
 		alSourcef(source[0], AL_PITCH, pitch[0]);
 
@@ -5250,11 +5249,14 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		}
 	}
 
+	//Интенсивность касания полосы стойками шасси, в среднем по всем стойка
+	double contact = (sr.obj_hv + sr.obj_l + sr.obj_nos + sr.obj_r) / 4;
+
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
 		alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
 
-		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(11.2, 0.126, 14, 1, velocityX));//
+		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation(11.2, 0.126, 14, 1, sr.v_surf_x));//
 
 		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
@@ -5263,9 +5265,9 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 
-		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(velocityX)) * h.runwayFactor * 0.25/*Уменьшаем движение по полосе*/);//
+		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(sr.v_surf_x)) * h.runwayFactor * 0.25 * contact/*Уменьшаем движение по полосе*/);//
 																																													  //alSourcef(source[1], AL_GAIN, 0);//
-		alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(velocityX)) * h.runwayFactor * 0.854);//
+		alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(sr.v_surf_x)) * h.runwayFactor * 0.854 * contact);//
 	}
 	else if (h.modelName == "mi_26")
 	{
@@ -5273,40 +5275,40 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
 		//78 -3 84 0 поправка на обороты редуктора
 		//180гр - 14 с разворот - нужно усиление при развороте (12гр - 1с -> -3дб; 6гр - 1с -> -6дб) (убавить флаппинг на 3 дб)
-		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 14, 0, abs(velocityX)) * interpolation(78, 0.71, 84, 1, sr.reduktor_gl_obor) * h.runwayFactor /** 0.25*//*Уменьшаем движение по полосе*/);//
+		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 14, 0, abs(sr.v_surf_x)) * interpolation(78, 0.71, 84, 1, sr.reduktor_gl_obor) * h.runwayFactor * contact /** 0.25*//*Уменьшаем движение по полосе*/);//
 																																													  //alSourcef(source[1], AL_GAIN, 0);//
 
 	}
 	else if (h.modelName == "ka_226")
 	{
-		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }, { 8.4, -12 }, { 14, -18 }}, abs(velocityX));
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }, { 8.4, -12 }, { 14, -18 }}, abs(sr.v_surf_x));
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor);
+		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor * contact);
 	}
 	else if (h.modelName == "ansat")
 	{
-		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }/*, { 2.77, -6 }*/, { 8.3, -3 }, { 14, 0 } }, abs(velocityX));
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }/*, { 2.77, -6 }*/, { 8.3, -3 }, { 14, 0 } }, abs(sr.v_surf_x));
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor);
+		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor * contact);
 	}
 	else
 	{
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcef(source[1], AL_GAIN, masterGain * interpolation(0, 0, 13.8, 1, abs(velocityX)) * h.runwayFactor);
+		alSourcef(source[1], AL_GAIN, masterGain * interpolation(0, 0, 13.8, 1, abs(sr.v_surf_x)) * h.runwayFactor * contact);
 	}
 
 	return 1;
 }
 
-double attack(double velocityX, double velocityXPrevious, double tangaz, double velocityY)
+double attack(double velocityVectorXZ, double velocityXPrevious, double tangaz, double velocityY)
 {
 	double calcA = 0;
-	if ((velocityX + velocityXPrevious) == 0)
+	if ((velocityVectorXZ + velocityXPrevious) == 0)
 	{
 		if (velocityY < 0)
 		{
@@ -5335,7 +5337,7 @@ double attack(double velocityX, double velocityXPrevious, double tangaz, double 
 	else
 	{
 		tangaz = tangaz * M_PI / 180.0;
-		calcA = atan(tan(tangaz) - (2 * velocityY) / ((velocityXPrevious + velocityX) * cos(tangaz)));
+		calcA = atan(tan(tangaz) - (2 * velocityY) / ((velocityXPrevious + velocityVectorXZ) * cos(tangaz)));
 		calcA = calcA * 180 / M_PI;
 	}
 	return calcA;
