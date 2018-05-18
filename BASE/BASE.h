@@ -227,6 +227,7 @@ public:
 	int previous = 1;
 	double switcher = 0;
 	int id = 0;
+	Smoother sm;
 
 	Reductor();
 
@@ -338,6 +339,7 @@ public:
 	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
 	string fileBuffered[2];/*!< Переменная для хранения имени загруженного файла */
 	double offset[2] = { 0 };
+	Smoother sm[2];
 
 	Runway();
 
@@ -690,10 +692,8 @@ class Smoother
 {
 public:
 
-	double agregator = 0;
-	float previousGain = 0;
 	double newDbGain = 0;
-	double dbPerSec = 3;
+	double dbPerSec = 3;//Скорость нарастания/убывания 3дб
 
 	double delay(double nsGain, double deltaTime);
 };

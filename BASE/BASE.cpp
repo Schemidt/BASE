@@ -3187,15 +3187,15 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		//добавляем отдельный звук взлета
 		if (takeOff != h.fullName["takeOff"])
 		{
-			setAndDeploySound(&buffer[3], &source[3], 0, h.fullName["takeOff"]);
-			alSourcei(source[3], AL_LOOPING, AL_TRUE);
+			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["takeOff"]);
+			alSourcei(source[2], AL_LOOPING, AL_TRUE);
 			takeOff = h.fullName["takeOff"];
 		}
 
 		double takeOffGain = toCoef(getParameterFromVector(vector<point>{ { 0, -18 }, { 16, 0 }}, step))
 			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, hight);
 
-		alSourcef(source[3], AL_GAIN, takeOffGain * masterGain);
+		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 		double averangeTurn = getAverange("redTurns", 30);
@@ -3272,15 +3272,15 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		//добавляем отдельный звук взлета
 		if (takeOff != h.fullName["takeOff"])
 		{
-			setAndDeploySound(&buffer[3], &source[3], 0, h.fullName["takeOff"]);
-			alSourcei(source[3], AL_LOOPING, AL_TRUE);
+			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["takeOff"]);
+			alSourcei(source[2], AL_LOOPING, AL_TRUE);
 			takeOff = h.fullName["takeOff"];
 		}
 
 		double takeOffGain = toCoef(getParameterFromVector(vector<point>{ { 0, -18 }, { 16, 0 }}, step))
 			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, hight);
 
-		alSourcef(source[3], AL_GAIN, takeOffGain * masterGain);
+		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 		double averangeTurn = getAverange("redTurns", 30);
@@ -3548,7 +3548,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		double takeOffGain = max(takeOffStep, takeOffVelY);
 
-		alSourcef(source[3], AL_GAIN, takeOffGain * masterGain);
+		alSourcef(source[3], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
 		//Громкость бумбума
 		double bumBumGain = toCoef(getParameterFromVector(vector<point>{ { -15, 0 }, { -10, -6 }, { -7, -15 }, { -5, -20 }, { 0, -60 }}, calcA))
@@ -5253,9 +5253,8 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 
-		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 11.2, 0, abs(sr.v_surf_x)) * h.runwayFactor * 0.25 * contact/*Уменьшаем движение по полосе*/);//
-																																													  //alSourcef(source[1], AL_GAIN, 0);//
-		alSourcef(source[0], AL_GAIN, interpolation(8.3, 0, 11.2, 1, abs(sr.v_surf_x)) * h.runwayFactor * 0.854 * contact);//
+		gain[1] = interpolation(0, 0, 8.3, 1, 11.2, 0, abs(sr.v_surf_x)) * 0.25 * contact;/*Уменьшаем движение по полосе*/																																									  //alSourcef(source[1], AL_GAIN, 0);//
+		gain[0] = interpolation(8.3, 0, 11.2, 1, abs(sr.v_surf_x)) * 0.854 * contact;//
 	}
 	else if (h.modelName == "mi_26")
 	{
@@ -5263,9 +5262,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
 		//78 -3 84 0 поправка на обороты редуктора
 		//180гр - 14 с разворот - нужно усиление при развороте (12гр - 1с -> -3дб; 6гр - 1с -> -6дб) (убавить флаппинг на 3 дб)
-		alSourcef(source[1], AL_GAIN, interpolation(0, 0, 8.3, 1, 14, 0, abs(sr.v_surf_x)) * interpolation(78, 0.71, 84, 1, sr.reduktor_gl_obor) * h.runwayFactor * contact /** 0.25*//*Уменьшаем движение по полосе*/);//
-																																													  //alSourcef(source[1], AL_GAIN, 0);//
-
+		gain[1] = interpolation(0, 0, 8.3, 1, 14, 0, abs(sr.v_surf_x)) * interpolation(78, 0.71, 84, 1, sr.reduktor_gl_obor) * contact;
 	}
 	else if (h.modelName == "ka_226")
 	{
@@ -5273,7 +5270,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor * contact);
+		gain[1] = toCoef(drivingGain) * contact;
 	}
 	else if (h.modelName == "ansat")
 	{
@@ -5281,7 +5278,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor * contact);
+		gain[1] = toCoef(drivingGain) * contact;
 	}
 	else if (h.modelName == "ka_29" || h.modelName == "ka_27")
 	{
@@ -5289,13 +5286,18 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor * contact);
+		gain[1] = toCoef(drivingGain) * contact;
 	}
 	else
 	{
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		alSourcef(source[1], AL_GAIN, masterGain * interpolation(0, 0, 13.8, 1, abs(sr.v_surf_x)) * h.runwayFactor * contact);
+		gain[1] = interpolation(0, 0, 13.8, 1, abs(sr.v_surf_x)) * contact;
+	}
+
+	for (size_t i = 0; i < sourceNumber; i++)
+	{
+		alSourcef(source[i], AL_GAIN, masterGain * h.runwayFactor * sm[i].delay(gain[i], deltaTime));
 	}
 
 	return 1;
@@ -5510,17 +5512,29 @@ double toCoef(double db)
 
 double Smoother::delay(double nsGain, double deltaTime)
 {
-	float deltaGain = 0;
+	if (newDbGain < toDb(nsGain))
+	{
+		//Ползем к актуальной громкости со скоростью 3 дб/с
+		newDbGain += dbPerSec * deltaTime;
+		if (newDbGain > toDb(nsGain))
+		{
+			newDbGain = toDb(nsGain);
+		}
+	}
+	else if (newDbGain > toDb(nsGain))
+	{
+		//Ползем к актуальной громкости со скоростью 3 дб/с
+		newDbGain -= dbPerSec * deltaTime;
+		if (newDbGain < toDb(nsGain))
+		{
+			newDbGain = toDb(nsGain);
+		}
+	}
+	else
+	{
+		//Ползем к актуальной громкости со скоростью 3 дб/с
+		newDbGain = toDb(nsGain);
+	}
 
-	deltaGain = nsGain - previousGain;
-
-	previousGain = nsGain;
-
-	agregator += deltaGain;
-
-	dbPerSec = (newDbGain < agregator) ? dbPerSec : -dbPerSec;
-
-	newDbGain += dbPerSec * deltaTime;
-
-	return  newDbGain;
+	return  toCoef(newDbGain);
 }
