@@ -117,8 +117,6 @@ public:
 	int bufferNumber = 3;//!< Переменная для хранения количества буфферов используемых объектом звука агрегата
 	int effectSlotNumber = 0;//!< Переменная для хранения количества слотов эффектов используемых объектом звука агрегата
 
-	Smoother *smooth = nullptr;
-
 	Sound();//!< Конструктор по умолчанию, для объекта с 1им источником
 	Sound(const Sound &copy);//!< Конструктор копирования*/
 	Sound(int sources, int buffers, int effectslots);//!< Конструктор для объекта с sources источниками, buffers буферами и effectslots слотами эффектов
@@ -689,7 +687,7 @@ double toDb(double coef);
 double toCoef(double db);
 
 
-class Smoother : public Sound
+class Smoother 
 {
 public:
 
@@ -698,7 +696,7 @@ public:
 	double newDbGain = 0;
 	double dbPerSec = 3;
 
-	double delay(double nsGain);
+	double delay(double nsGain, double deltaTime);
 };
 
 

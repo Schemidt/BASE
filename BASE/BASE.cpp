@@ -5341,7 +5341,7 @@ double attack(double velocityX, double velocityXPrevious, double tangaz, double 
 	return calcA;
 }
 
-Sound::Sound() : sourceStatus(new int[sourceNumber]), gain(new double[sourceNumber]), pitch(new double[sourceNumber]), source(new ALuint[sourceNumber]), buffer(new ALuint[bufferNumber]), effectSlot(new ALuint[sourceNumber]), effect(new ALuint[sourceNumber]), filter(new ALuint[sourceNumber])
+Sound::Sound() : sourceStatus(new int[2]), gain(new double[2]), pitch(new double[2]), source(new ALuint[2]), buffer(new ALuint[2])
 {
 	for (size_t i = 0; i < sourceNumber; i++)
 	{
@@ -5361,8 +5361,6 @@ Sound::Sound() : sourceStatus(new int[sourceNumber]), gain(new double[sourceNumb
 	}
 	alGenSources(sourceNumber, source.get());
 	alGenBuffers(bufferNumber, buffer.get());
-
-	smooth = new Smoother[sourceNumber + 4];
 
 	sourcesInUse += sourceNumber;
 }
@@ -5403,8 +5401,6 @@ Sound::Sound(int sources, int buffers, int effectslots) : sourceStatus(new int[s
 	alGenBuffers(bufferNumber, buffer.get());
 	alGenAuxiliaryEffectSlots(effectSlotNumber, effectSlot.get());
 
-	smooth = new Smoother[sourceNumber + 4];
-
 	sourcesInUse += sourceNumber;
 	effectSlotsInUse += effectSlotNumber;
 }
@@ -5433,13 +5429,21 @@ Sound::Sound(const Sound &copy) : Sound(copy.sourceNumber, copy.bufferNumber, co
 Sound::~Sound()
 {
 	alDeleteSources(sourceNumber, source.get());
-	alDeleteEffects(sourceNumber, effect.get());
-	alDeleteFilters(sourceNumber, filter.get());
 	alDeleteBuffers(bufferNumber, buffer.get());
-	alDeleteAuxiliaryEffectSlots(effectSlotNumber, effectSlot.get());
-
+	if (effect)
+	{
+		alDeleteEffects(sourceNumber, effect.get());
+	}
+	if (filter)
+	{
+		alDeleteFilters(sourceNumber, filter.get());
+	}
+	if (effectSlot)
+	{
+		alDeleteAuxiliaryEffectSlots(effectSlotNumber, effectSlot.get());
+		effectSlotsInUse -= effectSlotNumber;
+	}
 	sourcesInUse -= sourceNumber;
-	effectSlotsInUse -= effectSlotNumber;
 }
 
 double Sound::getLengthWAV(string filename)
@@ -5506,7 +5510,7 @@ double toCoef(double db)
 	return pow(10, db * 0.05);
 }
 
-double Smoother::delay(double nsGain)
+double Smoother::delay(double nsGain, double deltaTime)
 {
 	float deltaGain = 0;
 
