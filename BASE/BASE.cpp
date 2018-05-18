@@ -463,7 +463,7 @@ double Sound::calcA = 0;
 double Sound::RedTurnAcc = 0;
 int Engine::engCount = 0;
 
-vector<double> Sound::vectorHight, Sound::vectorVy, Sound::vectorVXZ, Sound::vectorAccXZ, Sound::vectorStep, Sound::vectorTangaz, Sound::vectorTime, Sound::vectorRedTurn;
+vector<double> Sound::vectorVy, Sound::vectorVXZ, Sound::vectorAccXZ, Sound::vectorStep, Sound::vectorTangaz, Sound::vectorTime, Sound::vectorRedTurn;
 vector<double> Sound::vectorAvrEng1Turn, Sound::vectorAvrEng2Turn, Sound::vectorAvrRedTurn, Sound::vectorAvrStep, Sound::vectorAvrAtk;
 double Sound::globalWindow = 50;
 
@@ -601,7 +601,6 @@ int main(int argc, char *argv[])
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
 	Sound::vectorTime.push_back(Sound::currentTime);
-	Sound::vectorHight.push_back(Sound::hight);
 	Sound::vectorVy.push_back(Sound::velocityY);
 	Sound::vectorVXZ.push_back(Sound::velocityVectorXZ);
 	Sound::vectorAccXZ.push_back(Sound::accelerationVectorXZ);
@@ -645,7 +644,6 @@ int main(int argc, char *argv[])
 			Sound::masterGain = localdata.master_gain;
 			Sound::tangaz = localdata.tangaz;//тангаж (временно используем параметр инт осадков)
 			Sound::velocityVectorXZ = sqrt(pow(localdata.v_atm_x, 2) + pow(localdata.v_atm_z, 2));//приборная скорость
-			Sound::hight = localdata.high;
 			Sound::step = localdata.step; //шаг (временно используем параметр перегрузки)
 
 			//Если не пришел признак остановки модели - вычисляем переменные
@@ -654,7 +652,6 @@ int main(int argc, char *argv[])
 			{
 				if (!Sound::vectorTime.empty())
 				{
-					Sound::vectorHight.erase(Sound::vectorHight.begin());
 					Sound::vectorVy.erase(Sound::vectorVy.begin());
 					Sound::vectorVXZ.erase(Sound::vectorVXZ.begin());
 					Sound::vectorAccXZ.erase(Sound::vectorAccXZ.begin());
@@ -669,8 +666,7 @@ int main(int argc, char *argv[])
 			if (Sound::vectorTime.back() != Sound::currentTime)
 			{
 				Sound::vectorTime.push_back(Sound::currentTime);
-				Sound::vectorHight.push_back(Sound::hight);
-				Sound::vectorVy.push_back(Sound::velocityY);
+				Sound::vectorVy.push_back(localdata.vy);
 				Sound::vectorVXZ.push_back(Sound::velocityVectorXZ);
 				Sound::vectorAccXZ.push_back(Sound::accelerationVectorXZ);
 				Sound::vectorTangaz.push_back(Sound::tangaz);
@@ -684,8 +680,7 @@ int main(int argc, char *argv[])
 				periodCalc = Sound::currentTime - Sound::vectorTime.front();
 				if (periodCalc > 0)
 				{
-					Sound::velocityY = (Sound::hight - Sound::vectorHight.front()) / periodCalc;
-					Sound::accelerationVy = (Sound::velocityY - Sound::vectorVy.front()) / periodCalc;
+					Sound::accelerationVy = (localdata.vy - Sound::vectorVy.front()) / periodCalc;
 					Sound::accelerationVectorXZ = (Sound::velocityVectorXZ - Sound::vectorVXZ.front()) / periodCalc;
 					Sound::dashVectorXZ = (Sound::accelerationVectorXZ - Sound::vectorAccXZ.front()) / periodCalc;
 					Sound::derivStep = (Sound::step - Sound::vectorStep.front()) / periodCalc;
@@ -1719,10 +1714,6 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			if (!Sound::vectorHight.empty())
-			{
-				Sound::vectorHight.clear();
-			}
 			if (!Sound::vectorVy.empty())
 			{
 				Sound::vectorVy.clear();
@@ -3034,9 +3025,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 	double avrTurnRestrict = max(getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, step), getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, hight));
 
-	////Плавная высота
-	//double smoothHight = sm[0].delay(velocityY * deltaTime, deltaTime);
-
 	//Полеты ми 28
 	if (h.modelName == "mi_28")
 	{
@@ -3940,7 +3928,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	return 1;
 }
 
-Vsu::Vsu() : Sound(2, 2, 2)
+Vsu::Vsu() : Sound(2, 2, 0)
 {
 
 }
@@ -5295,6 +5283,14 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
 		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor * contact);
 	}
+	else if (h.modelName == "ka_29" || h.modelName == "ka_27")
+	{
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -60 }, { 2.77, -11 }, { 14, -2 } }, abs(sr.v_surf_x));
+
+		filetoBuffer[1] = h.fullName["runway"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		alSourcef(source[1], AL_GAIN, masterGain * toCoef(drivingGain) * h.runwayFactor * contact);
+	}
 	else
 	{
 		filetoBuffer[1] = h.fullName["runway"];
@@ -5343,7 +5339,7 @@ double attack(double velocityVectorXZ, double velocityXPrevious, double tangaz, 
 	return calcA;
 }
 
-Sound::Sound() : sourceStatus(new int[2]), gain(new double[2]), pitch(new double[2]), source(new ALuint[2]), buffer(new ALuint[2])
+Sound::Sound() : sourceStatus(new int[2]), gain(new double[2]), pitch(new double[2]), source(new ALuint[2]), buffer(new ALuint[3])
 {
 	for (size_t i = 0; i < sourceNumber; i++)
 	{
@@ -5398,9 +5394,9 @@ Sound::Sound(int sources, int buffers, int effectslots) : sourceStatus(new int[s
 	if (sourcesInUse + sourceNumber > 256)
 		cout << "Caution: only [" << sourcesInUse + sourceNumber - 256 << "] sources can be generated" << endl;
 	alGenSources(sourceNumber, source.get());
+	alGenBuffers(bufferNumber, buffer.get());
 	alGenEffects(sourceNumber, effect.get());
 	alGenFilters(sourceNumber, filter.get());
-	alGenBuffers(bufferNumber, buffer.get());
 	alGenAuxiliaryEffectSlots(effectSlotNumber, effectSlot.get());
 
 	sourcesInUse += sourceNumber;

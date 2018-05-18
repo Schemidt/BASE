@@ -78,7 +78,6 @@ public:
 	static double calcA;//!< јтака винта
 	static double RedTurnAcc;//!< ”скорение оборотов редуктора (dturn/dt)
 
-	static vector<double> vectorHight;//!<ћассив дл€ рассчета производной от высоты
 	static vector<double> vectorVy;//!<ћассив дл€ рассчета производной от вертикальной скорости
 	static vector<double> vectorVXZ;//!<ћассив дл€ рассчета производной от горизонтальной скорости
 	static vector<double> vectorAccXZ;//!<ћассив дл€ рассчета производной от горизонтального ускорени€
