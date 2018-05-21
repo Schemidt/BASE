@@ -616,7 +616,6 @@ int main(int argc, char *argv[])
 	double timerAvr = 0;
 	const double window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
 	double periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
-	remove("test.txt");
 
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (true)
@@ -645,6 +644,7 @@ int main(int argc, char *argv[])
 			Sound::tangaz = localdata.tangaz;//тангаж (временно используем параметр инт осадков)
 			Sound::velocityVectorXZ = sqrt(pow(localdata.v_atm_x, 2) + pow(localdata.v_atm_z, 2));//приборная скорость
 			Sound::step = localdata.step; //шаг (временно используем параметр перегрузки)
+			Sound::hight = soundread.hight;
 
 			//Если не пришел признак остановки модели - вычисляем переменные
 			//Если необходимый размер окна достигнут - выбрасываем значения в начале массива
@@ -1206,13 +1206,13 @@ int main(int argc, char *argv[])
 			//Если звуки движения по ВПП включены в проект борта
 			if (helicopter.runwayFactor)
 			{
-				if (localdata.v > 0 && land)//Условие создания объекта
+				if (localdata.v_surf_x > 0 && land)//Условие создания объекта
 					if (!runway)//Если объект не создан 
 						runway = new Runway;//Создаем объект
 				if (runway)//Если объект создан - используем его
 				{
 					runway->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-					if (localdata.v == 0 || !land)//Условие удаления объекта
+					if (localdata.v_surf_x == 0 || !land)//Условие удаления объекта
 						Free(runway);//Удаляем объект
 				}
 			}
@@ -1279,13 +1279,13 @@ int main(int argc, char *argv[])
 			//Если звук хлопков винта включен в проект
 			if (helicopter.vintFlapFactor)
 			{
-				if (localdata.styk_hv > 0)//Условие создания объекта
+				if (Sound::hight > 0)//Условие создания объекта
 					if (!vintFlap)//Если объект не создан 
 						vintFlap = new VintFlap;//Создаем объект
 				if (vintFlap)//Если объект создан - используем его
 				{
 					vintFlap->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-					if (localdata.styk_hv <= 0)//Условие удаления объекта
+					if (Sound::hight <= 0)//Условие удаления объекта
 						Free(vintFlap);//Удаляем объект
 				}
 			}
@@ -1509,7 +1509,7 @@ int main(int argc, char *argv[])
 			//Скоростная добавка
 			if (helicopter.vadd)
 			{
-				if (localdata.v != 0)//Условие создания объекта
+				if (localdata.v_atm_x != 0)//Условие создания объекта
 				{
 					if (!vadd)//Если объект не создан 
 					{
@@ -1521,38 +1521,38 @@ int main(int argc, char *argv[])
 					double g = 0;
 					if (helicopter.modelName == "mi_28")
 					{
-						if (abs(localdata.v) < 60)
+						if (abs(localdata.v_atm_x) < 60)
 						{
-							g = interpolation(0, -60, 50, -14, 60, -6, abs(localdata.v));
+							g = interpolation(0, -60, 50, -14, 60, -6, abs(localdata.v_atm_x));
 						}
 						else
 						{
-							g = interpolation(60, -6, 70, -3, 80, 0, abs(localdata.v));
+							g = interpolation(60, -6, 70, -3, 80, 0, abs(localdata.v_atm_x));
 						}
 					}
 					else if (helicopter.modelName == "mi_8_amtsh" || helicopter.modelName == "mi_8_mtv5")
 					{
-						g = interpolation(0, -60, 42, -18, 70, 0, abs(localdata.v));
+						g = interpolation(0, -60, 42, -18, 70, 0, abs(localdata.v_atm_x));
 					}
 					else if (helicopter.modelName == "ka_29")
 					{
-						g = (69.4 - abs(localdata.v)) * (-0.86);
+						g = (69.4 - abs(localdata.v_atm_x)) * (-0.86);
 					}
 					else if (helicopter.modelName == "ka_27")
 					{
-						g = (69.4 - abs(localdata.v)) * (-0.86);
+						g = (69.4 - abs(localdata.v_atm_x)) * (-0.86);
 					}
 					/*else if (helicopter.modelName == "mi_26")
 					{
-						g = abs(localdata.v) * 0.428 - 36;
+						g = abs(localdata.v_atm_x) * 0.428 - 36;
 					}*/
 					else if (helicopter.modelName == "ka_226")
 					{
-						g = getParameterFromVector(vector<point>{ { 36.11111, -60 }, { 50, 0 } }, abs(localdata.v));
+						g = getParameterFromVector(vector<point>{ { 36.11111, -60 }, { 50, 0 } }, abs(localdata.v_atm_x));
 					}
 					else if (helicopter.modelName == "ansat")
 					{
-						g = getParameterFromVector(vector<point>{ { 28, -60 }, { 44.44, -15 }, { 56, -6 }, { 61.11, -1 }, { 70, 0 } }, abs(localdata.v));
+						g = getParameterFromVector(vector<point>{ { 28, -60 }, { 44.44, -15 }, { 56, -6 }, { 61.11, -1 }, { 70, 0 } }, abs(localdata.v_atm_x));
 					}
 					else
 					{
@@ -1560,8 +1560,8 @@ int main(int argc, char *argv[])
 					}
 					vadd->gain[0] = toCoef(g);
 
-					vadd->play(localdata.v != 0, "NULL", helicopter.fullName["pinkNoise"], "NULL", helicopter.vadd);//Воспроизводим звук - записываем состояние звука в play
-					if (localdata.v == 0)//Условие удаления объекта
+					vadd->play(localdata.v_atm_x != 0, "NULL", helicopter.fullName["pinkNoise"], "NULL", helicopter.vadd);//Воспроизводим звук - записываем состояние звука в play
+					if (localdata.v_atm_x == 0)//Условие удаления объекта
 					{
 						Free(vadd);//Удаляем объект
 					}
@@ -2426,20 +2426,6 @@ int binSer(vector<point> &time, double offset)
 void freeOpenAL()
 {
 	alutExit();
-}
-
-void printProgrammStatus(SOUNDREAD srd)
-{
-	char kor = '0';
-	//Определяем коррекцию (для отладки)
-	if (srd.p_eng1_lkorr & srd.p_eng2_lkorr)
-		kor = 'L';
-	else if (srd.p_eng1_rkorr & srd.p_eng2_rkorr)
-		kor = 'R';
-	else kor = '0';
-
-	printf(" Eng-1 = %8.3f  Eng-2 = %8.3f  Rotor = %8.3f  Time = %9.3f Sources(free) - %3i Sources(lock) - %3i Cor - %1c\t\t\t\t\t\r", srd.eng1_obor, srd.eng2_obor, srd.reduktor_gl_obor, srd.time, Sound::maxSources - Sound::sourcesInUse, Sound::sourcesInUse, kor);
-	//cout << " Eng-1 = " << srd.eng1_obor << "  Eng-2 = " << srd.eng2_obor << "  Rotor = " << srd.reduktor_gl_obor << "  Time = " << srd.time << "  Sources(free) - " << Sound::maxSources - Sound::sourcesInUse << "  Sources(lock) - " << Sound::sourcesInUse << "  Cor - " << kor << "\r";
 }
 
 int getMaxAvaliableSources()
@@ -3601,11 +3587,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		mid2CutoffFreq = 3700;//купол 2 1000-8000
 		highCutoffFreq = 4000;//ВЧ 4000-16000
 	}
-	//Остальные борты
-	else
-	{
-
-	}
 
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -3885,10 +3866,6 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "mi_26" || h.modelName == "ka_27" || h.modelName == "ka_29")
 	{
 		double averangeTurn = getAverange("eng" + to_string(engNum) + "Turns", 25);
-
-		////усиление от оборотов выше 10000
-		//double highFreqTurnGain = (parameter - averangeTurn) * 0.35;
-		//highFreqTurnGain = (highFreqTurnGain > 3) ? 3 : highFreqTurnGain;
 
 		//усиление от оборотов
 		double turnGain = toCoef((parameter - averangeTurn) * 0.35) * avrTurnRestrict;
@@ -4255,6 +4232,15 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 				flapIndicator = 0;
 			}
 		}
+
+		cout.precision(3);
+		cout << fixed 
+			<< " AVXZ: " << accelerationVectorXZ
+			<< " DASH: " << dashVectorXZ
+			<< " ACCY: " << accelerationVy
+			<< " VELY: " << velocityY
+			<< " VELX: " << velocityVectorXZ
+			<< "\r\t\t";
 	}
 
 	//Полеты 8 мтв5
@@ -4265,7 +4251,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			sourceStatus[0] = setAndDeploySound(&buffer[0], &source[0], 0, h.fullName["vint_flap"]);
 			alSourcei(source[0], AL_LOOPING, AL_TRUE);
 			key[0] = h.fullName["vint_flap"];
-
 		}
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
@@ -4849,8 +4834,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[0], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
 
 		alSourcef(source[2], AL_GAIN, vaddGain * masterGain * h.vintFlapFactor);
-
-		cout << " vintFlapGain : " << toDb(vintFlapGain * masterGain * h.vintFlapFactor) << "\tvintFlapHiGain : " << toDb(vintFlapHiGain * masterGain * h.vintFlapFactor) << "\tvaddGain : " << toDb(vaddGain * masterGain * h.vintFlapFactor) << "\r";
 	}
 	//Остальные борты
 	else
@@ -5260,8 +5243,6 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	{
 		filetoBuffer[1] = h.fullName["flapping"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		//78 -3 84 0 поправка на обороты редуктора
-		//180гр - 14 с разворот - нужно усиление при развороте (12гр - 1с -> -3дб; 6гр - 1с -> -6дб) (убавить флаппинг на 3 дб)
 		gain[1] = interpolation(0, 0, 8.3, 1, 14, 0, abs(sr.v_surf_x)) * interpolation(78, 0.71, 84, 1, sr.reduktor_gl_obor) * contact;
 	}
 	else if (h.modelName == "ka_226")
@@ -5274,7 +5255,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	}
 	else if (h.modelName == "ansat")
 	{
-		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }/*, { 2.77, -6 }*/, { 8.3, -3 }, { 14, 0 } }, abs(sr.v_surf_x));
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -18 }, { 8.3, -3 }, { 14, 0 } }, abs(sr.v_surf_x));
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
@@ -5282,7 +5263,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	}
 	else if (h.modelName == "ka_29" || h.modelName == "ka_27")
 	{
-		double drivingGain = getParameterFromVector(vector<point>{ { 0, -60 }, { 2.77, -11 }, { 14, -2 } }, abs(sr.v_surf_x));
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -60 }, { 2.77, -9 }, { 14, 0 } }, abs(sr.v_surf_x));
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
@@ -5512,6 +5493,13 @@ double toCoef(double db)
 
 double Smoother::delay(double nsGain, double deltaTime)
 {
+	//Берем текущую громкость за начальную
+	if (firstAttempt)
+	{
+		newDbGain = toDb(nsGain);
+		firstAttempt = 0;
+	}
+
 	if (newDbGain < toDb(nsGain))
 	{
 		//Ползем к актуальной громкости со скоростью 3 дб/с

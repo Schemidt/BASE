@@ -43,6 +43,17 @@ typedef struct
 } WAVEHEADER;
 #pragma pack ( pop )
 
+class Smoother
+{
+public:
+
+	bool firstAttempt = 1;
+	double newDbGain = 0;
+	double dbPerSec = 3;//Скорость нарастания/убывания 3дб
+
+	double delay(double nsGain, double deltaTime);
+};
+
 #ifndef Sound_h
 #define Sound_h
 /*!
@@ -634,8 +645,6 @@ double interpolation(point p1, point p2, double x);
 
 double interpolation(point p1, point p2, point p3, double x);
 
-/*!\brief Функция отладки*/
-void printProgrammStatus(SOUNDREAD srd);
 /*!
 \brief Возвращает максимальное количество доступных источников
 
@@ -688,15 +697,6 @@ double toDb(double coef);
 double toCoef(double db);
 
 
-class Smoother 
-{
-public:
-
-	double newDbGain = 0;
-	double dbPerSec = 3;//Скорость нарастания/убывания 3дб
-
-	double delay(double nsGain, double deltaTime);
-};
 
 
 
