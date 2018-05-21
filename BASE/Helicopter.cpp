@@ -165,6 +165,8 @@ void Helicopter::setPath(string pathToFile)
 	shortName["BumBum"] = "LF_.wav";
 	//Отрыв
 	shortName["takeOff"] = "take_off.wav";
+	//Удар при проходе стыка плит
+	shortName["shock"] = "shock.wav";
 
 	fullName = shortName;
 

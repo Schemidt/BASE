@@ -597,6 +597,7 @@ int main(int argc, char *argv[])
 	Sound *kranKolc = nullptr;
 	Sound *vpryam = nullptr;
 	Sound *vadd = nullptr;
+	vector<Sound> shock[4];
 
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
@@ -646,7 +647,7 @@ int main(int argc, char *argv[])
 			Sound::velocityVectorXZ = sqrt(pow(localdata.v_atm_x, 2) + pow(localdata.v_atm_z, 2));//приборная скорость
 			Sound::step = localdata.step; //шаг (временно используем параметр перегрузки)
 			Sound::hight = localdata.hight;
-			Sound::velocityY  = localdata.vy;
+			Sound::velocityY = localdata.vy;
 
 			//Если не пришел признак остановки модели - вычисляем переменные
 			//Если необходимый размер окна достигнут - выбрасываем значения в начале массива
@@ -1508,6 +1509,39 @@ int main(int argc, char *argv[])
 				}
 
 			}
+
+			//Удар при проходе стыка плит
+			//if (helicopter.shock)
+			//{
+			//	double shockInten[4] = { 
+			//		localdata.styk_hv,
+			//		localdata.styk_nos,
+			//		localdata.styk_l,
+			//		localdata.styk_r };
+			//	double reload[4] = { 0 };
+
+			//	for (size_t i = 0; i < 4; i++)
+			//	{
+			//		if (shockInten[i] <= 0)
+			//		{
+			//			reload[i] = 1;
+			//		}
+
+			//		if (shockInten[i] && reload[i])//Условие создания объекта
+			//		{
+			//			shock[i].push_back(Sound());
+			//			shock[i].back().gain[0] = shockInten[i];
+			//		}
+			//		for (auto j : shock[i])//Если объект создан - используем его
+			//		{
+			//			j.play(shockInten[i], helicopter.fullName["shock"], "NULL", "NULL", helicopter.shock);//Воспроизводим звук - записываем состояние звука в play
+			//			if (j.sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
+			//				shock[i].erase(j);
+			//		}
+			//	}
+			//}
+
+
 			//Скоростная добавка
 			if (helicopter.vadd)
 			{
@@ -3184,10 +3218,18 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			takeOff = h.fullName["takeOff"];
 		}
 
-		double takeOffGain = toCoef(getParameterFromVector(vector<point>{ { 0, -18 }, { 16, 0 }}, step))
-			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, hight);
+		double takeOffGain = toCoef(min(getParameterFromVector(vector<point>{ { 0, -12 }, { 8, -5 }, { 16, 0 }}, step),
+			getParameterFromVector(vector<point>{ { 0, 0 }, { 4, -2.5 }, { 8, -12 } }, hight)));
 
 		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
+
+		float toff;
+		alGetSourcef(source[2], AL_GAIN, &toff);
+		cout.precision(3);
+		cout << fixed
+			<< " TOFD: " << toff
+			<< " TOFG: " << takeOffGain
+			<< "\t\t\r";
 
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 		double averangeTurn = getAverange("redTurns", 30);
@@ -3269,8 +3311,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			takeOff = h.fullName["takeOff"];
 		}
 
-		double takeOffGain = toCoef(getParameterFromVector(vector<point>{ { 0, -18 }, { 16, 0 }}, step))
-			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8, 0 } }, hight);
+		double takeOffGain = toCoef(min(getParameterFromVector(vector<point>{ { 0, -12 }, { 8, -5 }, { 16, 0 }}, step),
+			getParameterFromVector(vector<point>{ { 0, 0 }, { 4, -2.5 }, { 8, -12 } }, hight)));
 
 		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
@@ -3571,17 +3613,11 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step)
 			* getParameterFromVector(vector<point>{ { -1.3, 0 }, { -0.7, 1 }}, velocityY);
 
-		//НЧ при авторотации
-		//double lowFreqAutorotation = getParameterFromVector(vector<point>{ { -9, 7 }, { -8, 6 }, { -4, 0 }}, velocityY)
-		//	* getParameterFromVector(vector<point>{ { 5, 0 }, { 10, 1 }}, calcA)
-		//	* getParameterFromVector(vector<point>{ { 34, 1 }, { 37, 0.5 }, { 40, 0 }}, step);
-
 		//НЧ треск на висении
 		double lowFreqCrunchHoveringGain = getParameterFromVector(vector<point>{ { 4, 0 }, { 6, 4 }}, tangaz)
 			* getParameterFromVector(vector<point>{ { 0, 1 }, { 8.3, 0 }}, abs(velocityVectorXZ));
 
-		lowFreqGain = toCoef(lowFreqGainStep + lowFreqGainVelX + lowFreqCrunchGain /*+ lowFreqAutorotation*/ + lowFreqCrunchHoveringGain);
-		//mid1FreqGain = toCoef(0);
+		lowFreqGain = toCoef(lowFreqGainStep + lowFreqGainVelX + lowFreqCrunchGain + lowFreqCrunchHoveringGain);
 		mid2FreqGain = toCoef(mid2GainStep + mid2FreqGainVelX + mid2FreqGainEngTurns);
 		highFreqGain = toCoef(highFreqGainVelX);
 
@@ -3589,7 +3625,6 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		alEffectf(effect[1], AL_EQUALIZER_MID2_WIDTH, 0.3);//
 
 		lowCutoffFreq = 120;//НЧ 50-800
-		//mid1CutoffFreq = 1000;//купол 1 200-3000
 		mid2CutoffFreq = 3700;//купол 2 1000-8000
 		highCutoffFreq = 4000;//ВЧ 4000-16000
 	}
@@ -4055,6 +4090,11 @@ int Vsu::play(SOUNDREAD sr, Helicopter h)
 	double fade = finalGain - rise;
 	alSourcef(source[!id], AL_GAIN, fade);
 	alSourcef(source[id], AL_GAIN, rise);
+
+	cout.precision(3);
+	cout << fixed << " FADE: " << fade
+		<< " RISE: " << rise
+		<< "\t\t\r";
 
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -4554,9 +4594,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		//Условие и громкость НЧ хлопков в некоторых случаях определяется ускорением и высокой скоростью
 		double accelerationGain = (3 * (abs(accelerationVectorXZ) / 0.277)) - 15;
-		accelerationGain = (accelerationGain > 5) ? -accelerationGain : accelerationGain;//дб
+		accelerationGain = (accelerationGain > 5) ? 5 - (accelerationGain - 5) : accelerationGain;//дб
 		accelerationGain = pow(10, accelerationGain * 0.05);//коэф
 
+		//Хлопки по высокой скорости
 		double hiSpeedGain = 0;
 		if (abs(velocityVectorXZ) <= 61.6)
 		{
@@ -4614,18 +4655,18 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//рассчитываем результирующую громкость хлопков в каждый момент времени
 		double flapAGain = flapA * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
 		double flapBGain = flapB * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
-		double flapCGain = ((flapIndicator) ? 
+		double flapCGain = ((flapIndicator) ?
 			(flapCGainAccX * flapCStep * flapCVX * offsetOn * off * pow(10, turnsGain*0.05)
-				* masterGain 
-				* (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5)) 
-			: (masterGain 
+				* masterGain
+				* (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5))
+			: (masterGain
 				* (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5) * (1 - offsetOn) * resFlapCGain * off));
 
 		alSourcef(source[0], AL_GAIN, flapAGain);//равномерные
 		alSourcef(source[1], AL_GAIN, flapBGain);//неравномерные
 		alSourcef(source[2], AL_GAIN, flapCGain);//тупые
 
-		cout.precision(3);
+		/*cout.precision(3);
 		cout << fixed
 			<< " FLAG: " << flapAGain
 			<< " FLBG: " << flapBGain
@@ -4635,7 +4676,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			<< " ACCY: " << accelerationVy
 			<< " VELY: " << velocityY
 			<< " VELX: " << velocityVectorXZ
-			<< "\t\t\r";
+			<< "\t\t\r";*/
 	}
 	//Полеты ми 26
 	else if (h.modelName == "mi_26")
@@ -5490,9 +5531,10 @@ bool IsProcessPresent(wchar_t * szExe)
 
 double toDb(double coef)
 {
+	//определяем log10(0) как -40
 	if (coef == 0)
 	{
-		return -60;
+		return -40;
 	}
 	else
 	{
@@ -5507,35 +5549,37 @@ double toCoef(double db)
 
 double Smoother::delay(double nsGain, double deltaTime)
 {
+
+	double nsDbGain = toDb(nsGain);
 	//Берем текущую громкость за начальную
 	if (firstAttempt)
 	{
-		newDbGain = toDb(nsGain);
+		newDbGain = nsDbGain;
 		firstAttempt = 0;
 	}
 
-	if (newDbGain < toDb(nsGain))
+	if (newDbGain < nsDbGain)
 	{
 		//Ползем к актуальной громкости со скоростью 3 дб/с
 		newDbGain += dbPerSec * deltaTime;
-		if (newDbGain > toDb(nsGain))
+		if (newDbGain > nsDbGain)
 		{
-			newDbGain = toDb(nsGain);
+			newDbGain = nsDbGain;
 		}
 	}
-	else if (newDbGain > toDb(nsGain))
+	else if (newDbGain > nsDbGain)
 	{
 		//Ползем к актуальной громкости со скоростью 3 дб/с
 		newDbGain -= dbPerSec * deltaTime;
-		if (newDbGain < toDb(nsGain))
+		if (newDbGain < nsDbGain)
 		{
-			newDbGain = toDb(nsGain);
+			newDbGain = nsDbGain;
 		}
 	}
 	else
 	{
 		//Ползем к актуальной громкости со скоростью 3 дб/с
-		newDbGain = toDb(nsGain);
+		newDbGain = nsDbGain;
 	}
 
 	return  toCoef(newDbGain);
