@@ -632,19 +632,21 @@ int main(int argc, char *argv[])
 			//Убираем звук при зависании модели
 			if (Sound::deltaTime == 0)
 			{
-				Sound::masterGain = 0;
+				Sound::masterGain -= 0.001;
+				Sound::masterGain = (Sound::masterGain < 0) ? 0 : Sound::masterGain;
 			}
 			else
 			{
-				Sound::masterGain = 1;
+				Sound::masterGain += Sound::deltaTime;
+				Sound::masterGain = (Sound::masterGain < localdata.master_gain) ? Sound::masterGain : localdata.master_gain;
 			}
 
 			Sound::currentTime = localdata.time;
-			Sound::masterGain = localdata.master_gain;
 			Sound::tangaz = localdata.tangaz;//тангаж (временно используем параметр инт осадков)
 			Sound::velocityVectorXZ = sqrt(pow(localdata.v_atm_x, 2) + pow(localdata.v_atm_z, 2));//приборная скорость
 			Sound::step = localdata.step; //шаг (временно используем параметр перегрузки)
-			Sound::hight = soundread.hight;
+			Sound::hight = localdata.hight;
+			Sound::velocityY  = localdata.vy;
 
 			//Если не пришел признак остановки модели - вычисляем переменные
 			//Если необходимый размер окна достигнут - выбрасываем значения в начале массива
@@ -666,7 +668,7 @@ int main(int argc, char *argv[])
 			if (Sound::vectorTime.back() != Sound::currentTime)
 			{
 				Sound::vectorTime.push_back(Sound::currentTime);
-				Sound::vectorVy.push_back(localdata.vy);
+				Sound::vectorVy.push_back(Sound::velocityY);
 				Sound::vectorVXZ.push_back(Sound::velocityVectorXZ);
 				Sound::vectorAccXZ.push_back(Sound::accelerationVectorXZ);
 				Sound::vectorTangaz.push_back(Sound::tangaz);
@@ -680,7 +682,7 @@ int main(int argc, char *argv[])
 				periodCalc = Sound::currentTime - Sound::vectorTime.front();
 				if (periodCalc > 0)
 				{
-					Sound::accelerationVy = (localdata.vy - Sound::vectorVy.front()) / periodCalc;
+					Sound::accelerationVy = (Sound::velocityY - Sound::vectorVy.front()) / periodCalc;
 					Sound::accelerationVectorXZ = (Sound::velocityVectorXZ - Sound::vectorVXZ.front()) / periodCalc;
 					Sound::dashVectorXZ = (Sound::accelerationVectorXZ - Sound::vectorAccXZ.front()) / periodCalc;
 					Sound::derivStep = (Sound::step - Sound::vectorStep.front()) / periodCalc;
@@ -1782,6 +1784,10 @@ int main(int argc, char *argv[])
 			if (vintSwish)
 			{
 				Free(vintSwish);
+			}
+			if (vadd)
+			{
+				Free(vadd);
 			}
 			timerAvr = 0;
 			periodCalc = 0;
@@ -4232,15 +4238,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 				flapIndicator = 0;
 			}
 		}
-
-		cout.precision(3);
-		cout << fixed 
-			<< " AVXZ: " << accelerationVectorXZ
-			<< " DASH: " << dashVectorXZ
-			<< " ACCY: " << accelerationVy
-			<< " VELY: " << velocityY
-			<< " VELX: " << velocityVectorXZ
-			<< "\r\t\t";
 	}
 
 	//Полеты 8 мтв5
@@ -4608,7 +4605,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double flapCVX = 0;
 		crossFade(&flapCVX, &flapABVX, abs(velocityVectorXZ), 15.28, 16.67, 1);
 
-		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
+		//на висении, используем ускорение в качестве переходной функции хлопков
 		double flapCGainAccX = 1;
 		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)) && abs(velocityVectorXZ) < 16.67)
 		{
@@ -4617,11 +4614,28 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//рассчитываем результирующую громкость хлопков в каждый момент времени
 		double flapAGain = flapA * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
 		double flapBGain = flapB * offsetOn * off * masterGain * h.vintFlapFactor * flapABStep * flapABVX * pow(10, turnsGain*0.05);
-		double flapCGain = ((flapIndicator) ? (flapCGainAccX * flapCStep * flapCVX * offsetOn * off * pow(10, turnsGain*0.05) * masterGain * (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5)) : (masterGain * (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5) * (1 - offsetOn) * resFlapCGain * off));
+		double flapCGain = ((flapIndicator) ? 
+			(flapCGainAccX * flapCStep * flapCVX * offsetOn * off * pow(10, turnsGain*0.05)
+				* masterGain 
+				* (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5)) 
+			: (masterGain 
+				* (h.vintFlapFactor + (1 - h.vintFlapFactor)*0.5) * (1 - offsetOn) * resFlapCGain * off));
 
 		alSourcef(source[0], AL_GAIN, flapAGain);//равномерные
 		alSourcef(source[1], AL_GAIN, flapBGain);//неравномерные
 		alSourcef(source[2], AL_GAIN, flapCGain);//тупые
+
+		cout.precision(3);
+		cout << fixed
+			<< " FLAG: " << flapAGain
+			<< " FLBG: " << flapBGain
+			<< " FLCG: " << flapCGain
+			<< " AVXZ: " << accelerationVectorXZ
+			<< " DASH: " << dashVectorXZ
+			<< " ACCY: " << accelerationVy
+			<< " VELY: " << velocityY
+			<< " VELX: " << velocityVectorXZ
+			<< "\t\t\r";
 	}
 	//Полеты ми 26
 	else if (h.modelName == "mi_26")
