@@ -4593,7 +4593,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
 		//Условие и громкость НЧ хлопков в некоторых случаях определяется ускорением и высокой скоростью
-		double accelerationGain = (3 * (abs(accelerationVectorXZ) / 0.277)) - 15;
+		double accelerationGain = (2.125 * (abs(accelerationVectorXZ) / 0.277)) - 14.125;
 		accelerationGain = (accelerationGain > 5) ? 5 - (accelerationGain - 5) : accelerationGain;//дб
 		accelerationGain = pow(10, accelerationGain * 0.05);//коэф
 
