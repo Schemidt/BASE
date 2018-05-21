@@ -3223,13 +3223,13 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
-		float toff;
+		/*float toff;
 		alGetSourcef(source[2], AL_GAIN, &toff);
 		cout.precision(3);
 		cout << fixed
 			<< " TOFD: " << toff
 			<< " TOFG: " << takeOffGain
-			<< "\t\t\r";
+			<< "\t\t\r";*/
 
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 		double averangeTurn = getAverange("redTurns", 30);
@@ -4593,8 +4593,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
 		//Условие и громкость НЧ хлопков в некоторых случаях определяется ускорением и высокой скоростью
-		double accelerationGain = (2.125 * (abs(accelerationVectorXZ) / 0.277)) - 14.125;
-		accelerationGain = (accelerationGain > 5) ? 5 - (accelerationGain - 5) : accelerationGain;//дб
+		double mirror = 5;
+		double accelerationGain = 3 * (abs(accelerationVectorXZ) / 0.277) - 20;
+		accelerationGain = (accelerationGain > mirror) ? mirror - (accelerationGain - mirror) : accelerationGain;//дб
 		accelerationGain = pow(10, accelerationGain * 0.05);//коэф
 
 		//Хлопки по высокой скорости
@@ -4666,7 +4667,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[1], AL_GAIN, flapBGain);//неравномерные
 		alSourcef(source[2], AL_GAIN, flapCGain);//тупые
 
-		/*cout.precision(3);
+		cout.precision(3);
 		cout << fixed
 			<< " FLAG: " << flapAGain
 			<< " FLBG: " << flapBGain
@@ -4676,7 +4677,16 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			<< " ACCY: " << accelerationVy
 			<< " VELY: " << velocityY
 			<< " VELX: " << velocityVectorXZ
-			<< "\t\t\r";*/
+			<< "\t\t\r";
+
+		static double p = 0;
+		p += deltaTime;
+		if (p>=0.1)
+		{
+			FILE *f = fopen("flap.txt", "at");
+			fprintf(f, "%1.3lf %1.3lf %1.3lf\n", flapAGain, flapBGain, flapCGain);
+			p = 0;
+		}
 	}
 	//Полеты ми 26
 	else if (h.modelName == "mi_26")
