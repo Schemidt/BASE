@@ -4593,10 +4593,10 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
 		//Условие и громкость НЧ хлопков в некоторых случаях определяется ускорением и высокой скоростью
-		double mirror = 5;
-		double accelerationGain = 3 * (abs(accelerationVectorXZ) / 0.277) - 20;
-		accelerationGain = (accelerationGain > mirror) ? mirror - (accelerationGain - mirror) : accelerationGain;//дб
-		accelerationGain = pow(10, accelerationGain * 0.05);//коэф
+		double mirror = 1.385;//5кмч
+		double accMirrored = (accelerationVectorXZ >= mirror) ? mirror - (accelerationVectorXZ - mirror): accelerationVectorXZ;
+		double accelerationGain = 10.83 * accMirrored - 15;
+		accelerationGain = toCoef(accelerationGain);//коэф
 
 		//Хлопки по высокой скорости
 		double hiSpeedGain = 0;
@@ -4679,14 +4679,15 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			<< " VELX: " << velocityVectorXZ
 			<< "\t\t\r";
 
-		static double p = 0;
+		/*static double p = 0;
 		p += deltaTime;
-		if (p>=0.1)
+		if (p >= 0.1)
 		{
 			FILE *f = fopen("flap.txt", "at");
-			fprintf(f, "%1.3lf %1.3lf %1.3lf\n", flapAGain, flapBGain, flapCGain);
+			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\n", currentTime, flapAGain, flapBGain, flapCGain);
 			p = 0;
-		}
+			fclose(f);
+		}*/
 	}
 	//Полеты ми 26
 	else if (h.modelName == "mi_26")
