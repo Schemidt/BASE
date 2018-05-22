@@ -5146,30 +5146,30 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 	return 1;
 }
 
-Skv::Skv() : Sound(2, 3, 2)
+Skv::Skv() : Sound(3, 4, 2)
 {
 
 }
 
 int Skv::play(Helicopter h, SOUNDREAD sr)
 {
-	for (size_t i = 0; i < 2; i++)
-	{
-		//Подключаем эквалайзер
-		if (eq[i] != "set")
-		{
-			alEffecti(effect[i], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
-			alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-			alFilteri(filter[i], AL_FILTER_TYPE, AL_FILTER_LOWPASS);//определяем фильтр как НЧ
-			alFilterf(filter[i], AL_LOWPASS_GAIN, 0);//убираем звук чистого источника
-			alSource3i(source[i], AL_AUXILIARY_SEND_FILTER, effectSlot[i], 0, 0);//посылаем выход источника через слот с эффектом
-			alSourcei(source[i], AL_DIRECT_FILTER, filter[i]);//подключаем фильтр к источнику
-			eq[i] = "set";
-		}
-	}
-
 	if (h.modelName == "mi_28")
 	{
+		for (size_t i = 0; i < 2; i++)
+		{
+			//Подключаем эквалайзер
+			if (eq[i] != "set")
+			{
+				alEffecti(effect[i], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
+				alAuxiliaryEffectSloti(effectSlot[i], AL_EFFECTSLOT_EFFECT, effect[i]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+				alFilteri(filter[i], AL_FILTER_TYPE, AL_FILTER_LOWPASS);//определяем фильтр как НЧ
+				alFilterf(filter[i], AL_LOWPASS_GAIN, 0);//убираем звук чистого источника
+				alSource3i(source[i], AL_AUXILIARY_SEND_FILTER, effectSlot[i], 0, 0);//посылаем выход источника через слот с эффектом
+				alSourcei(source[i], AL_DIRECT_FILTER, filter[i]);//подключаем фильтр к источнику
+				eq[i] = "set";
+			}
+		}
+
 		pitch[0] = 0.029 * max(sr.eng1_obor, sr.eng2_obor) - 1.484;
 
 		Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
@@ -5203,19 +5203,39 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 			//добавляем шум биений
 			if (harm != h.fullName["skv_harm_29"])
 			{
-				setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["skv_harm_29"]);
-				alSourcei(source[1], AL_LOOPING, AL_TRUE);
+				setAndDeploySound(&buffer[3], &source[2], 0, h.fullName["skv_harm_29"]);
+				alSourcei(source[2], AL_LOOPING, AL_TRUE);
 				harm = h.fullName["skv_harm_29"];
+
+				alEffecti(effect[1], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
+				alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[1]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+				alFilteri(filter[1], AL_FILTER_TYPE, AL_FILTER_LOWPASS);//определяем фильтр как НЧ
+				alFilterf(filter[1], AL_LOWPASS_GAIN, 0);//убираем звук чистого источника
+				alSource3i(source[2], AL_AUXILIARY_SEND_FILTER, effectSlot[1], 0, 0);//посылаем выход источника через слот с эффектом
+				alSourcei(source[2], AL_DIRECT_FILTER, filter[1]);//подключаем фильтр к источнику
 			}
 
-			double harmOn = (soundOn) ? offsetOn / getLengthWAV(h.fullName["skv_on"]) : 1;
+			double harmOn = 0;
+			if (soundOn)
+			{
+				harmOn = offsetOn / lengthOn;
+			}
+			else if (soundOff)
+			{
+				harmOn = 1 - (offsetOff / lengthOff);
+			}
+			else if (soundWork)
+			{
+				harmOn = 1;
+			}
+
 			//регулируем громкость шума
 			double harmGain = getParameterFromVector(vector<point>{ { 0, -60 }, { 40, -35 }, { 85, -15 }, { 90, -10 }, { 100, -5 } }, sr.reduktor_gl_obor);
-			alSourcef(source[1], AL_GAIN, toCoef(harmGain) * harmOn);
+			alSourcef(source[2], AL_GAIN, toCoef(harmGain) * harmOn);
 
 			//Высота тона гармоники
 			double harmPitch = 1 + (0.01892 * sr.reduktor_gl_obor - h.redTurnoverAvt);
-			alSourcef(source[1], AL_PITCH, harmGain);
+			alSourcef(source[2], AL_PITCH, harmGain);
 
 			//Средние обороты дв за 2 с
 			double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange("eng1Turns", 2) : sr.eng2_obor - getAverange("eng2Turns", 2);
@@ -5231,6 +5251,13 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 
 			gain[0] = toCoef(harmGain);
 			Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
+
+			cout.precision(3);
+			cout << fixed
+				<< " HRMN: " << harmOn
+				<< " OFON: " << offsetOn
+				<< " OFOF: " << offsetOff
+				<< "\t\t\r";
 		}
 	}
 	else

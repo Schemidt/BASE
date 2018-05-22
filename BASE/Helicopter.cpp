@@ -97,10 +97,10 @@ void Helicopter::setPath(string pathToFile)
 	shortName["skv_on"] = "skv_on.wav";//!<имя файла звука СКВ
 	shortName["skv_w"] = "skv_w.wav";//!<имя файла звука СКВ
 	shortName["skv_off"] = "skv_off.wav";//!<имя файла звука СКВ
-	shortName["skv_harm_29"] = "skv_harm_29.wav";//!<имя файла гармоники СКВ для Ка-29
+	shortName["skv_harm_29"] = "skv_harm.wav";//!<имя файла гармоники СКВ для Ка-29
 										 //Движение по ВПП и РД
 	shortName["runway"] = "driving.wav";//!<имя файла звука звука движения по ВПП и РД
-										
+
 								 //Вооружение
 	shortName["sturm"] = "sturm.wav";//!<имя файла звука ракеты штурм
 	shortName["nar8"] = "s8.wav";//!<имя файла звука НАР 8
@@ -156,8 +156,8 @@ void Helicopter::setPath(string pathToFile)
 	shortName["undefined1_on"] = "undefined1_on.wav";//
 	shortName["undefined1_w"] = "undefined1_w.wav";//
 	shortName["undefined1_off"] = "undefined1_off.wav";
-											   //Другое
-											   //Шум
+	//Другое
+	//Шум
 	shortName["pinkNoise"] = "vadd.wav";//
 	shortName["landing"] = "landing.wav";//
 	shortName["testNoise"] = "testNoise.wav";
