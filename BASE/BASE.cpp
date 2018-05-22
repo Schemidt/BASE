@@ -3049,7 +3049,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	double mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;//купол 2 1000-8000
 	double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;//ВЧ 4000-16000
 
-	double avrTurnRestrict = max(getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, step), getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, hight));
+	double avrTurnRestrict = max(getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, step), getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, hight));
 
 	//Полеты ми 28
 	if (h.modelName == "mi_28")
@@ -3219,7 +3219,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		double takeOffGain = toCoef(min(getParameterFromVector(vector<point>{ { 0, -12 }, { 8, -5 }, { 16, 0 }}, step),
-			getParameterFromVector(vector<point>{ { 0, 0 }, { 4, -2.5 }, { 8, -12 } }, hight)));
+			getParameterFromVector(vector<point>{ { 0, 0 }/*, { 4, -2.5 }*/, { 8, -12 } }, hight)));
 
 		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
@@ -3231,7 +3231,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			<< " TOFG: " << takeOffGain
 			<< "\t\t\r";*/
 
-		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
+			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
 		double averangeTurn = getAverange("redTurns", 30);
 
 		//Общее усиление от скорости выше 50м/с
@@ -3244,7 +3244,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, hight);
 
 		//усиление по шагу в НЧ
-		double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, hight);
+		//double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, hight);
 
 		//усиление по шагу в Средних чатотах
 		double absStepGain = step * interpolation(0, 1, 10.5, 0.5, 27.78, 0, abs(velocityVectorXZ));
@@ -3286,7 +3286,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		lowFreqGain = pow(10, (turnGain + stepGain * 0.15 + absStepGain * 0.1 /*+ mid2FreqStepGain * 0.3*/ + flapCGain + velocityGain) * 0.05); //0.15 -> 0.15
-		mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.1 + mid2FreqStepGain * 0.2 + flapCGain) * 0.05);//0.3 -> 0.2
+		mid1FreqGain = pow(10, (turnGain + stepGain * 0.2 + absStepGain * 0.1 /*+ mid2FreqStepGain * 0.2*/ + flapCGain) * 0.05);//0.3 -> 0.2
 		mid2FreqGain = pow(10, (turnGain + stepGain * 0.3 + absStepGain * 0.1 + velocityGain * 0.75) * 0.05);//0.4 -> 0.3
 		highFreqGain = pow(10, (turnGain + stepGain * 0.5 + absStepGain * 0.3 + highFreqTurnGain) * 0.05);//
 
@@ -3799,12 +3799,11 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	alSourcef(source[!id], AL_GAIN, fade);
 	alSourcef(source[id], AL_GAIN, rise);
 
-	/*float g0;
+	float g0;
 	float g1;
 	alGetSourcef(source[0], AL_GAIN, &g0);
 	alGetSourcef(source[1], AL_GAIN, &g1);
-	cout.precision(3);
-	cout << fixed << " g0: " << g0 << " g1: " << g1 << " %: " << parameter << "\r";*/
+
 
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -3844,10 +3843,6 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 			alSourcei(source[i], AL_LOOPING, AL_TRUE);
 			offset[i] = lengthWAavt * phase;
 			alSourcef(source[i], AL_PITCH, parameter / h.engTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
-
-			offset[!i] = lengthW * phase;
-			alSourcef(source[!i], AL_PITCH, parameter / h.engTurnoverMg);
-			alSourcei(source[!i], AL_LOOPING, AL_TRUE);
 		}
 		else if (filetoBuffer[i] == h.fullName["eng_off_w"])
 		{
@@ -3901,7 +3896,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	double mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;//купол 2 1000-8000
 	double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;//ВЧ 4000-16000
 
-	double avrTurnRestrict = max(getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, step), getParameterFromVector(vector<point>{ { 0, 0 }, { 0.1, 1 }}, hight));
+	double avrTurnRestrict = max(getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, step), getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, hight));
 
 	//Полеты 8 мтв5, 8 амтш, ка 27м, ка 29
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "mi_26" || h.modelName == "ka_27" || h.modelName == "ka_29")
@@ -3909,7 +3904,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		double averangeTurn = getAverange("eng" + to_string(engNum) + "Turns", 25);
 
 		//усиление от оборотов
-		double turnGain = toCoef((parameter - averangeTurn) * 0.35) * avrTurnRestrict;
+		double turnGain = toCoef((parameter - averangeTurn) * 0.35 * avrTurnRestrict);
 
 		lowFreqGain = turnGain;
 		mid1FreqGain = turnGain;
@@ -4594,7 +4589,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		//Условие и громкость НЧ хлопков в некоторых случаях определяется ускорением и высокой скоростью
 		double mirror = 1.385;//5кмч
-		double accMirrored = (accelerationVectorXZ >= mirror) ? mirror - (accelerationVectorXZ - mirror): accelerationVectorXZ;
+		double accMirrored = (accelerationVectorXZ >= mirror) ? mirror - (accelerationVectorXZ - mirror) : accelerationVectorXZ;
 		double accelerationGain = 10.83 * accMirrored - 15;
 		accelerationGain = toCoef(accelerationGain);//коэф
 
@@ -4679,15 +4674,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			<< " VELX: " << velocityVectorXZ
 			<< "\t\t\r";
 
-		/*static double p = 0;
-		p += deltaTime;
-		if (p >= 0.1)
-		{
-			FILE *f = fopen("flap.txt", "at");
-			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\n", currentTime, flapAGain, flapBGain, flapCGain);
-			p = 0;
-			fclose(f);
-		}*/
+
 	}
 	//Полеты ми 26
 	else if (h.modelName == "mi_26")
@@ -5329,11 +5316,30 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	}
 	else if (h.modelName == "ka_29" || h.modelName == "ka_27")
 	{
-		double drivingGain = getParameterFromVector(vector<point>{ { 0, -60 }, { 2.77, -9 }, { 14, 0 } }, abs(sr.v_surf_x));
+		double drivingGain = max(
+			getParameterFromVector(vector<point>{ { 0, -13 }, { 2.77, -8 }, { 8.3, -2 }, { 9, 0 } }, abs(sr.v_surf_x)),
+			getParameterFromVector(vector<point>{ { 0, -13 }, { 0.5, 0 } }, contact));
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = toCoef(drivingGain) * contact;
+		gain[1] = toCoef(drivingGain);
+
+		/*cout.precision(3);
+		cout << fixed
+			<< " DRIG: " << drivingGain
+			<< " GAN1: " << gain[1]
+			<< " VELX: " << abs(sr.v_surf_x)
+			<< "\t\t\r";*/
+
+			/*static double p = 0;
+			p += deltaTime;
+			if (p >= 0.1)
+			{
+				FILE *f = fopen("drig.txt", "at");
+				fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\n", currentTime, drivingGain, gain[1], abs(sr.v_surf_x));
+				p = 0;
+				fclose(f);
+			}*/
 	}
 	else
 	{
