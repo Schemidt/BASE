@@ -3219,7 +3219,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		double takeOffGain = toCoef(min(getParameterFromVector(vector<point>{ { 0, -12 }, { 8, -5 }, { 16, 0 }}, step),
-			getParameterFromVector(vector<point>{ { 0, 0 }/*, { 4, -2.5 }*/, { 8, -12 } }, hight)));
+			getParameterFromVector(vector<point>{ { 0, 0 }/*, { 4, -2.5 }*/, { 8, -12 } }, hight)))
+			* getParameterFromVector(vector<point>{ { 0, 0 }, { h.redTurnoverAvt, 1 } }, sr.reduktor_gl_obor);
 
 		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
@@ -3312,7 +3313,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		double takeOffGain = toCoef(min(getParameterFromVector(vector<point>{ { 0, -12 }, { 8, -5 }, { 16, 0 }}, step),
-			getParameterFromVector(vector<point>{ { 0, 0 }, { 4, -2.5 }, { 8, -12 } }, hight)));
+			getParameterFromVector(vector<point>{ { 0, 0 }/*, { 4, -2.5 }*/, { 8, -12 } }, hight)))
+			* getParameterFromVector(vector<point>{ { 0, 0 }, { h.redTurnoverAvt, 1 } }, sr.reduktor_gl_obor);
 
 		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
@@ -5250,14 +5252,15 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 			alAuxiliaryEffectSloti(effectSlot[1], AL_EFFECTSLOT_EFFECT, effect[1]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
 
 			gain[0] = toCoef(harmGain);
+			pitch[0] = harmPitch;
 			Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 
-			cout.precision(3);
+			/*cout.precision(3);
 			cout << fixed
 				<< " HRMN: " << harmOn
 				<< " OFON: " << offsetOn
 				<< " OFOF: " << offsetOff
-				<< "\t\t\r";
+				<< "\t\t\r";*/
 		}
 	}
 	else
