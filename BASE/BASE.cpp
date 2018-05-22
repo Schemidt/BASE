@@ -5236,7 +5236,7 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 			alSourcef(source[2], AL_GAIN, toCoef(harmGain) * harmOn);
 
 			//Высота тона гармоники
-			double harmPitch = 1 + (0.01892 * sr.reduktor_gl_obor - h.redTurnoverAvt);
+			double harmPitch = 1 + (0.01892 * (max(sr.eng1_obor, sr.eng2_obor) - h.engTurnoverAvt));
 			alSourcef(source[2], AL_PITCH, harmGain);
 
 			//Средние обороты дв за 2 с
