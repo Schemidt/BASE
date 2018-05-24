@@ -183,7 +183,6 @@ void Helicopter::setParam(string model)
 	if (model == "mi_8_mtv5")
 	{
 		//Константы		
-		engTurnoverHp = 20;
 		engTurnoverMg = 75;
 		engTurnoverAvt = 88;
 		redTurnoverMg1 = 50;
@@ -221,7 +220,6 @@ void Helicopter::setParam(string model)
 	else if (model == "mi_8_amtsh")
 	{
 		//Константы		
-		engTurnoverHp = 20;
 		engTurnoverMg = 75;
 		engTurnoverAvt = 88;
 		redTurnoverMg1 = 50;
@@ -259,7 +257,6 @@ void Helicopter::setParam(string model)
 	else if (model == "mi_26")
 	{
 		//Константы		
-		engTurnoverHp = 20;
 		engTurnoverMg = 69;
 		engTurnoverAvt = 84;
 		redTurnoverMg1 = 37;
@@ -291,7 +288,6 @@ void Helicopter::setParam(string model)
 	else if (model == "mi_28")
 	{
 		//Константы		
-		engTurnoverHp = 20;
 		engTurnoverMg = 73;
 		engTurnoverAvt = 86;
 		redTurnoverMg1 = 48;
@@ -331,7 +327,6 @@ void Helicopter::setParam(string model)
 	else if (model == "ka_226")
 	{
 		//Константы		
-		engTurnoverHp = 20;
 		engTurnoverMg = 61;
 		engTurnoverAvt = 79;
 		redTurnoverMg1 = 49;
@@ -358,7 +353,6 @@ void Helicopter::setParam(string model)
 	else if (model == "ansat")
 	{
 		//Константы		
-		engTurnoverHp = 20;
 		engTurnoverMg = 65;
 		engTurnoverAvt = 73;
 		redTurnoverMg1 = 65;
@@ -382,7 +376,6 @@ void Helicopter::setParam(string model)
 	else if (model == "ka_27")
 	{
 		//Константы		
-		engTurnoverHp = 20;
 		engTurnoverMg = 75;
 		engTurnoverAvt = 85;
 		redTurnoverMg1 = 44;
@@ -414,7 +407,6 @@ void Helicopter::setParam(string model)
 	else if (model == "ka_29")
 	{
 		//Константы		
-		engTurnoverHp = 25;
 		engTurnoverMg = 75;
 		engTurnoverAvt = 85;
 		redTurnoverMg1 = 44;

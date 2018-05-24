@@ -108,31 +108,36 @@ public:
 	unique_ptr<int[]> sourceStatus;//!< Переменная для статуса источника
 	unique_ptr<double[]> pitch;//!< Переменная для параметра высоты тона звука агрегата
 	unique_ptr<double[]> gain;//!< Переменная для параметра громкости звука агрегата
+	unique_ptr<float[]> offset;//!< 
 	unique_ptr<ALuint[]> source;//!< Переменная для источника
 	unique_ptr<ALuint[]> buffer;//!< Переменная для буффера
 	unique_ptr<ALuint[]> effectSlot;//!< Переменная для слота эффекта
 	unique_ptr<ALuint[]> effect;//!< переменная для эффекта
 	unique_ptr<ALuint[]> filter;//!< переменная для эффекта
-	string load;
+	unique_ptr<string[]> filetoBuffer;//!< 
+	unique_ptr<string[]> fileBuffered;//!<
+	vector<string> ModeSequence = { "0","0","0" };
+	string mode = "0";
+	int ModeCounter = 0;
+	double switcher = 0;
+	double crossFadeDuration = 0.5;//Кроссфейд по времени за crossFadeDuration секунд
+	int id = 0;
+
 	bool soundOn = 0;//!< Переменная для определения состояния звука
 	bool soundWork = 0;//!< Переменная для определения состояния звука
 	bool soundOff = 0;//!< Переменная для определения состояния звука
-	float offsetOn = 0;//!< Переменная для хранения отступа от начала файла в секундах, как правило для файла запуска агрегата
-	float offsetOff = 0;//!< Переменная для хранения отступа от начала файла в секундах, как правило для файла остановки агрегата
 	double lengthOn = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла запуска агрегата
 	double lengthOff = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата
-	
+
 	vector<double> channel = { 1,1,0,0,0,0,0 };//!< массив для поканального вывода звука
 	int sourceNumber = 2;//!< Переменная для хранения количества источников используемых объектом звука агрегата
-	int bufferNumber = 3;//!< Переменная для хранения количества буфферов используемых объектом звука агрегата
+	int bufferNumber = 2;//!< Переменная для хранения количества буфферов используемых объектом звука агрегата
 	int effectSlotNumber = 0;//!< Переменная для хранения количества слотов эффектов используемых объектом звука агрегата
 
 	Sound();//!< Конструктор по умолчанию, для объекта с 1им источником
 	Sound(const Sound &copy);//!< Конструктор копирования*/
 	Sound(int sources, int buffers, int effectslots);//!< Конструктор для объекта с sources источниками, buffers буферами и effectslots слотами эффектов
 	~Sound();//!< Деструктор (да неужели)
-
-
 
 	/*!
 	\brief Вычисляет длительность WAVE файла
@@ -230,15 +235,8 @@ public:
 	string pinkNoise;/*!< Переменная для однократной загрузки буфера */
 	string beats;/*!< Переменная для однократной загрузки буфера */
 	string takeOff;/*!< Переменная для однократной загрузки буфера */
-	string filetoBuffer[2] = { "NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
-	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
-	double offset[2] = { 0 };
-	vector<string> redModeSequence = { "0","0","0" };
-	int redModeCounter = 0;
-	int previous = 1;
-	double switcher = 0;
-	int id = 0;
 	Smoother sm;
+	double flapOn = 0;
 
 	Reductor();
 
@@ -267,16 +265,7 @@ public:
 	static int engCount;/*!< Переменная для количества инициализированных двигателей в программе */
 	double phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
 	int engNum;//!<Номер двигателя
-	vector<string> engModeSequence = { "0","0","0" };
-	int engModeCounter = 0;
-	int previous = 1;
-	double switcher = 0;
-	int id = 0;
-
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
-	string filetoBuffer[2] = { "NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
-	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
-	double offset[2] = { 0 };
 
 	Engine();
 
@@ -305,19 +294,10 @@ class Vsu : public Sound
 {
 public:
 
-
 	double vsuDownTimer = 0;
 	double vsuUpTimer = 0;
-	vector<string> vsuModeSequence = { "0", "0", "0" };
-	int vsuModeCounter = 0;
-	int previous = 1;
-	double switcher = 0;
-	int id = 0;
 
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
-	string filetoBuffer[2] = { "NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
-	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
-	double offset[2] = { 0 };
 
 	Vsu();
 
@@ -347,9 +327,6 @@ class Runway : public Sound
 public:
 
 	string eq;/*!< Переменная для однократной загрузки буфера */
-	string filetoBuffer[2];/*!< Переменная для однократной загрузки буфера */
-	string fileBuffered[2];/*!< Переменная для хранения имени загруженного файла */
-	double offset[2] = { 0 };
 	Smoother sm[2];
 
 	Runway();
@@ -377,6 +354,7 @@ class VintFlap : public Sound
 public:
 
 	string key[3];/*!< Переменная для однократной загрузки буфера */
+	double flapOn = 0;
 
 	VintFlap();
 
@@ -401,15 +379,6 @@ public:
 class VintSwish : public Sound
 {
 public:
-
-	string filetoBuffer[2] = { "NULL","NULL" };/*!< Переменная для однократной загрузки буфера */
-	string fileBuffered[2] = { "NULL","NULL" };/*!< Переменная для хранения имени загруженного файла */
-	double offset[2] = { 0 };
-	vector<string> swshModeSequence = { "0","0","0" };
-	int swshModeCounter = 0;
-	int previous = 1;
-	double switcher = 0;
-	int id = 0;
 
 	VintSwish();
 
@@ -583,21 +552,39 @@ double getOffset(double pitch, string filename, double parameter);
 /*!
 \brief Производит Crossfade
 \details Осуществляет плавный переход 1ой записи в другую путем уменьшения громкости 1ой записи и повышения громкости другой, по мере изменения параметра
-от значения limit1 к limit2.
+от значения fadeLimit к riseLimit.
 <pre>
 Если громкость звуков изменяется не в границах [0..1],
 то стоит указать множитель громкости - т.е. предельная громкость нарастающей записи
-\image html crossFade.png "CrossFade"
+\image html parametricalCrossfade.png "CrossFade"
 </pre>
-\param[in] gf Громкость затухающего источника
-\param[in] gr Громкость нарастающего источника
+\param[in] fadeGain Громкость затухающего источника
+\param[in] riseGain Громкость нарастающего источника
 \param[in] parameter Значение параметра
-\param[in] limit1 Значение параметра, при уровне громкости затухающей записи равном 1
-\param[in] limit2 Значение параметра, при уровне громкости Нарастающей записи равном 1
-\param[in] mult Множитель громкости записей
+\param[in] fadeLimit Значение параметра, при уровне громкости затухающей записи равном 1
+\param[in] riseLimit Значение параметра, при уровне громкости Нарастающей записи равном 1
+\param[in] gainMultiplicator Множитель громкости записей
 \return 1 ,если громкость затухающей записи равняется 0, а нарастающей 1
 */
-int crossFade(double *gf, double *gr, double parameter, double limit1, double limit2, double mult);
+int parametricalCrossfade(double *fadeGain, double *riseGain, double parameter, double fadeLimit, double riseLimit);
+/*!
+\brief Производит Crossfade
+\details Осуществляет плавный переход 1ой записи в другую путем уменьшения громкости 1ой записи и повышения громкости другой, по мере изменения параметра
+от значения fadeLimit к riseLimit.
+<pre>
+Если громкость звуков изменяется не в границах [0..1],
+то стоит указать множитель громкости - т.е. предельная громкость нарастающей записи
+\image html parametricalCrossfade.png "CrossFade"
+</pre>
+\param[in] fadeGain Громкость затухающего источника
+\param[in] riseGain Громкость нарастающего источника
+\param[in] parameter Значение параметра
+\param[in] fadeLimit Значение параметра, при уровне громкости затухающей записи равном 1
+\param[in] riseLimit Значение параметра, при уровне громкости Нарастающей записи равном 1
+\param[in] gainMultiplicator Множитель громкости записей
+\return 1 ,если громкость затухающей записи равняется 0, а нарастающей 1
+*/
+int timeCrossfade(double *fadeGain, double *riseGain, double crossFadeDuration, double timer);
 /*!\brief Определяет указатели на функции расширений EFX*/
 void setEFXPointers();
 /*!

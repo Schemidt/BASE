@@ -28,7 +28,7 @@ public:
 
 	string modelName;//!<Название и модификация вертолета
 	//Константы
-	double engTurnoverHp = 0; //!<обороты двигателя на холодной прокрутке
+	double engTurnoverHp = 25; //!<обороты двигателя на холодной прокрутке
 	double engTurnoverMg = 0; //!<обороты двигателя на малом газу
 	double engTurnoverAvt = 0; //!<обороты двигателя на режиме автомат
 	double redTurnoverMg1 = 0; //!<обороты редуктора с 1им двигателем на малом газу
