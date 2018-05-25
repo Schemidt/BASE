@@ -588,7 +588,7 @@ int main(int argc, char *argv[])
 	Sound *rocket = nullptr;
 	Sound *ppu = nullptr;
 	Sound *upk = nullptr;
-	Sound *nar8[20] = { nullptr };
+	vector <Sound> nar8;
 	Sound *nar13[5] = { nullptr };
 	Engine *eng[2] = { nullptr };
 	Reductor *red = nullptr;
@@ -1482,43 +1482,27 @@ int main(int argc, char *argv[])
 				if (localdata.p_nar_s8)//Условие создания объекта
 				{
 					timerNar8 += Sound::deltaTime;
-					for (int i = 0; i < 20; i++)
+
+					//воспроизводим звук выстрела 1го НАР8 каждые 0.05с - 20 раз
+					//каждые 20 выпусков процесс можно повторить без потери заднего фронта
+					//количество необходимых каналов равно количеству пусков, которое в свою очередь
+					//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
+					if (timerNar8 >= 0.05)
 					{
-						//воспроизводим звук выстрела 1го НАР8 каждые 0.05с - 20 раз
-						//каждые 20 выпусков процесс можно повторить без потери заднего фронта
-						//количество необходимых каналов равно количеству пусков, которое в свою очередь
-						//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
-						if (timerNar8 >= 0.05 * i & counterNar8 < 20 & i >= counterNar8)
-						{
-							if (!nar8[i])//Если объект не создан 
-								nar8[i] = new Sound;//Создаем объект
-							if (nar8[i])//Если объект создан - используем его
-							{
-								nar8[i]->play(localdata.p_nar_s8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);//Воспроизводим звук - записываем состояние звука в play
-								nar8[i]->soundOn = 0;
-							}
-							counterNar8++;
-						}
-					}
-					if (counterNar8 == 20)
-					{
-						counterNar8 = 0;
+						nar8.push_back(Sound());
+						nar8.back().play(localdata.p_nar_s8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);//Воспроизводим звук - записываем состояние звука в play
 						timerNar8 = 0;
 					}
-				}
-				else
-				{
-					for (int i = 0; i < 20; i++)
+					if (!nar8.empty())
 					{
-						if (nar8[i])
+						for (size_t i = 0; i < nar8.size(); i++)
 						{
-							alGetSourcei(nar8[i]->source[nar8[i]->id], AL_SOURCE_STATE, &nar8[i]->sourceStatus[nar8[i]->id]);
-							if (nar8[i]->sourceStatus[nar8[i]->id] != AL_PLAYING)//Условие удаления объекта
-								Free(nar8[i]);//Удаляем объект
+							if (nar8[i].sourceStatus[nar8[i].id] != AL_PLAYING)
+							{
+								nar8.erase(nar8.begin()+i);
+							}
 						}
 					}
-					timerNar8 = 0;
-					counterNar8 = 0;
 				}
 			}
 			//Если НАР13 имеется на борту
@@ -1540,7 +1524,7 @@ int main(int argc, char *argv[])
 							if (nar13[i])//Если объект создан - используем его
 							{
 								nar13[i]->play(localdata.p_nar_s13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);//Воспроизводим звук - записываем состояние звука в play
-								nar13[i]->soundOn = 0;
+
 							}
 							counterNar13++;
 						}
@@ -1564,7 +1548,6 @@ int main(int argc, char *argv[])
 					}
 					timerNar13 = 0;
 					counterNar13 = 0;
-
 				}
 			}
 			//Если ППУ имеется на борту
@@ -2884,20 +2867,20 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 	switcher += deltaTime;
 	timeCrossfade(&fade, &rise, crossFadeDuration, switcher);
 
-	if (filetoBuffer[id] == "NULL")
+	if (fileBuffered[id] == "NULL")
 	{
 		rise = 0;
 		fade = 1;
 	}
-	else if (filetoBuffer[!id] == "NULL" || pathW == "NULL")
+	else if (fileBuffered[!id] == "NULL" || pathW == "NULL")
 	{
 		rise = 1;
 		fade = 0;
 	}
 	alSourcef(source[!id], AL_GAIN, fade * finalGain);
-	alSourcef(source[id], AL_GAIN, rise *finalGain);
+	alSourcef(source[id], AL_GAIN, rise * finalGain);
 
-	/*float a;
+	float a;
 	float b;
 	alGetSourcef(source[0], AL_GAIN, &a);
 	alGetSourcef(source[1], AL_GAIN, &b);
@@ -2908,17 +2891,17 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 		<< " " << ModeSequence[0]
 		<< " " << ModeSequence[1]
 		<< " " << ModeSequence[2]
-		<< "\t\t\r";*/
+		<< "\t\t\r";
 
-		/*static double p = 0;
-		p += deltaTime;
-		if (p >= 0.01)
-		{
-			FILE *f = fopen("cf.txt", "at");
-			fprintf(f, "%.3lf\t%.3lf\t%.3lf\n", currentTime, a, b);
-			p = 0;
-			fclose(f);
-		}*/
+	/*static double p = 0;
+	p += deltaTime;
+	if (p >= 0.01)
+	{
+		FILE *f = fopen("cf.txt", "at");
+		fprintf(f, "%.3lf\t%.3lf\t%.3lf\n", currentTime, a, b);
+		p = 0;
+		fclose(f);
+	}*/
 
 	for (size_t i = 0; i < sourceNumber; i++)
 	{
@@ -4617,6 +4600,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}
 	}
 
+	double avrTurnRestrict = max(getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, step), getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, hight));
+
 	//Полеты 8 мтв5
 	if (h.modelName == "mi_8_mtv5")
 	{
@@ -4629,7 +4614,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
-		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
+		double averangeTurn = getAverange("redTurns", 30);
 
 		//Усиление от оборотов
 		//только если атака больше 2х
@@ -4638,7 +4623,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		if (atkXvel >= 2)
 		{
 			//усиление от оборотов
-			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
+			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2 * avrTurnRestrict;
 		}
 
 		//Хлопки плавно появляются
@@ -4650,11 +4635,11 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		double atkFls = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
 
-		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
+		// на висении, используем ускорение в качестве переходной функции хлопков
 		//При а = 6 м/с^2 громкость хлопков номинальная, при условии, что вертолет летит вниз, а скорость ниже 60 км/ч (16.67)
 		double flapCGainAccX = interpolation(0.56, 0, 6, 1, abs(accelerationVectorXZ)) * interpolation(-0.25, 1, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityVectorXZ);//переходит в усиление нч по vy
 
-		if (flapIndicator == 2)//хлопаем
+		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)))//хлопаем
 		{
 			flapOn += deltaTime;
 			flapOn = (flapOn > 1) ? 1 : flapOn;//плавно наводим громкость за 1с
@@ -4691,7 +4676,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		}
 
-		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
+		double averangeTurn = getAverange("redTurns", 30);
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
@@ -4715,7 +4700,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		if (atkXvel >= 2)
 		{
 			//усиление от оборотов
-			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
+			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2 * avrTurnRestrict;
 		}
 
 		double hG = interpolation(0, 0, 0.5, 0.5, 1, 1, hight);
@@ -4743,7 +4728,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double atkFls = pow(10, (turnsGain + gainAtk)*0.05) * vG * hG;
 
 		//Хлопки на висении возникают при 2ом условии хлопков
-		if (flapIndicator == 2)
+		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)))
 		{
 			flapOn += deltaTime;
 			flapOn = (flapOn > 1) ? 1 : flapOn;//плавно наводим громкость за 1с
@@ -4782,7 +4767,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			key[1] = h.fullName["vint_flap_low"];
 		}
 
-		double averangeTurn = getAverange("redTurns", 30 * interpolation(0, 0.01, h.redTurnoverAvt, 1, sr.reduktor_gl_obor));
+		double averangeTurn = getAverange("redTurns", 30);
 
 		double gain_a = 0;
 		double h_g = 0;
@@ -4799,7 +4784,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		double flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationVectorXZ)) * interpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityVectorXZ);//переходит в усиление нч по vy
 
-		if (flapIndicator == 2)//хлопаем
+		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)))//хлопаем
 		{
 			flapOn += deltaTime;
 			flapOn = (flapOn > 1) ? 1 : flapOn;//плавно наводим громкость за 1с
@@ -4815,7 +4800,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		if (atkXvel >= 2)
 		{
 			//усиление от оборотов
-			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2;
+			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2 * avrTurnRestrict;
 		}
 		double atkFls = pow(10, (turnsGain + gain_a)*0.05) * h_g * v_g;
 

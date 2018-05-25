@@ -136,6 +136,7 @@ public:
 
 	Sound();//!< Конструктор по умолчанию, для объекта с 1им источником
 	Sound(const Sound &copy);//!< Конструктор копирования*/
+	Sound &Sound::operator =(const Sound &) { return Sound(); };
 	Sound(int sources, int buffers, int effectslots);//!< Конструктор для объекта с sources источниками, buffers буферами и effectslots слотами эффектов
 	~Sound();//!< Деструктор (да неужели)
 
