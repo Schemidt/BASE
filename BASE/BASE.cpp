@@ -462,7 +462,6 @@ double Sound::derivStep = 0;
 double Sound::calcA = 0;
 double Sound::RedTurnAcc = 0;
 int Engine::engCount = 0;
-int Reductor::redCount = 0;
 
 vector<double> Sound::vectorVy, Sound::vectorVXZ, Sound::vectorAccXZ, Sound::vectorStep, Sound::vectorTangaz, Sound::vectorTime, Sound::vectorRedTurn;
 vector<double> Sound::vectorAvrEng1Turn, Sound::vectorAvrEng2Turn, Sound::vectorAvrRedTurn, Sound::vectorAvrStep, Sound::vectorAvrAtk;
@@ -592,7 +591,7 @@ int main(int argc, char *argv[])
 	vector <Sound> nar8;
 	Sound *nar13[5] = { nullptr };
 	Engine *eng[2] = { nullptr };
-	Reductor *red[2] = { nullptr };
+	Reductor *red = nullptr;
 	Sound *beep = nullptr;
 	Sound *undefined1 = nullptr;
 	Sound *kranKolc = nullptr;
@@ -1648,31 +1647,20 @@ int main(int argc, char *argv[])
 					}
 				}
 
-				for (size_t i = 0; i < 2; i++)
-				{
-					if (localdata.reduktor_gl_obor > 0)//условие создания объекта редуктора
-						if (!red[i])//Если объект не создан 
-							red[i] = new Reductor;//Создаем объект
-					if (red[i])//Если объект создан - используем его
-					{
-						if (i)
-						{
-							red[i]->channel[0] = 0;
-							red[i]->channel[1] = 2;
-						}
-						else
-						{
-							//2 мнимых редуктора, фактический 1, для рассинхронизации звука
-							red[i]->channel[0] = 1;
-							red[i]->channel[1] = -1;
-						}
-						red[i]->play(helicopter, localdata);//
-						if (red[i] && localdata.reduktor_gl_obor == 0)//Условие удаления объекта
-							Free(red[1]);//Удаляем объект
-					}
-				}
-			}
 
+				if (localdata.reduktor_gl_obor > 0)//условие создания объекта редуктора
+					if (!red)//Если объект не создан 
+						red = new Reductor;//Создаем объект
+				if (red)//Если объект создан - используем его
+				{
+					red->channel[0] = 1;
+					red->channel[1] = 1;
+					red->play(helicopter, localdata);//
+					if (red && localdata.reduktor_gl_obor == 0)//Условие удаления объекта
+						Free(red);//Удаляем объект
+				}
+
+			}
 
 			double shockInten[4] = {
 					localdata.styk_hv,
@@ -2041,12 +2029,11 @@ int main(int argc, char *argv[])
 				{
 					Free(eng[i]);
 				}
-				if (red[i])
-				{
-					Free(red[i]);
-				}
 			}
-
+			if (red)
+			{
+				Free(red);
+			}
 			if (vintFlap)
 			{
 				Free(vintFlap);
@@ -3151,14 +3138,10 @@ Reductor::Reductor() : Sound(4, 4, 3)
 	//наибольшему количеству требуемых источников
 	//при условии что редуктор просто вызывает конструктор Sound
 	//можно писать так if(modelName == mi_26){reductor = new Sound(4,4,2)}else{reductor = new Sound(3,3,2)}
-	redCount++;
-	phase = (redCount - 1) * 0.5;
-	redNum = redCount;
 }
 
 Reductor::~Reductor()
 {
-	redCount--;
 }
 
 int Reductor::play(Helicopter h, SOUNDREAD sr)
@@ -3228,6 +3211,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	else if (mode == "mg2")
 	{
 		filetoBuffer[id] = h.fullName["red_w_mg_w"];
+		filetoBuffer[!id] = h.fullName["red_w_w"];
 	}
 	else if (mode == "avt")
 	{
@@ -3331,19 +3315,19 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		else if (filetoBuffer[i] == h.fullName["red_w_w"])
 		{
 			alSourcei(source[i], AL_LOOPING, AL_TRUE);
-			offset[i] = lengthW * phase;
+			offset[i] = 0;
 			alSourcef(source[i], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg1);
 		}
 		else if (filetoBuffer[i] == h.fullName["red_w_mg_w"])
 		{
 			alSourcei(source[i], AL_LOOPING, AL_TRUE);
-			offset[i] = lengthMg * phase;
+			offset[i] = 0;
 			alSourcef(source[i], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverMg2);//меняем pitch (дает нисходящую прямую при остановке второго дв)
 		}
 		else if (filetoBuffer[i] == h.fullName["red_w_avt_w"])
 		{
 			alSourcei(source[i], AL_LOOPING, AL_TRUE);
-			offset[i] = lengthAvt * phase;
+			offset[i] = 0;
 			alSourcef(source[i], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);//меняем pitch (дает нисходящую прямую при остановке второго дв)
 		}
 		else if (filetoBuffer[i] == h.fullName["red_off_w"])
@@ -3380,7 +3364,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
 	}
 
-	
+
 
 	double lowFreqGain = AL_EQUALIZER_DEFAULT_LOW_GAIN;
 	double mid1FreqGain = AL_EQUALIZER_DEFAULT_MID1_GAIN;
@@ -3591,7 +3575,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		//double mid2FreqStepGain = step * interpolation(0, 1, 5, 0, hight);
 
 		//усиление по шагу в Средних чатотах
-		double absStepGain = step * getParameterFromVector(vector<point>{ { 0, 1 }, { 10.5, 0.5 }, { 27.78, 0 } },abs(velocityVectorXZ));
+		double absStepGain = step * getParameterFromVector(vector<point>{ { 0, 1 }, { 10.5, 0.5 }, { 27.78, 0 } }, abs(velocityVectorXZ));
 
 		//усиление от оборотов выше 10000
 		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1 * avrTurnRestrict;
@@ -5433,6 +5417,7 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 		else if (mode == "mg2")
 		{
 			filetoBuffer[id] = h.fullName["vint_swish_w_mg"];
+			filetoBuffer[!id] = h.fullName["vint_swish_w"];
 		}
 		else if (mode == "avt")
 		{

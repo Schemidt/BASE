@@ -418,8 +418,8 @@ void Helicopter::setParam(string model)
 		vsuFactor = 0.237/*всу*/;//-12.5
 		vsuHpFactor = 0.25/*всу хп*/;//-12
 		vsuCraneFactor = 0.354/*всу кран*/;//-9
-		//engFactor = 0.794/*дв*/; //-2
-		engHpFactor = 0.237/*дв хп*/;//-12.5
+		//engFactor = 1/*дв*/; //0
+		engHpFactor = 0.334/*дв хп*/;//-9.5
 		redFactor = 0.794/*Редуктор*/; //-2
 		vpryam = 0.199/*ВУ*/;//-14
 		cutoffCraneFactor = 0.354/*перекр*/;//-9
