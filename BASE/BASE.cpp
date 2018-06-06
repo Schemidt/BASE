@@ -1484,8 +1484,10 @@ int main(int argc, char *argv[])
 			//Если НАР8 имеется на борту
 			if (helicopter.rocketNar8Factor)
 			{
-				if (localdata.p_nar_s8)//Условие создания объекта
+				if (localdata.p_nar_s8 && localdata.p_nar_s8 != '0')//Условие создания объекта
 				{
+					
+
 					timerNar8 += Sound::deltaTime;
 					if (timerNar8 >= 0.07)
 					{
@@ -1509,6 +1511,22 @@ int main(int argc, char *argv[])
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
 						if (nar8[i])
 						{
+							if (localdata.p_nar_s8 == '1')
+							{
+								nar8[i]->channel[0] = 1;//L
+								nar8[i]->channel[1] = 0;
+							}
+							else if(localdata.p_nar_s8 == '2')
+							{
+								nar8[i]->channel[0] = 0;//R
+								nar8[i]->channel[1] = 1;
+							}
+							else if (localdata.p_nar_s8 == '3')
+							{
+								nar8[i]->channel[0] = 1;//Both
+								nar8[i]->channel[1] = 1;
+							}
+
 							nar8[i]->play(localdata.p_nar_s8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);
 
 							if (nar8[i]->sourceStatus[nar8[i]->id] != AL_PLAYING)
@@ -1528,6 +1546,21 @@ int main(int argc, char *argv[])
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
 						if (nar8[i])
 						{
+							if (localdata.p_nar_s8 == '1')
+							{
+								nar8[i]->channel[0] = 1;//L
+								nar8[i]->channel[1] = 0;
+							}
+							else if (localdata.p_nar_s8 == '2')
+							{
+								nar8[i]->channel[0] = 0;//R
+								nar8[i]->channel[1] = 1;
+							}
+							else if (localdata.p_nar_s8 == '3')
+							{
+								nar8[i]->channel[0] = 1;//Both
+								nar8[i]->channel[1] = 1;
+							}
 							nar8[i]->play(localdata.p_nar_s8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);
 
 							if (nar8[i]->sourceStatus[nar8[i]->id] != AL_PLAYING)
@@ -1542,7 +1575,7 @@ int main(int argc, char *argv[])
 			//Если НАР13 имеется на борту
 			if (helicopter.rocketNar13Factor)
 			{
-				if (localdata.p_nar_s13)//Условие создания объекта
+				if (localdata.p_nar_s13 && localdata.p_nar_s13 != '0')//Условие создания объекта
 				{
 					timerNar13 += Sound::deltaTime;
 					if (timerNar13 >= 0.12)
@@ -1568,6 +1601,21 @@ int main(int argc, char *argv[])
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР13
 						if (nar13[i])
 						{
+							if (localdata.p_nar_s13 == '1')
+							{
+								nar13[i]->channel[0] = 1;//L
+								nar13[i]->channel[1] = 0;
+							}
+							else if (localdata.p_nar_s13 == '2')
+							{
+								nar13[i]->channel[0] = 0;//R
+								nar13[i]->channel[1] = 1;
+							}
+							else if (localdata.p_nar_s13 == '3')
+							{
+								nar13[i]->channel[0] = 1;//Both
+								nar13[i]->channel[1] = 1;
+							}
 							nar13[i]->play(localdata.p_nar_s13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);
 
 							if (nar13[i]->sourceStatus[nar13[i]->id] != AL_PLAYING)
@@ -1587,6 +1635,21 @@ int main(int argc, char *argv[])
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР13
 						if (nar13[i])
 						{
+							if (localdata.p_nar_s13 == '1')
+							{
+								nar13[i]->channel[0] = 1;//L
+								nar13[i]->channel[1] = 0;
+							}
+							else if (localdata.p_nar_s13 == '2')
+							{
+								nar13[i]->channel[0] = 0;//R
+								nar13[i]->channel[1] = 1;
+							}
+							else if (localdata.p_nar_s13 == '3')
+							{
+								nar13[i]->channel[0] = 1;//Both
+								nar13[i]->channel[1] = 1;
+							}
 							nar13[i]->play(localdata.p_nar_s13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);
 
 							if (nar13[i]->sourceStatus[nar13[i]->id] != AL_PLAYING)
@@ -1610,11 +1673,26 @@ int main(int argc, char *argv[])
 			//Если ППУ имеется на борту
 			if (helicopter.ppuFactor)
 			{
-				if (localdata.p_spo_ppu)//Условие создания объекта
+				if (localdata.p_spo_ppu && localdata.p_spo_ppu != '0')//Условие создания объекта
 					if (!ppu)//Если объект не создан 
 						ppu = new Sound;//Создаем объект
 				if (ppu)//Если объект создан - используем его
 				{
+					if (localdata.p_spo_ppu == '1')
+					{
+						ppu->channel[0] = 1;//L
+						ppu->channel[1] = 0;
+					}
+					else if (localdata.p_spo_ppu == '2')
+					{
+						ppu->channel[0] = 0;//R
+						ppu->channel[1] = 1;
+					}
+					else if (localdata.p_spo_ppu == '3')
+					{
+						ppu->channel[0] = 1;//centre
+						ppu->channel[1] = 1;
+					}
 					if (ppu->play(localdata.p_spo_ppu, "NULL", helicopter.fullName["ppu"], "NULL", helicopter.ppuFactor))
 					{
 
@@ -1628,11 +1706,27 @@ int main(int argc, char *argv[])
 			//Если УПК имеется на борту
 			if (helicopter.upkFactor)
 			{
-				if (localdata.p_spo_upk)//Условие создания объекта
+				if (localdata.p_spo_upk && localdata.p_spo_upk != '0')//Условие создания объекта
 					if (!upk)//Если объект не создан 
 						upk = new Sound;//Создаем объект
 				if (upk)//Если объект создан - используем его
 				{
+					if (localdata.p_spo_upk == '1')
+					{
+						upk->channel[0] = 1;//L
+						upk->channel[1] = 0;
+					}
+					else if (localdata.p_spo_upk == '2')
+					{
+						upk->channel[0] = 0;//R
+						upk->channel[1] = 1;
+					}
+					else if (localdata.p_spo_upk == '3')
+					{
+						upk->channel[0] = 1;//centre
+						upk->channel[1] = 1;
+					}
+
 					if (upk->play(localdata.p_spo_upk, "NULL", helicopter.fullName["upk"], "NULL", helicopter.upkFactor))
 					{
 
@@ -1646,11 +1740,27 @@ int main(int argc, char *argv[])
 			//Если УР ШТУРМ имеется на борту
 			if (helicopter.rocketSturmFactor)
 			{
-				if (localdata.p_ur_ataka)//Условие создания объекта
+				if (localdata.p_ur_ataka && localdata.p_ur_ataka != '0')//Условие создания объекта
 					if (!sturm)//Если объект не создан 
 						sturm = new Sound;//Создаем объект
 				if (sturm)//Если объект создан - используем его
 				{
+					if (localdata.p_ur_ataka == '1')
+					{
+						sturm->channel[0] = 1;//L
+						sturm->channel[1] = 0;
+					}
+					else if (localdata.p_ur_ataka == '2')
+					{
+						sturm->channel[0] = 0;//R
+						sturm->channel[1] = 1;
+					}
+					else if (localdata.p_ur_ataka == '3')
+					{
+						sturm->channel[0] = 1;//centre
+						sturm->channel[1] = 1;
+					}
+
 					if (sturm->play(localdata.p_ur_ataka, helicopter.fullName["sturm"], "NULL", "NULL", helicopter.rocketSturmFactor))
 					{
 
@@ -1664,11 +1774,26 @@ int main(int argc, char *argv[])
 			//Если УР ИГЛА имеется на борту
 			if (helicopter.rocketIglaFactor)
 			{
-				if (localdata.p_ur_igla)//Условие создания объекта
+				if (localdata.p_ur_igla && localdata.p_ur_igla != '0')//Условие создания объекта
 					if (!igla)//Если объект не создан 
 						igla = new Sound;//Создаем объект
 				if (igla)//Если объект создан - используем его
 				{
+					if (localdata.p_ur_igla == '1')
+					{
+						igla->channel[0] = 1;//L
+						igla->channel[1] = 0;
+					}
+					else if (localdata.p_ur_igla == '2')
+					{
+						igla->channel[0] = 0;//R
+						igla->channel[1] = 1;
+					}
+					else if (localdata.p_ur_igla == '3')
+					{
+						igla->channel[0] = 1;//centre
+						igla->channel[1] = 1;
+					}
 					if (igla->play(localdata.p_ur_igla, helicopter.fullName["igla"], "NULL", "NULL", helicopter.rocketIglaFactor))
 					{
 
