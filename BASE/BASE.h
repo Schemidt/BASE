@@ -672,6 +672,19 @@ double toDb(double coef);
 */
 double toCoef(double db);
 
+/*!
+\brief Округляет вещественное число до необходимой точности
+
+nullsAfterInt - принимает значения 1/m, где m = 10^n, n колиство 0лей после запятой 
+/code
+roundFloat(3.34678, 0.01) -> 3.35
+roundFloat(3.34678, 0.001) -> 3.347
+/endcode
+
+\param[in] x число
+\param[in] nullsAfterInt точность
+\return округленное значение
+*/
 double roundFloat(double x, double nullsAfterInt);
 
 

@@ -1414,14 +1414,14 @@ int main(int argc, char *argv[])
 			//Если тормоза включены на борту
 			if (helicopter.chassisBrakePumpFactor)
 			{
-				if (localdata.p_tormoz)//Условие создания объекта
+				if (localdata.p_tormoz_press)//Условие создания объекта
 					if (!brake)//Если объект не создан 
 						brake = new Sound;//Создаем объект
 				if (brake)//Если объект создан - используем его
 				{
 					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
 					{
-						if (brake->play(localdata.p_tormoz, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor))
+						if (brake->play(localdata.tormoz, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor))
 						{
 
 						}
@@ -1433,7 +1433,7 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
-						if (brake->play(localdata.p_tormoz, helicopter.fullName["brake"], "NULL", helicopter.fullName["poff"], helicopter.chassisBrakePumpFactor))
+						if (brake->play(localdata.p_tormoz_press, helicopter.fullName["brake"], "NULL", helicopter.fullName["poff"], helicopter.chassisBrakePumpFactor))
 						{
 
 						}
@@ -1484,7 +1484,7 @@ int main(int argc, char *argv[])
 			//Если НАР8 имеется на борту
 			if (helicopter.rocketNar8Factor)
 			{
-				if (localdata.p_nar_s8 && localdata.p_nar_s8 != '0')//Условие создания объекта
+				if (localdata.p_nar_s8)//Условие создания объекта
 				{
 					
 
@@ -1511,17 +1511,17 @@ int main(int argc, char *argv[])
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
 						if (nar8[i])
 						{
-							if (localdata.p_nar_s8 == '1')
+							if (localdata.p_nar_s8 == 1)
 							{
 								nar8[i]->channel[0] = 1;//L
 								nar8[i]->channel[1] = 0;
 							}
-							else if(localdata.p_nar_s8 == '2')
+							else if(localdata.p_nar_s8 == 2)
 							{
 								nar8[i]->channel[0] = 0;//R
 								nar8[i]->channel[1] = 1;
 							}
-							else if (localdata.p_nar_s8 == '3')
+							else if (localdata.p_nar_s8 == 3)
 							{
 								nar8[i]->channel[0] = 1;//Both
 								nar8[i]->channel[1] = 1;
@@ -1546,17 +1546,17 @@ int main(int argc, char *argv[])
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
 						if (nar8[i])
 						{
-							if (localdata.p_nar_s8 == '1')
+							if (localdata.p_nar_s8 == 1)
 							{
 								nar8[i]->channel[0] = 1;//L
 								nar8[i]->channel[1] = 0;
 							}
-							else if (localdata.p_nar_s8 == '2')
+							else if (localdata.p_nar_s8 == 2)
 							{
 								nar8[i]->channel[0] = 0;//R
 								nar8[i]->channel[1] = 1;
 							}
-							else if (localdata.p_nar_s8 == '3')
+							else if (localdata.p_nar_s8 == 3)
 							{
 								nar8[i]->channel[0] = 1;//Both
 								nar8[i]->channel[1] = 1;
@@ -1575,7 +1575,7 @@ int main(int argc, char *argv[])
 			//Если НАР13 имеется на борту
 			if (helicopter.rocketNar13Factor)
 			{
-				if (localdata.p_nar_s13 && localdata.p_nar_s13 != '0')//Условие создания объекта
+				if (localdata.p_nar_s13)//Условие создания объекта
 				{
 					timerNar13 += Sound::deltaTime;
 					if (timerNar13 >= 0.12)
@@ -1601,17 +1601,17 @@ int main(int argc, char *argv[])
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР13
 						if (nar13[i])
 						{
-							if (localdata.p_nar_s13 == '1')
+							if (localdata.p_nar_s13 == 1)
 							{
 								nar13[i]->channel[0] = 1;//L
 								nar13[i]->channel[1] = 0;
 							}
-							else if (localdata.p_nar_s13 == '2')
+							else if (localdata.p_nar_s13 == 2)
 							{
 								nar13[i]->channel[0] = 0;//R
 								nar13[i]->channel[1] = 1;
 							}
-							else if (localdata.p_nar_s13 == '3')
+							else if (localdata.p_nar_s13 == 3)
 							{
 								nar13[i]->channel[0] = 1;//Both
 								nar13[i]->channel[1] = 1;
@@ -1635,17 +1635,17 @@ int main(int argc, char *argv[])
 						//зависит от промежуточного интервала и длинны записи звука выстрела НАР13
 						if (nar13[i])
 						{
-							if (localdata.p_nar_s13 == '1')
+							if (localdata.p_nar_s13 == 1)
 							{
 								nar13[i]->channel[0] = 1;//L
 								nar13[i]->channel[1] = 0;
 							}
-							else if (localdata.p_nar_s13 == '2')
+							else if (localdata.p_nar_s13 == 2)
 							{
 								nar13[i]->channel[0] = 0;//R
 								nar13[i]->channel[1] = 1;
 							}
-							else if (localdata.p_nar_s13 == '3')
+							else if (localdata.p_nar_s13 == 3)
 							{
 								nar13[i]->channel[0] = 1;//Both
 								nar13[i]->channel[1] = 1;
@@ -1661,34 +1661,34 @@ int main(int argc, char *argv[])
 				}
 			}
 
-			cout.precision(3);
+			/*cout.precision(3);
 			cout << fixed
 				<< " CO8: " << counterNar8
 				<< " TI8: " << timerNar8
 				<< " C13: " << counterNar13
 				<< " T13: " << timerNar13
 				<< " SIU: " << Sound::sourcesInUse
-				<< "\t\t\r";
+				<< "\t\t\r";*/
 
 			//Если ППУ имеется на борту
 			if (helicopter.ppuFactor)
 			{
-				if (localdata.p_spo_ppu && localdata.p_spo_ppu != '0')//Условие создания объекта
+				if (localdata.p_spo_ppu)//Условие создания объекта
 					if (!ppu)//Если объект не создан 
 						ppu = new Sound;//Создаем объект
 				if (ppu)//Если объект создан - используем его
 				{
-					if (localdata.p_spo_ppu == '1')
+					if (localdata.p_spo_ppu == 1)
 					{
 						ppu->channel[0] = 1;//L
 						ppu->channel[1] = 0;
 					}
-					else if (localdata.p_spo_ppu == '2')
+					else if (localdata.p_spo_ppu == 2)
 					{
 						ppu->channel[0] = 0;//R
 						ppu->channel[1] = 1;
 					}
-					else if (localdata.p_spo_ppu == '3')
+					else if (localdata.p_spo_ppu == 3)
 					{
 						ppu->channel[0] = 1;//centre
 						ppu->channel[1] = 1;
@@ -1706,22 +1706,22 @@ int main(int argc, char *argv[])
 			//Если УПК имеется на борту
 			if (helicopter.upkFactor)
 			{
-				if (localdata.p_spo_upk && localdata.p_spo_upk != '0')//Условие создания объекта
+				if (localdata.p_spo_upk)//Условие создания объекта
 					if (!upk)//Если объект не создан 
 						upk = new Sound;//Создаем объект
 				if (upk)//Если объект создан - используем его
 				{
-					if (localdata.p_spo_upk == '1')
+					if (localdata.p_spo_upk == 1)
 					{
 						upk->channel[0] = 1;//L
 						upk->channel[1] = 0;
 					}
-					else if (localdata.p_spo_upk == '2')
+					else if (localdata.p_spo_upk == 2)
 					{
 						upk->channel[0] = 0;//R
 						upk->channel[1] = 1;
 					}
-					else if (localdata.p_spo_upk == '3')
+					else if (localdata.p_spo_upk == 3)
 					{
 						upk->channel[0] = 1;//centre
 						upk->channel[1] = 1;
@@ -1740,22 +1740,22 @@ int main(int argc, char *argv[])
 			//Если УР ШТУРМ имеется на борту
 			if (helicopter.rocketSturmFactor)
 			{
-				if (localdata.p_ur_ataka && localdata.p_ur_ataka != '0')//Условие создания объекта
+				if (localdata.p_ur_ataka)//Условие создания объекта
 					if (!sturm)//Если объект не создан 
 						sturm = new Sound;//Создаем объект
 				if (sturm)//Если объект создан - используем его
 				{
-					if (localdata.p_ur_ataka == '1')
+					if (localdata.p_ur_ataka == 1)
 					{
 						sturm->channel[0] = 1;//L
 						sturm->channel[1] = 0;
 					}
-					else if (localdata.p_ur_ataka == '2')
+					else if (localdata.p_ur_ataka == 2)
 					{
 						sturm->channel[0] = 0;//R
 						sturm->channel[1] = 1;
 					}
-					else if (localdata.p_ur_ataka == '3')
+					else if (localdata.p_ur_ataka == 3)
 					{
 						sturm->channel[0] = 1;//centre
 						sturm->channel[1] = 1;
@@ -1774,22 +1774,22 @@ int main(int argc, char *argv[])
 			//Если УР ИГЛА имеется на борту
 			if (helicopter.rocketIglaFactor)
 			{
-				if (localdata.p_ur_igla && localdata.p_ur_igla != '0')//Условие создания объекта
+				if (localdata.p_ur_igla)//Условие создания объекта
 					if (!igla)//Если объект не создан 
 						igla = new Sound;//Создаем объект
 				if (igla)//Если объект создан - используем его
 				{
-					if (localdata.p_ur_igla == '1')
+					if (localdata.p_ur_igla == 1)
 					{
 						igla->channel[0] = 1;//L
 						igla->channel[1] = 0;
 					}
-					else if (localdata.p_ur_igla == '2')
+					else if (localdata.p_ur_igla == 2)
 					{
 						igla->channel[0] = 0;//R
 						igla->channel[1] = 1;
 					}
-					else if (localdata.p_ur_igla == '3')
+					else if (localdata.p_ur_igla == 3)
 					{
 						igla->channel[0] = 1;//centre
 						igla->channel[1] = 1;
@@ -1843,9 +1843,9 @@ int main(int argc, char *argv[])
 					localdata.styk_nos,
 					localdata.styk_l,
 					localdata.styk_r };
+
 			for (size_t i = 0; i < 4; i++)
 			{
-
 				if (helicopter.shock)
 				{
 					if (shockInten[i])//Условие создания объекта
@@ -1864,40 +1864,6 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-
-
-			/*
-			Удар при проходе стыка плит
-			if (helicopter.shock)
-			{
-				double shockInten[4] = {
-					localdata.styk_hv,
-					localdata.styk_nos,
-					localdata.styk_l,
-					localdata.styk_r };
-				double reload[4] = { 0 };
-
-				for (size_t i = 0; i < 4; i++)
-				{
-					if (shockInten[i] <= 0)
-					{
-						reload[i] = 1;
-					}
-
-					if (shockInten[i] && reload[i])//Условие создания объекта
-					{
-						shock[i].push_back(Sound());
-						shock[i].back().gain[0] = shockInten[i];
-					}
-					for (auto j : shock[i])//Если объект создан - используем его
-					{
-						j.play(shockInten[i], helicopter.fullName["shock"], "NULL", "NULL", helicopter.shock);//Воспроизводим звук - записываем состояние звука в play
-						if (j.sourceStatus[0] != AL_PLAYING)//Условие удаления объекта
-							shock[i].erase(j);
-					}
-				}
-			}
-			*/
 
 			//Скоростная добавка
 			if (helicopter.vadd)
@@ -3056,12 +3022,12 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 	switcher += deltaTime;
 	timeCrossfade(&fade, &rise, crossFadeDuration, switcher);
 
-	if (fileBuffered[id] == "NULL")
+	if (fileBuffered[id] == "NULL" && filetoBuffer[id] == "NULL")
 	{
 		rise = 0;
 		fade = 1;
 	}
-	else if (fileBuffered[!id] == "NULL" || pathW == "NULL")
+	else if ((fileBuffered[!id] == "NULL" && filetoBuffer[!id] == "NULL") || pathW == "NULL")
 	{
 		rise = 1;
 		fade = 0;
@@ -3304,14 +3270,21 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		mode = "mg2";
 	}
 	//мг2дв <-> авт
-	else if (sr.reduktor_gl_obor > h.redTurnoverMg2)
+	else if (sr.reduktor_gl_obor > h.redTurnoverMg2 && !sr.p_eng1_ostanov && !sr.p_eng2_ostanov)
 	{
 		mode = "avt";
 	}
 	//мг2дв -> 0
-	else if (sr.p_eng1_ostanov && sr.p_eng2_ostanov && sr.reduktor_gl_obor > 0 && sr.reduktor_gl_obor <= h.redTurnoverMg2)
+	else if (sr.p_eng1_ostanov && sr.p_eng2_ostanov && sr.reduktor_gl_obor > 0)
 	{
-		mode = "off";
+		if (sr.reduktor_gl_obor > h.redTurnoverMg2)
+		{
+			mode = "avtOff";
+		}
+		else
+		{
+			mode = "off";
+		}
 	}
 
 	if (ModeSequence.back() != mode)
@@ -3347,9 +3320,24 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		filetoBuffer[id] = h.fullName["red_w_avt_w"];
 		filetoBuffer[!id] = h.fullName["red_w_mg_w"];
 	}
+	else if (mode == "avtOff")
+	{
+		filetoBuffer[!id] = h.fullName["red_w_avt_w"];
+		filetoBuffer[id] = h.fullName["red_w_mg_w"];
+	}
 	else if (mode == "off")
 	{
-		filetoBuffer[id] = h.fullName["red_off_w"];
+		if (ModeSequence[1] == "avt")
+		{
+			fileBuffered[id] = h.fullName["red_w_mg_w"];
+			ModeSequence[1] = "mg2";
+			id = !id;
+			filetoBuffer[id] = h.fullName["red_off_w"];
+		}
+		else
+		{
+			filetoBuffer[id] = h.fullName["red_off_w"];
+		}
 	}
 
 	//28
@@ -3399,12 +3387,12 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		gain[id] = 1 - getParameterFromVector(vector<point>{ {h.redTurnoverMg1, 0}, { h.redTurnoverMg2, 1 } }, sr.reduktor_gl_obor);
 		gain[!id] = 1 - gain[id];
 	}
-	else if (fileBuffered[id] == "NULL")
+	else if (fileBuffered[id] == "NULL" && filetoBuffer[id] == "NULL")
 	{
 		gain[id] = 0;
 		gain[!id] = 1;
 	}
-	else if (fileBuffered[!id] == "NULL")
+	else if (fileBuffered[!id] == "NULL" && filetoBuffer[!id] == "NULL")
 	{
 		gain[id] = 1;
 		gain[!id] = 0;
@@ -3451,10 +3439,25 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	alSourcef(source[!id], AL_GAIN, gain[!id] * finalGain);
 	alSourcef(source[id], AL_GAIN, gain[id] * finalGain);
 
+	float g[2];
+	float p[2];
 	for (size_t i = 0; i < 2; i++)
 	{
+		alGetSourcef(source[i], AL_GAIN, &g[i]);
+		alGetSourcef(source[i], AL_PITCH, &p[i]);
+	}
+	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
+	cout.precision(3);
+	cout << fixed
+		<< " ID__: " << id
+		<< " MODS: " << modes
+		<< " OFF0: " << offset[id]
+		<< " FIB0: " << fileBuffered[0]
+		<< " FIB1: " << fileBuffered[1]
+		<< "\t\t\r";
 
-
+	for (size_t i = 0; i < 2; i++)
+	{
 		//При оборотах редуктора = 0 и незапущенных двигателях, останавиваем источники
 		if (sr.reduktor_gl_obor == 0 && !sr.p_eng1_zap && !sr.p_eng2_zap)
 		{
@@ -4208,7 +4211,14 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	}
 	else if (status_off)
 	{
-		mode = "off";
+		if (parameter <= h.engTurnoverMg)
+		{
+			mode = "off";
+		}
+		else
+		{
+			mode = "avtOff";
+		}
 	}
 	else if (!status_on && !status_off && !status_hp)
 	{
@@ -4287,12 +4297,30 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	{
 		if (modeOn)
 		{
-			filetoBuffer[id] = h.fullName["eng_off_w"];
+			//если каким-то неимоверным образом промежуточный этап
+			//был пропущен и после автомата последовало выключение
+			if (ModeSequence[1] == "avt")
+			{
+				fileBuffered[id] = h.fullName["eng_w_w"];
+				ModeSequence[1] = "mg";
+				id = !id;
+				filetoBuffer[id] = h.fullName["eng_off_w"];
+			}
+			else
+			{
+				filetoBuffer[id] = h.fullName["eng_off_w"];
+			}
 		}
 		else if (modeHp)
 		{
 			filetoBuffer[id] = h.fullName["eng_off_hp_w"];
 		}
+	}
+	//авт -> 0
+	else if (mode == "avtOff")
+	{
+		filetoBuffer[!id] = h.fullName["eng_w_avt_w"];
+		filetoBuffer[id] = h.fullName["eng_w_w"];
 	}
 
 	double finalGain = 0;
@@ -4349,12 +4377,12 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		gain[id] = max(timeGain[id], turnGain[id]);
 		gain[!id] = min(timeGain[!id], turnGain[!id]);
 	}
-	else if (fileBuffered[id] == "NULL")
+	else if (fileBuffered[id] == "NULL" && filetoBuffer[id] == "NULL")
 	{
 		gain[id] = 0;
 		gain[!id] = 1;
 	}
-	else if (fileBuffered[!id] == "NULL")
+	else if (fileBuffered[!id] == "NULL" && filetoBuffer[!id] == "NULL")
 	{
 		gain[id] = 1;
 		gain[!id] = 0;
@@ -4374,14 +4402,12 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	{
 		alGetSourcef(source[i], AL_GAIN, &g[i]);
 		alGetSourcef(source[i], AL_PITCH, &p[i]);
-	}*/
-	/*string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
+	}
+	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
 	cout.precision(3);
 	cout << fixed
-		<< " GAI0: " << g[0]
-		<< " GAI1: " << g[1]
-		<< " PIC0: " << p[0]
-		<< " PIC1: " << p[1]
+		<< " ID__: " << id
+		<< " MODS: " << modes
 		<< " OFF0: " << offset[id]
 		<< " FIB0: " << fileBuffered[0]
 		<< " FIB1: " << fileBuffered[1]
@@ -4732,12 +4758,12 @@ int Vsu::play(SOUNDREAD sr, Helicopter h)
 
 	switcher += deltaTime;
 	timeCrossfade(&fade, &rise, crossFadeDuration, switcher);
-	if (filetoBuffer[id] == "NULL")
+	if (filetoBuffer[id] == "NULL" && filetoBuffer[id] == "NULL")
 	{
 		rise = 0;
 		fade = 1;
 	}
-	else if (filetoBuffer[!id] == "NULL")
+	else if (filetoBuffer[!id] == "NULL" && filetoBuffer[!id] == "NULL")
 	{
 		rise = 1;
 		fade = 0;
@@ -4799,6 +4825,7 @@ int Vsu::play(SOUNDREAD sr, Helicopter h)
 		{
 			alSourceStop(source[i]);
 			alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);		// перезабили признак 
+			return 0;
 		}
 
 		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
@@ -5649,8 +5676,17 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 		}
 		else if (mode == "off")
 		{
-			filetoBuffer[id] = h.fullName["vint_swish_w"];
-
+			if (ModeSequence[1] == "avt")
+			{
+				fileBuffered[id] = h.fullName["vint_swish_w_mg"];
+				ModeSequence[1] = "mg2";
+				id = !id;
+				filetoBuffer[id] = h.fullName["vint_swish_off"];
+			}
+			else
+			{
+				filetoBuffer[id] = h.fullName["vint_swish_off"];
+			}
 		}
 
 		double finalGain = h.redFactor * masterGain;
@@ -5675,12 +5711,12 @@ int VintSwish::play(Helicopter h, SOUNDREAD sr)
 			gain[id] = 1 - getParameterFromVector(vector<point>{ {h.redTurnoverMg1, 0}, { h.redTurnoverMg2, 1 } }, sr.reduktor_gl_obor);
 			gain[!id] = 1 - gain[id];
 		}
-		else if (fileBuffered[id] == "NULL")
+		else if (fileBuffered[id] == "NULL" && filetoBuffer[id] == "NULL")
 		{
 			gain[id] = 0;
 			gain[!id] = 1;
 		}
-		else if (fileBuffered[!id] == "NULL")
+		else if (fileBuffered[!id] == "NULL" && filetoBuffer[!id] == "NULL")
 		{
 			gain[id] = 1;
 			gain[!id] = 0;
