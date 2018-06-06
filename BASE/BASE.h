@@ -118,7 +118,6 @@ public:
 	unique_ptr<string[]> fileBuffered;//!<
 	vector<string> ModeSequence = { "0","0","0" };
 	string mode = "0";
-	int ModeCounter = 0;
 	double switcher = 0;
 	double crossFadeDuration = 0.5;//Кроссфейд по времени за crossFadeDuration секунд
 	int id = 0;
@@ -138,7 +137,7 @@ public:
 
 	Sound();//!< Конструктор по умолчанию, для объекта с 1им источником
 	Sound(const Sound &copy);//!< Конструктор копирования*/
-	Sound &Sound::operator =(const Sound &) { return Sound(); };
+	Sound& operator =(const Sound &copy);
 	Sound(int sources, int buffers, int effectslots);//!< Конструктор для объекта с sources источниками, buffers буферами и effectslots слотами эффектов
 	~Sound();//!< Деструктор (да неужели)
 
@@ -201,22 +200,10 @@ public:
 	*/
 	int setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, string file_path);
 
-	/*!
-	\brief Подключает буфер к источнику и запускает
-	\details
-	<pre>
-	Предполагается что буферы уже заполнены необходимыми данными,
-	и требуется лишь переподлючать их к источнику.
-	Призвана убрать задержку при переключении буферов, что вызывает кликающий звук.
-	</pre>
-	\param[in] Buffer Объект буфера
-	\param[in] Source Объект источника
-	\param[in] offset оступ от начала файла, сек
-	\return Статус источника OpenAL
-	*/
-	int switchBufferAndPlay(ALuint *Buffer, ALuint *Source, double offset);
-
 	double getAverange(string parameter, double seconds);
+
+	private:
+
 
 };
 
@@ -239,6 +226,8 @@ public:
 	string takeOff;/*!< Переменная для однократной загрузки буфера */
 	Smoother sm;
 	double flapOn = 0;
+	double reperTurn = 0;
+	string reperSet;
 
 	Reductor();
 
@@ -269,6 +258,8 @@ public:
 	double phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
 	int engNum;//!<Номер двигателя
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
+	double reperTurn = 0;
+	string reperSet;
 
 	Engine();
 
@@ -300,6 +291,7 @@ public:
 	double vsuDownTimer = 0;
 	double vsuUpTimer = 0;
 	double vsuTurnover = 0;
+
 	string init = "NULL";
 
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
@@ -385,6 +377,8 @@ class VintSwish : public Sound
 {
 public:
 
+	double reperTurn = 0;
+	string reperSet;
 	VintSwish();
 
 	/*!
@@ -491,16 +485,6 @@ double getValue(point p1, point p2, double x, double limit, string w);
 \return Возвращает значение функции
 */
 double getValue(point p1, point p2, double x, double low_limit, double hi_limit);
-
-/*!
-\brief Возвращает значение функции
-\details Возвращает значение функции в точке offset заданной графически, векторами точек
-\param[in] &value Вектор значений функции
-\param[in] &time Вектор значений параметра
-\param[in] offset Значение переменной в искомой точке
-\return Возвращает значение функции
-*/
-double getParameterFromVector(vector<double> &value, vector<double> &time, double offset);
 
 /*!
 \brief Возвращает значение функции
@@ -687,6 +671,8 @@ double toDb(double coef);
 \return коэффициент громкости
 */
 double toCoef(double db);
+
+double roundFloat(double x, double nullsAfterInt);
 
 
 

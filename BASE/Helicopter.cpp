@@ -386,9 +386,9 @@ void Helicopter::setParam(string model)
 		vsuFactor = 0.05/*всу*/;//-26
 		vsuHpFactor = 0.25/*всу хп*/;//-12
 		vsuCraneFactor = 0.354/*всу кран*/;//-9
-		engFactor = 0.794/*дв*/; //-2
-		engHpFactor = 0.237/*дв хп*/;//-12.5
-		redFactor = 0.794/*Редуктор*/; //-2 0.794
+		engFactor = 1/*дв*/; //0
+		engHpFactor = 0.334/*дв хп*/;//-9.5
+		redFactor = 0.794/*Редуктор*/; //-2
 		vpryam = 0.199/*ВУ*/;//-14
 		cutoffCraneFactor = 0.354/*перекр*/;//-9
 		vintBrakeFactor = 0.2/*Винт тормоз*/;
@@ -418,7 +418,7 @@ void Helicopter::setParam(string model)
 		vsuFactor = 0.237/*всу*/;//-12.5
 		vsuHpFactor = 0.25/*всу хп*/;//-12
 		vsuCraneFactor = 0.354/*всу кран*/;//-9
-		//engFactor = 1/*дв*/; //0
+		engFactor = 1/*дв*/; //0
 		engHpFactor = 0.334/*дв хп*/;//-9.5
 		redFactor = 0.794/*Редуктор*/; //-2
 		vpryam = 0.199/*ВУ*/;//-14
@@ -433,7 +433,7 @@ void Helicopter::setParam(string model)
 		skvFactor = 1;
 
 		rocketSturmFactor = 1/*ШТУРМ*/;
-		rocketNar8Factor = 1/*НАР8*/;
+		rocketNar8Factor =  1/*НАР8*/;
 		rocketNar13Factor = 1/*НАР13*/;
 		rocketHitFactor = 0.8/*Попадание ракеты*/;
 		upkFactor = 1/*УПК*/;
