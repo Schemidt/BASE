@@ -1168,7 +1168,7 @@ int main(int argc, char *argv[])
 				{
 					perek1->channel[0] = 1;//L
 					perek1->channel[1] = 0;
-					if (perek1->play(localdata.p_kran_perekr_1, helicopter.fullName["perekr_l"], "NULL", "NULL", helicopter.cutoffCraneFactor))
+					if (perek1->play(localdata.p_kran_perekr_1, helicopter.fullName["perekr_l"], "NULL", helicopter.fullName["perekr_l"], helicopter.cutoffCraneFactor))
 					{
 
 					}
@@ -1189,7 +1189,7 @@ int main(int argc, char *argv[])
 				{
 					perek2->channel[0] = 0;
 					perek2->channel[1] = 1;//R
-					if (perek2->play(localdata.p_kran_perekr_2, helicopter.fullName["perekr_r"], "NULL", "NULL", helicopter.cutoffCraneFactor))
+					if (perek2->play(localdata.p_kran_perekr_2, helicopter.fullName["perekr_r"], "NULL", helicopter.fullName["perekr_r"], helicopter.cutoffCraneFactor))
 					{
 
 					}
@@ -1264,7 +1264,7 @@ int main(int argc, char *argv[])
 				{
 					fire1->channel[0] = 1;//L
 					fire1->channel[1] = 0;
-					if (fire1->play(localdata.p_kran_poj_l, helicopter.fullName["kran_fire_l"], "NULL", "NULL", helicopter.fireCraneFactor))
+					if (fire1->play(localdata.p_kran_poj_l, helicopter.fullName["kran_fire_l"], "NULL", helicopter.fullName["kran_fire_l"], helicopter.fireCraneFactor))
 					{
 
 					}
@@ -1281,7 +1281,7 @@ int main(int argc, char *argv[])
 				{
 					fire2->channel[0] = 0;
 					fire2->channel[1] = 1;//R
-					if (fire2->play(localdata.p_kran_poj_r, helicopter.fullName["kran_fire_r"], "NULL", "NULL", helicopter.fireCraneFactor))
+					if (fire2->play(localdata.p_kran_poj_r, helicopter.fullName["kran_fire_r"], "NULL", helicopter.fullName["kran_fire_r"], helicopter.fireCraneFactor))
 					{
 
 					}
@@ -2034,7 +2034,7 @@ int main(int argc, char *argv[])
 				{
 					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
 					{
-						if (vsuKran->play(localdata.p_kran_perekr_vsu, helicopter.fullName["vsu_kran_on"], "NULL", "NULL", helicopter.vsuCraneFactor))
+						if (vsuKran->play(localdata.p_kran_perekr_vsu, helicopter.fullName["vsu_kran_on"], "NULL", helicopter.fullName["vsu_kran_on"], helicopter.vsuCraneFactor))
 						{
 
 						}
