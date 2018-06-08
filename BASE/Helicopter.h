@@ -78,7 +78,8 @@ public:
 	double rocketIglaFactor = 0;//!<Игла
 	double vpryam = 0;//!<Выпрямительное устройство
 	double vadd = 0;//!<Скоростная добавка
-	double shock = 1;
+	double shock = 1;//!<Удар о стык плит
+	double trim = 0;//!<Триммер
 
 	//!<Ассоциативный массив с именами файлов - звуков
 	map<string, string> shortName;

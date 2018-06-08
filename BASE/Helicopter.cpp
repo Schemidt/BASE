@@ -21,6 +21,7 @@ void Helicopter::setPath(string pathToFile)
 	shortName["eng_avt_mg"] = "eng_avt_mg.txt"; //!<имя файла c переходной функцией остановки до режима малого газа
 												//Редуктор
 	shortName["red_on"] = "red_on.txt"; //!<имя файла c переходной функцией разгона редуктора до режима малого газа на 1ом двигателе
+	shortName["red_on_wfe"] = "red_on_wfe.txt"; //!<имя файла c переходной функцией разгона редуктора до режима малого газа на 1ом двигателе
 	shortName["red_on_mg"] = "red_on_mg.txt"; //!<имя файла c переходной функцией разгона редуктора до режима малого газа на 2х двигателях
 	shortName["red_mg_avt"] = "red_mg_avt.txt"; //!<имя файла c переходной функцией разгона редуктора до режима автомат
 	shortName["red_avt_mg"] = "red_avt_mg.txt"; //!<имя файла c переходной функцией замедления редуктора до режима мг
@@ -167,6 +168,9 @@ void Helicopter::setPath(string pathToFile)
 	shortName["takeOff"] = "take_off.wav";
 	//Удар при проходе стыка плит
 	shortName["shock"] = "shock.wav";
+	//Триммер
+	shortName["trim_on"] = "trim_on.wav";
+	shortName["trim_off"] = "trim_off.wav";
 
 	fullName = shortName;
 
@@ -385,9 +389,9 @@ void Helicopter::setParam(string model)
 		vsuFactor = 0.05/*всу*/;//-26
 		vsuHpFactor = 0.25/*всу хп*/;//-12
 		vsuCraneFactor = 0.354/*всу кран*/;//-9
-		engFactor = 0.794/*дв*/; //-2
-		engHpFactor = 0.237/*дв хп*/;//-12.5
-		redFactor = 0.794/*Редуктор*/; //-2 0.794
+		engFactor = 1/*дв*/; //0
+		engHpFactor = 0.334/*дв хп*/;//-9.5
+		redFactor = 0.794/*Редуктор*/; //-2
 		vpryam = 0.199/*ВУ*/;//-14
 		cutoffCraneFactor = 0.354/*перекр*/;//-9
 		vintBrakeFactor = 0.2/*Винт тормоз*/;
@@ -397,6 +401,7 @@ void Helicopter::setParam(string model)
 		undefinedFactor = 0.25; /*хз1*///-12
 		runwayFactor = 0.63/*ВПП*/;
 		vadd = 1/*Скоростная добавка*/;
+		skvFactor = 1;
 
 		rainFactor = 0.5/*Дождь*/;
 
@@ -416,8 +421,8 @@ void Helicopter::setParam(string model)
 		vsuFactor = 0.237/*всу*/;//-12.5
 		vsuHpFactor = 0.25/*всу хп*/;//-12
 		vsuCraneFactor = 0.354/*всу кран*/;//-9
-		engFactor = 0.794/*дв*/; //-2
-		engHpFactor = 0.237/*дв хп*/;//-12.5
+		engFactor = 1/*дв*/; //0
+		engHpFactor = 0.334/*дв хп*/;//-9.5
 		redFactor = 0.794/*Редуктор*/; //-2
 		vpryam = 0.199/*ВУ*/;//-14
 		cutoffCraneFactor = 0.354/*перекр*/;//-9
@@ -429,10 +434,11 @@ void Helicopter::setParam(string model)
 		runwayFactor = 0.63/*ВПП*/;
 		vadd = 1/*Скоростная добавка*/;
 		skvFactor = 1;
+		trim = 1;
 
 		rocketSturmFactor = 1/*ШТУРМ*/;
-		rocketNar8Factor = 1/*НАР8*/;
-		rocketNar13Factor = 1/*НАР13*/;
+		rocketNar8Factor =  1/*НАР8*/;
+		//rocketNar13Factor = 1/*НАР13*/;
 		rocketHitFactor = 0.8/*Попадание ракеты*/;
 		upkFactor = 1/*УПК*/;
 		ppuFactor = 1/*ППУ*/;
