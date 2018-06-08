@@ -598,8 +598,7 @@ int main(int argc, char *argv[])
 	Sound *vpryam = nullptr;
 	Sound *vadd = nullptr;
 	Sound *shock[4] = { nullptr };
-
-	Sound *singleNar8 = nullptr;
+	Sound *trim = nullptr;
 
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
@@ -1444,6 +1443,24 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
+			//Если триммер включен на борту
+			if (helicopter.trim)
+			{
+				if (localdata.trim)//Условие создания объекта
+					if (!trim)//Если объект не создан 
+						trim = new Sound;//Создаем объект
+				if (trim)//Если объект создан - используем его
+				{
+					if (trim->play(localdata.p_tormoz_press, helicopter.fullName["trim_on"], "NULL", helicopter.fullName["trim_off"], helicopter.trim))
+					{
+
+					}
+					else
+					{
+						Free(trim);//Удаляем объект
+					}
+				}
+			}
 			//Дождь
 			if (true)
 			{
@@ -1486,7 +1503,7 @@ int main(int argc, char *argv[])
 			{
 				if (localdata.p_nar_s8)//Условие создания объекта
 				{
-					
+
 
 					timerNar8 += Sound::deltaTime;
 					if (timerNar8 >= 0.07)
@@ -1516,7 +1533,7 @@ int main(int argc, char *argv[])
 								nar8[i]->channel[0] = 1;//L
 								nar8[i]->channel[1] = 0;
 							}
-							else if(localdata.p_nar_s8 == 2)
+							else if (localdata.p_nar_s8 == 2)
 							{
 								nar8[i]->channel[0] = 0;//R
 								nar8[i]->channel[1] = 1;
@@ -1585,7 +1602,7 @@ int main(int argc, char *argv[])
 							nar13[counterNar13] = new Sound;//Создаем объект
 							counterNar13++;
 						}
-						
+
 						if (counterNar13 >= 50)
 						{
 							counterNar13 = 0;
@@ -1670,7 +1687,7 @@ int main(int argc, char *argv[])
 				<< " SIU: " << Sound::sourcesInUse
 				<< "\t\t\r";*/
 
-			//Если ППУ имеется на борту
+				//Если ППУ имеется на борту
 			if (helicopter.ppuFactor)
 			{
 				if (localdata.p_spo_ppu)//Условие создания объекта
@@ -3086,6 +3103,11 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 		offsetOff = offset[id];
 		offset[!id] = lengthOn * (1 - (offset[id] / lengthOff));
 	}
+	if (pathW == "NULL")
+	{
+		offset[id] = 0;
+		offset[!id] = 0;
+	}
 
 	return 1;
 }
@@ -3366,38 +3388,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	*/
 
 	double finalGain = h.redFactor * masterGain;
+	double rise = 0;
+	double fade = 0;
 
-	if (fileBuffered[id] == h.fullName["red_w_avt_w"])
-	{
-		gain[id] = getParameterFromVector(vector<point>{ {h.redTurnoverMg2, 0}, { h.redTurnoverAvt, 1 } }, sr.reduktor_gl_obor);
-		gain[!id] = 1 - gain[id];
-	}
-	else if (fileBuffered[!id] == h.fullName["red_w_avt_w"])
-	{
-		gain[id] = 1 - getParameterFromVector(vector<point>{ {h.redTurnoverMg2, 0}, { h.redTurnoverAvt, 1 } }, sr.reduktor_gl_obor);
-		gain[!id] = 1 - gain[id];
-	}
-	else if (fileBuffered[id] == h.fullName["red_w_mg_w"] && fileBuffered[!id] == h.fullName["red_w_w"])
-	{
-		gain[id] = getParameterFromVector(vector<point>{ {h.redTurnoverMg1, 0}, { h.redTurnoverMg2, 1 } }, sr.reduktor_gl_obor);
-		gain[!id] = 1 - gain[id];
-	}
-	else if (fileBuffered[!id] == h.fullName["red_w_mg_w"] && fileBuffered[id] == h.fullName["red_w_w"])
-	{
-		gain[id] = 1 - getParameterFromVector(vector<point>{ {h.redTurnoverMg1, 0}, { h.redTurnoverMg2, 1 } }, sr.reduktor_gl_obor);
-		gain[!id] = 1 - gain[id];
-	}
-	else if (fileBuffered[id] == "NULL" && filetoBuffer[id] == "NULL")
-	{
-		gain[id] = 0;
-		gain[!id] = 1;
-	}
-	else if (fileBuffered[!id] == "NULL" && filetoBuffer[!id] == "NULL")
-	{
-		gain[id] = 1;
-		gain[!id] = 0;
-	}
-	else if (fileBuffered[!id] == h.fullName["red_on_w"] && fileBuffered[id] == h.fullName["red_w_w"])
+	if (fileBuffered[!id] == h.fullName["red_on_w"] && fileBuffered[id] == h.fullName["red_w_w"])
 	{
 		if (reperSet != "set")
 		{
@@ -3428,33 +3422,48 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			timeGain[!id] = 0;
 		}
 
-		gain[id] = max(timeGain[id], turnGain[id]);
-		gain[!id] = min(timeGain[!id], turnGain[!id]);
+		rise = min(timeGain[id], turnGain[id]);
+		fade = max(timeGain[!id], turnGain[!id]);
+	}
+	else if (fileBuffered[id] == h.fullName["red_on_w"] || fileBuffered[id] == h.fullName["red_off_w"] || fileBuffered[!id] == h.fullName["red_on_w"] || fileBuffered[!id] == h.fullName["red_off_w"])
+	{
+		switcher += deltaTime;
+		timeCrossfade(&fade, &rise, crossFadeDuration, switcher);
 	}
 	else
 	{
-		switcher += deltaTime;
-		timeCrossfade(&gain[!id], &gain[id], crossFadeDuration, switcher);
+		rise = 1;
+		fade = 1;
 	}
-	alSourcef(source[!id], AL_GAIN, gain[!id] * finalGain);
-	alSourcef(source[id], AL_GAIN, gain[id] * finalGain);
 
-	float g[2];
-	float p[2];
-	for (size_t i = 0; i < 2; i++)
-	{
-		alGetSourcef(source[i], AL_GAIN, &g[i]);
-		alGetSourcef(source[i], AL_PITCH, &p[i]);
-	}
+	alSourcef(source[id], AL_GAIN, gain[id] * rise * finalGain);
+	alSourcef(source[id], AL_PITCH, pitch[id]);
+	alSourcef(source[!id], AL_GAIN, gain[!id] * fade * finalGain);
+	alSourcef(source[!id], AL_PITCH, pitch[!id]);
+
 	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
 	cout.precision(3);
 	cout << fixed
 		<< " ID__: " << id
-		<< " MODS: " << modes
-		<< " OFF0: " << offset[id]
+		<< " gain[id]: " << gain[id] * rise * finalGain
+		<< " gain[!id]: " << gain[!id] * fade * finalGain
+		<< " pitch[id]: " << pitch[id]
+		<< " pitch[!id]: " << pitch[!id]
+		<< " rise: " << rise
+		<< " fade: " << fade
 		<< " FIB0: " << fileBuffered[0]
 		<< " FIB1: " << fileBuffered[1]
 		<< "\t\t\r";
+
+	/*static double period = 0;
+	period += deltaTime;
+	if (period>=0.05)
+	{
+		FILE *f = fopen("abr.txt", "at");
+		fprintf(f, "%lf\t%lf\t%lf\t%lf\t%s\t%s\t%s\n", gain[id] * rise * finalGain, gain[!id] * fade * finalGain,pitch[id],pitch[!id], fileBuffered[0].data(), fileBuffered[1].data(), mode.data());
+		fclose(f);
+		period = 0;
+	}*/
 
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -3480,6 +3489,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		{
 			alSourcei(source[i], AL_LOOPING, AL_FALSE);
 			offset[i] = getOffset(1, h.fullName["red_on"], sr.reduktor_gl_obor);
+			crossFadeDuration = 0.5;
 		}
 		else if (filetoBuffer[i] == h.fullName["red_w_w"])
 		{
@@ -3500,6 +3510,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		{
 			alSourcei(source[i], AL_LOOPING, AL_FALSE);
 			offset[i] = getOffset(1, h.fullName["red_off"], sr.reduktor_gl_obor);
+			crossFadeDuration = 1;
 		}
 
 		//Загружаем буферы и запускам источники
@@ -3512,24 +3523,33 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		if (fileBuffered[i] == h.fullName["red_on_w"])
 		{
 			alGetSourcef(source[i], AL_SEC_OFFSET, &offsetOn);
-			alSourcef(source[i], AL_PITCH, getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor));
+			pitch[i] = getPitch(offsetOn, h.fullName["red_on"], sr.reduktor_gl_obor);
+			gain[i] = 1;
 		}
 		else if (fileBuffered[i] == h.fullName["red_w_w"])
 		{
-			alSourcef(source[i], AL_PITCH, roundFloat((sr.reduktor_gl_obor / h.redTurnoverMg1), 0.001));
+			pitch[i] = roundFloat((sr.reduktor_gl_obor / h.redTurnoverMg1), 0.001);
+			gain[i] = getParameterFromVector(vector<point>{ {h.redTurnoverMg1, 1}, { h.redTurnoverMg2, 0 } }, sr.reduktor_gl_obor);
 		}
 		else if (fileBuffered[i] == h.fullName["red_w_mg_w"])
 		{
-			alSourcef(source[i], AL_PITCH, roundFloat((sr.reduktor_gl_obor / h.redTurnoverMg2), 0.001));//меняем pitch (дает нисходящую прямую при остановке второго дв)
+			pitch[i] = roundFloat((sr.reduktor_gl_obor / h.redTurnoverMg2), 0.001);
+			gain[i] = getParameterFromVector(vector<point>{ {h.redTurnoverMg1, 0}, { h.redTurnoverMg2, 1 }, { h.redTurnoverAvt, 0 } }, sr.reduktor_gl_obor);
 		}
 		else if (fileBuffered[i] == h.fullName["red_w_avt_w"])
 		{
-			alSourcef(source[i], AL_PITCH, roundFloat((sr.reduktor_gl_obor / h.redTurnoverAvt), 0.001));//меняем pitch (дает нисходящую прямую при остановке второго дв)
+			pitch[i] = roundFloat((sr.reduktor_gl_obor / h.redTurnoverAvt), 0.001);
+			gain[i] = getParameterFromVector(vector<point>{ {h.redTurnoverMg2, 0}, { h.redTurnoverAvt, 1 } }, sr.reduktor_gl_obor);
 		}
 		else if (fileBuffered[i] == h.fullName["red_off_w"])
 		{
 			alGetSourcef(source[i], AL_SEC_OFFSET, &offsetOff);
-			alSourcef(source[i], AL_PITCH, getPitch(offset[i], h.fullName["red_off"], sr.reduktor_gl_obor));
+			pitch[i] = getPitch(offset[i], h.fullName["red_off"], sr.reduktor_gl_obor);
+			gain[i] = 1;
+		}
+		if (fileBuffered[id] == "NULL")
+		{
+			gain[id] = 0;
 		}
 
 		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);

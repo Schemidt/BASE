@@ -168,6 +168,9 @@ void Helicopter::setPath(string pathToFile)
 	shortName["takeOff"] = "take_off.wav";
 	//Удар при проходе стыка плит
 	shortName["shock"] = "shock.wav";
+	//Триммер
+	shortName["trim_on"] = "trim_on.wav";
+	shortName["trim_off"] = "trim_off.wav";
 
 	fullName = shortName;
 
@@ -431,10 +434,11 @@ void Helicopter::setParam(string model)
 		runwayFactor = 0.63/*ВПП*/;
 		vadd = 1/*Скоростная добавка*/;
 		skvFactor = 1;
+		trim = 1;
 
 		rocketSturmFactor = 1/*ШТУРМ*/;
 		rocketNar8Factor =  1/*НАР8*/;
-		rocketNar13Factor = 1/*НАР13*/;
+		//rocketNar13Factor = 1/*НАР13*/;
 		rocketHitFactor = 0.8/*Попадание ракеты*/;
 		upkFactor = 1/*УПК*/;
 		ppuFactor = 1/*ППУ*/;

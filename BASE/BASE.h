@@ -204,7 +204,6 @@ public:
 
 	private:
 
-
 };
 
 /*!
