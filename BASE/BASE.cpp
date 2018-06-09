@@ -633,6 +633,8 @@ int main(int argc, char *argv[])
 				<< " CUTI: " << Sound::currentTime
 				<< "\t\t\r";*/
 
+			printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
+
 			if (Sound::currentTime == 0)
 				Sound::currentTime = localdata.time;
 			//Вычисляем изменение времени с прошлого цикла работы программы
@@ -3467,7 +3469,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	alSourcef(source[!id], AL_GAIN, gain[!id] * fade * finalGain * reductorHp);
 	alSourcef(source[!id], AL_PITCH, pitch[!id]);
 
-	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
+	/*string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
 	cout.precision(3);
 	cout << fixed
 		<< " ID__: " << id
@@ -3479,7 +3481,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		<< " fade: " << fade
 		<< " FIB0: " << fileBuffered[0]
 		<< " FIB1: " << fileBuffered[1]
-		<< "\t\t\r";
+		<< "\t\t\r";*/
 
 	/*static double period = 0;
 	period += deltaTime;
@@ -4877,7 +4879,7 @@ int Vsu::play(SOUNDREAD sr, Helicopter h)
 		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
 	}
 
-	float a;
+	/*float a;
 	float b;
 	alGetSourcef(source[0], AL_GAIN, &a);
 	alGetSourcef(source[1], AL_GAIN, &b);
@@ -4889,7 +4891,7 @@ int Vsu::play(SOUNDREAD sr, Helicopter h)
 		<< " " << ModeSequence[1]
 		<< " " << ModeSequence[2]
 		<< " VSTO: " << vsuTurnover
-		<< "\t\t\r";
+		<< "\t\t\r";*/
 
 	return 1;
 }
@@ -6646,15 +6648,15 @@ int Crane::play(char status, string pathOn, string pathW, string pathOff, double
 	}
 
 
-	cout.precision(3);
-	cout << fixed
-		<< " ID__: " << id
-		<< " OFF0: " << offset[0]
-		<< " OFF1: " << offset[1]
-		<< " " << ModeSequence[0]
-		<< " " << ModeSequence[1]
-		<< " " << ModeSequence[2]
-		<< "\t\t\r";
+	//cout.precision(3);
+	//cout << fixed
+	//	<< " ID__: " << id
+	//	<< " OFF0: " << offset[0]
+	//	<< " OFF1: " << offset[1]
+	//	<< " " << ModeSequence[0]
+	//	<< " " << ModeSequence[1]
+	//	<< " " << ModeSequence[2]
+	//	<< "\t\t\r";
 
 	if (mode == "w")
 	{
