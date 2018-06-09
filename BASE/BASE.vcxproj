@@ -162,6 +162,7 @@
     <ClInclude Include="Shared.h" />
     <ClInclude Include="BASE.h" />
     <ClInclude Include="Sound.h" />
+    <ClInclude Include="Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BASE.cpp" />
@@ -169,6 +170,7 @@
     <ClCompile Include="Helicopter.cpp" />
     <ClCompile Include="RealTime.cpp" />
     <ClCompile Include="Shared.cpp" />
+    <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BASE.rc" />

@@ -4,10 +4,8 @@
 
 Данный файл определяет работу методов класса Helicopter
 */
+
 #include "helicopter.h"
-#include "string.h"
-#include "map"
-#include "iostream"
 
 using namespace std;
 
@@ -186,6 +184,9 @@ void Helicopter::setPath(string pathToFile)
 void Helicopter::setParam(string model)
 {
 	modelName = model;
+
+	setPath(modelName + "/");
+
 	if (model == "mi_8_mtv5")
 	{
 		//Константы		
@@ -441,7 +442,7 @@ void Helicopter::setParam(string model)
 
 		rocketSturmFactor = 1/*ШТУРМ*/;
 		rocketNar8Factor =  1/*НАР8*/;
-		//rocketNar13Factor = 1/*НАР13*/;
+		rocketNar13Factor = 1/*НАР13*/;
 		rocketHitFactor = 0.8/*Попадание ракеты*/;
 		upkFactor = 1/*УПК*/;
 		ppuFactor = 1/*ППУ*/;
@@ -454,6 +455,53 @@ void Helicopter::setParam(string model)
 	{
 		cout << " Unknown argument" << endl;
 		throw 0;
+	}
+
+	//
+	redLengthOn = getLengthWAV(fullName["red_on_w"]);
+	redLengthOff = getLengthWAV(fullName["red_off_w"]);
+	redLengthMg1 = getLengthWAV(fullName["red_w_w"]);
+	redLengthMg2 = getLengthWAV(fullName["red_w_mg_w"]);
+	redLengthAvt = getLengthWAV(fullName["red_w_avt_w"]);
+	//
+	engLengthOn = getLengthWAV(fullName["eng_on_w"]);
+	engLengthOff = getLengthWAV(fullName["eng_off_w"]);
+	engLengthHpOn = getLengthWAV(fullName["eng_on_hp_w"]);
+	engLengthMg = getLengthWAV(fullName["eng_w_w"]);
+	engLengthWAavt = getLengthWAV(fullName["eng_w_avt_w"]);
+	engLengthHpW = getLengthWAV(fullName["eng_w_hp_w"]);
+	engLengthHpOff = getLengthWAV(fullName["eng_off_hp_w"]);
+	//
+	vsuLengthOn = getLengthWAV(fullName["vsu_on"]);
+	vsuLengthHpOn = getLengthWAV(fullName["vsu_hp_on"]);
+	vsuLengthOff = getLengthWAV(fullName["vsu_off"]);
+	vsuLengthHpOff = getLengthWAV(fullName["vsu_hp_off"]);
+	//
+	redFunctionOn = getVectorFromFile(fullName["red_on"]);
+	redFunctionOnSwap = redFunctionOn;
+	redFunctionOff = getVectorFromFile(fullName["red_off"]);
+	redFunctionOffSwap = redFunctionOff;
+	//
+	engFunctionOn = getVectorFromFile(fullName["eng_on"]);
+	engFunctionOnSwap = engFunctionOn;
+	engFunctionOff = getVectorFromFile(fullName["eng_off"]);
+	engFunctionOffSwap = engFunctionOff;
+
+	for (auto &swp : redFunctionOnSwap)
+	{
+		swp.swap();
+	}
+	for (auto &swp : redFunctionOffSwap)
+	{
+		swp.swap();
+	}
+	for (auto &swp : engFunctionOnSwap)
+	{
+		swp.swap();
+	}
+	for (auto &swp : engFunctionOffSwap)
+	{
+		swp.swap();
 	}
 }
 

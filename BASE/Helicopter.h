@@ -5,11 +5,16 @@
 Данный файл объявляет класс Helicopter
 */
 #pragma once
-#pragma pack ( push, 1 )
-#include "string.h"
-#include "map"
-using namespace std;
 
+#include "string"
+#include "map"
+#include "iostream"
+#include "vector"
+
+#include "Utility.h"
+
+#pragma pack ( push, 1 )
+using namespace std;
 
 #ifndef Helicopter_h
 #define Helicopter_h
@@ -82,6 +87,36 @@ public:
 	double trim = 0;//!<Триммер
 	double frict = 0;//!>Фрикцион
 
+	//
+	double redLengthOn = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла запуска агрегата
+	double redLengthOff = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата
+	double redLengthMg1 = 0;
+	double redLengthMg2 = 0;
+	double redLengthAvt = 0;
+	//
+	double engLengthOn = 0;
+	double engLengthOff = 0;
+	double engLengthHpOn = 0;
+	double engLengthMg = 0;
+	double engLengthWAavt = 0;
+	double engLengthHpW = 0;
+	double engLengthHpOff = 0;
+	//
+	double vsuLengthOn = 0;
+	double vsuLengthHpOn = 0;
+	double vsuLengthOff = 0;
+	double vsuLengthHpOff = 0;
+	//
+	vector<point> redFunctionOn;
+	vector<point> redFunctionOff;
+	vector<point> redFunctionOnSwap;
+	vector<point> redFunctionOffSwap;
+	//
+	vector<point> engFunctionOn;
+	vector<point> engFunctionOff;
+	vector<point> engFunctionOnSwap;
+	vector<point> engFunctionOffSwap;
+
 	//!<Ассоциативный массив с именами файлов - звуков
 	map<string, string> shortName;
 
@@ -101,6 +136,7 @@ public:
 	\param[in] model Модель летательного аппарата
 	*/
 	void setParam(string model);
+
 	Helicopter();
 	~Helicopter();
 };

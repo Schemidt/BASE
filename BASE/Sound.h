@@ -5,7 +5,6 @@
 Определяет структуру SOUNDREAD - протокол обмена с программой USPO
 */
 
-
 #ifndef __SND__
 #define __SND__
 

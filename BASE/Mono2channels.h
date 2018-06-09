@@ -5,6 +5,11 @@
 Данный файл описывает функцию преобразования буфера
 */
 #pragma once
+
+#include "string"
+
+using namespace std;
+
 enum AL_SOUND_CHANNELS_FLAGS
 {
 	AL_CHANNEL_DEFAULT = 0x0000,   // to all available channels

@@ -5,54 +5,39 @@
 Данный файл объявляет класс Sound и его наследников
 */
 
+#define _USE_MATH_DEFINES
+
 #pragma once
-#include "Mono2channels.h"
+
+#include "stdio.h"
+#include "stdlib.h"
+#include "iostream"
+#include "fstream"
+#include "string"
+#include "conio.h"
+#include "regex"
 #include "memory"
+#include "vector"
+#include "math.h"
+
+#include "AL\al.h"
+#include "AL\alc.h"
+#include "AL\alut.h"
+#include "AL\alext.h"
+#include "AL\efx.h"
+
+//обмен
+#include "Shared.h"
+#include "realtime.h"
+
+//звук
+#include "Mono2channels.h"
+#include "EFXptr.h"
+#include "Sound.h"
+#include "Helicopter.h"
+#include "Utility.h"
 
 using namespace std;
-
-
-template <class T>
-/*!
-\brief Шаблон высвобождения объекта
-\details Высвобождает объект и обнуляет указатель
-*/
-void Free(T &x)
-{
-	delete x;
-	x = NULL;
-}
-
-#pragma pack ( push, 1 )
-
-/*!
-\struct WAVEHEADER
-
-Структура интерпретации загруженного wave файла
-*/
-typedef struct
-{
-	char			szRIFF[4];
-	long			lRIFFSize;
-	char			szWave[4];
-	char			szFmt[4];
-	long			lFmtSize;
-	WAVEFORMATEX	wfex;
-	char			szData[4];
-	long			lDataSize;
-} WAVEHEADER;
-#pragma pack ( pop )
-
-class Smoother
-{
-public:
-
-	bool firstAttempt = 1;
-	double newDbGain = 0;
-	double dbPerSec = 3;//Скорость нарастания/убывания 3дб
-
-	double delay(double nsGain, double deltaTime);
-};
 
 #ifndef Sound_h
 #define Sound_h
@@ -125,10 +110,10 @@ public:
 	bool soundOn = 0;//!< Переменная для определения состояния звука
 	bool soundWork = 0;//!< Переменная для определения состояния звука
 	bool soundOff = 0;//!< Переменная для определения состояния звука
-	double lengthOn = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла запуска агрегата
-	double lengthOff = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата
 	float offsetOn = 0;
 	float offsetOff = 0;
+	double lengthOn = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла запуска агрегата
+	double lengthOff = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата
 
 	vector<double> channel = { 1,1,0,0,0,0,0 };//!< массив для поканального вывода звука
 	int sourceNumber = 2;//!< Переменная для хранения количества источников используемых объектом звука агрегата
@@ -140,14 +125,6 @@ public:
 	Sound& operator =(const Sound &copy);
 	Sound(int sources, int buffers, int effectslots);//!< Конструктор для объекта с sources источниками, buffers буферами и effectslots слотами эффектов
 	~Sound();//!< Деструктор (да неужели)
-
-	/*!
-	\brief Вычисляет длительность WAVE файла
-	\details Вычисляет длительность несжатого WAVE файла
-	\param[in] filename имя файла
-	\return длительность WAVE файла
-	*/
-	double getLengthWAV(string filename);
 
 	/*!
 	\brief Инициализирует воспроизведение звука
@@ -455,124 +432,9 @@ public:
 };
 #endif
 
-/*!
-\brief Класс "точка"
-\details Определяет класс точки
-*/
-class point {
-public:
-	double x;
-	double y;
-
-	point()
-	{
-		x = 0;
-		y = 0;
-	}
-
-	point(double x, double y)
-	{
-		this->x = x;
-		this->y = y;
-	}
-};
-
-/*!
-\brief Возвращает значение функции
-\details Возвращает значение функции заданной графически (точками)
-\param[in] p Точки функции
-\param[in] n Количество точек
-\param[in] parameter Значение переменной в искомой точке
-\return Возвращает значение функции
-*/
-double getValue(double parameter, int n, point p, ...);
-
-/*!
-\brief Возвращает значение функции
-\details Возвращает значение функции заданной графически (точками)
-\param[in] p1 Точка функции
-\param[in] p2 Точка функции
-\param[in] x Значение переменной в искомой точке
-\return Возвращает значение функции
-*/
-double getValue(point p1, point p2, double x);
-
-/*!
-\brief Возвращает значение функции
-\details Возвращает значение функции заданной графически (точками), с учетом предельного значения функции
-\param[in] p1 Точка функции
-\param[in] p2 Точка функции
-\param[in] x Значение переменной в искомой точке
-\param[in] limit Предел функции
-\param[in] w Переменная определяющая верхний или нижний предел
-\return Возвращает значение функции
-*/
-double getValue(point p1, point p2, double x, double limit, string w);
-
-/*!
-\brief Возвращает значение функции
-\details Возвращает значение функции заданной графически (точками), с учетом предельного значения функции
-\param[in] p1 Точка функции
-\param[in] p2 Точка функции
-\param[in] x Значение переменной в искомой точке
-\param[in] low_limit Нижний предел функции
-\param[in] hi_limit Верхний предел функции
-\return Возвращает значение функции
-*/
-double getValue(point p1, point p2, double x, double low_limit, double hi_limit);
-
-/*!
-\brief Возвращает значение функции
-\details Возвращает значение функции в точке offset заданной графически, вектором точек
-\param[in] &value Вектор точек функции
-\param[in] offset Значение переменной в искомой точке
-\return Возвращает значение функции
-*/
-double getParameterFromVector(vector<point> &value, double offset);
-
-/*!
-\brief Возвращает номер искомой ячейки вектора
-\details Возвращает номер искомой ячейки упорядоченного вектора с помощью бинарного поиска
-\param[in] &time Упорядоченный вектор переменных
-\param[in] offset Значение переменной в искомой точке
-\return Номер искомой ячейки
-*/
-int binSer(vector<double> &time, double offset);
-
-/*!
-\brief Возвращает номер искомой ячейки вектора
-\details Возвращает номер искомой ячейки упорядоченного вектора с помощью бинарного поиска
-\param[in] &time Вектор точек
-\param[in] offset Значение переменной в искомой точке
-\return Номер искомой ячейки
-*/
-int binSer(vector<point> &time, double offset);
-
 /*!\brief Очищает объекты OpenAL*/
 void freeOpenAL();
-/*!
-\brief Возвращает Pitch
-\details Возвращает Pitch оценивая значения parameter из базы filename,которая хранит
-значения parameter при записи аудиофайла относительно начала записи offset, и входящего параметра parameter
-Например: при значении оборотов редуктора равного 60% на 32 секунде проигрывания файла, вернет значение pitch = 60/59
-т.к. в базе значений, при записи, на 32 секунде редуктор имел 59% оборотов
-если реальное и базовое значения отступа от начала в секундах, не совпадают - применяется квадратичная интерполяция
-\param[in] offset Время от начала проигрывания записи
-\param[in] filename Путь к файлу с переходной функцией
-\param[in] parameter Значение параметра
-\return Возвращает значение высоты звука
-*/
-double getPitch(double offset, string filename, double parameter);
-/*!
-\brief Возвращает Offset
-\details Возвращает время в секундах на которое необходимо сделать отступ от начала проигрывания звука учитывая переходную функцию параметра
-, его значение в данный момент, и отличие реальной кривой от эталонной.
-\param[in] pitch Отношение значения реального параметра и его значения при получении переходной функции
-\param[in] filename Путь к файлу с переходной функцией
-\param[in] parameter Значение параметра
-\return Время отступа в секундах
-*/
-double getOffset(double pitch, string filename, double parameter);
+
 /*!
 \brief Производит Crossfade
 \details Осуществляет плавный переход 1ой записи в другую путем уменьшения громкости 1ой записи и повышения громкости другой, по мере изменения параметра
@@ -611,50 +473,6 @@ int parametricalCrossfade(double *fadeGain, double *riseGain, double parameter, 
 int timeCrossfade(double *fadeGain, double *riseGain, double crossFadeDuration, double timer);
 /*!\brief Определяет указатели на функции расширений EFX*/
 void setEFXPointers();
-/*!
-\brief Вычисляет квадратную интерполяцию
-\details Вычисляет интерполяцию для fx в точке x,на отрезке [x0,x2], при определенных неодинаковых x0,x1,x2 и известных fx0,fx1,fx2, если x0=x1 или x1=x2
-вычисляется линейная интерполяция
-
-Код вычисления интерполяции:
-\code
-a2 = ((fx2 - fx0) / ((x2 - x0)*(x2 - x1))) - ((fx1 - fx0) / ((x1 - x0)*(x2 - x1)));
-a1 = ((fx1 - fx0) / (x1 - x0)) - (a2*(x1 + x0));
-a0 = fx0 - a1 * x0 - a2 * x0*x0;
-return fx = a0 + a1 * x + a2*x*x;
-\endcode
-
-\param[in] x0 Абсцисса 1ой точки
-\param[in] fx0 Ордината 1ой точки
-\param[in] x1 Абсцисса 2ой точки
-\param[in] fx1 Ордината 2ой точки
-\param[in] x2 Абсцисса 3ой точки
-\param[in] fx2 Ордината 3ой точки
-\param[in] x Абсцисса искомой fx
-\return Значение fx в точке x
-*/
-double interpolation(double x0, double fx0, double x1, double fx1, double x2, double fx2, double x);
-/*!
-\brief Вычисляет линейную интерполяцию
-\details В точках x>x1 и x<x0 - возвращает граничные значения
-
-Код вычисления интерполяции:
-\code
-fx = fx0 + ((fx1 - fx0) / (x1 - x0))*(x - x0);
-\endcode
-
-\param[in] x0 Абсцисса 1ой точки
-\param[in] fx0 Ордината 1ой точки
-\param[in] x1 Абсцисса 2ой точки
-\param[in] fx1 Ордината 2ой точки
-\param[in] x Абсцисса искомой fx
-\return Значение fx в точке x
-*/
-double interpolation(double x0, double fx0, double x1, double fx1, double x);
-
-double interpolation(point p1, point p2, double x);
-
-double interpolation(point p1, point p2, point p3, double x);
 
 /*!
 \brief Возвращает максимальное количество доступных источников
@@ -682,45 +500,6 @@ calcA = calcA * 180 / M_PI;
 \return Значение атаки при данных параметрах
 */
 double attack(double velocityVectorXZ, double velocityXPrevious, double tangaz, double velocityY);
-/*!
-\brief Проверяет наличие процесса
-\details Проверяет наличие процесса
-
-\param[in] szExe имя процесса
-\return True если процесс выполняется в системе, иначе False
-*/
-bool IsProcessPresent(wchar_t * szExe);
-
-/*!
-\brief Переводит коэффициент громкости в децибелы
-
-\param[in] coef коэффициент громкости
-\return децибелы
-*/
-double toDb(double coef);
-
-/*!
-\brief Переводит децибелы в коэффициент громкости
-
-\param[in] db децибелы
-\return коэффициент громкости
-*/
-double toCoef(double db);
-
-/*!
-\brief Округляет вещественное число до необходимой точности
-
-nullsAfterInt - принимает значения 1/m, где m = 10^n, n колиство 0лей после запятой
-/code
-roundFloat(3.34678, 0.01) -> 3.35
-roundFloat(3.34678, 0.001) -> 3.347
-/endcode
-
-\param[in] x число
-\param[in] nullsAfterInt точность
-\return округленное значение
-*/
-double roundFloat(double x, double nullsAfterInt);
 
 
 
