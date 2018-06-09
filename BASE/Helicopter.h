@@ -80,6 +80,7 @@ public:
 	double vadd = 0;//!<Скоростная добавка
 	double shock = 1;//!<Удар о стык плит
 	double trim = 0;//!<Триммер
+	double frict = 0;//!>Фрикцион
 
 	//!<Ассоциативный массив с именами файлов - звуков
 	map<string, string> shortName;

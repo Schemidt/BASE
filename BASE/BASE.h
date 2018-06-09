@@ -170,7 +170,7 @@ public:
 	\param[in] gain_mult Коэффициент громкости для агрегата
 	\return Статус источника OpenAL
 	*/
-	virtual int play(bool status, string path_on, string path_w, string path_off, double gain_mult);
+	virtual int play(bool status, string pathOn, string pathW, string pathOff, double gainMult);
 
 	/*!
 	\brief Загружает буфер данными
@@ -202,7 +202,7 @@ public:
 
 	double getAverange(string parameter, double seconds);
 
-	private:
+private:
 
 };
 
@@ -417,6 +417,45 @@ public:
 
 };
 
+/*!
+\brief Класс объекта - Кран
+\author Самсонов А.В.
+\version 2.0
+\date  09.06.2018
+
+Класс определяющий логику всех кранов
+*/
+class Crane : public Sound
+{
+public:
+
+	char prev;
+	bool factor;//Признак работы крана (1 - включен, 0 - выключен)
+
+	/*!
+	\brief Инициализирует воспроизведение звука
+	\details <pre>Устанавливает шаблон воспроизведения звука при получении признака работы агрегата или физ.эффекта:
+	звук устанавления режима работы агрегата (при признаке - "1")
+	|
+	\\|/
+	звук работы агрегата (при окончании звука установления работы и признаке - "1")
+	|
+	\\|/
+	звук завершения работы агрегата (при признаке - "0")
+
+
+	\image html phases.png "Фазы звучания"
+	</pre>
+	\param[in] status Признак работы
+	\param[in] path_on Указатель на строку с адресом звука устанавления режима работы
+	\param[in] path_w Указатель на строку с адресом звука режима работы
+	\param[in] path_off Указатель на строку с адресом звука завершения работы
+	\param[in] gain_mult Коэффициент громкости для агрегата
+	\return Статус источника OpenAL
+	*/
+	int play(char status, string path_on, string path_w, string path_off, double gain_mult);
+
+};
 #endif
 
 /*!
@@ -674,7 +713,7 @@ double toCoef(double db);
 /*!
 \brief Округляет вещественное число до необходимой точности
 
-nullsAfterInt - принимает значения 1/m, где m = 10^n, n колиство 0лей после запятой 
+nullsAfterInt - принимает значения 1/m, где m = 10^n, n колиство 0лей после запятой
 /code
 roundFloat(3.34678, 0.01) -> 3.35
 roundFloat(3.34678, 0.001) -> 3.347

@@ -64,20 +64,20 @@ void Helicopter::setPath(string pathToFile)
 	shortName["accum"] = "accu.wav";//!<имя файла звука Аккумулятора
 	shortName["accum_tr"] = "accu_tr.wav";//!<имя файла звука Аккумулятора
 	shortName["vpryam"] = "vy_tone.wav";//!<имя файла звука Аккумулятора
-										  //ПТС
+	//ПТС
 	shortName["pts_on"] = "pts_on.wav";//!<имя файла звука включения ПТС
 	shortName["pts_w"] = "pts_w.wav";//!<имя файла звука работы ПТС
 	shortName["pts_off"] = "pts_off.wav";//!<имя файла звука выключения ПТС
 	shortName["pts_tone"] = "pts_tone.wav";//!<имя файла звука ПТС ТОН
-										   //Трансформатор 36В
+	//Трансформатор 36В
 	shortName["tr36_on"] = "tr36_on.wav";//!<имя файла звука Трансформатор 36В
 	shortName["tr36_w"] = "tr36_w.wav";//!<имя файла звука Трансформатор 36В
 	shortName["tr36_off"] = "tr36_off.wav";//!<имя файла звука Трансформатор 36В
-										   //Трансформатор 115В
+	//Трансформатор 115В
 	shortName["tr115_on"] = "tr115_on.wav";//!<имя файла звука Трансформатор 115В
 	shortName["tr115_w"] = "tr115_w.wav";//!<имя файла звука Трансформатор 115В
 	shortName["tr115_off"] = "tr115_off.wav";//!<имя файла звука Трансформатор 115В
-											 //Насос подкачки
+	//Насос подкачки
 	shortName["podk_r_on"] = "pump_r_on.wav";//!<имя файла звука насоса подкачки
 	shortName["podk_r_w"] = "pump_r_w.wav";//!<имя файла звука насоса подкачки
 	shortName["podk_r_off"] = "pump_r_off.wav";//!<имя файла звука насоса подкачки
@@ -171,6 +171,8 @@ void Helicopter::setPath(string pathToFile)
 	//Триммер
 	shortName["trim_on"] = "trim_on.wav";
 	shortName["trim_off"] = "trim_off.wav";
+	//Фрикцион
+	shortName["frict"] = "brake_on.wav";
 
 	fullName = shortName;
 
@@ -434,7 +436,8 @@ void Helicopter::setParam(string model)
 		runwayFactor = 0.63/*ВПП*/;
 		vadd = 1/*Скоростная добавка*/;
 		skvFactor = 1;
-		trim = 1;
+		trim = 0.28;
+		//frict = 1;
 
 		rocketSturmFactor = 1/*ШТУРМ*/;
 		rocketNar8Factor =  1/*НАР8*/;

@@ -554,7 +554,7 @@ int main(int argc, char *argv[])
 	//Указатели на объекты определяющие параметры выводимого звука
 	Vsu *vsu = nullptr;
 	Sound *vsuHp = nullptr;
-	Sound *vsuKran = nullptr;
+	Crane *vsuKran = nullptr;
 	Sound *engHp[2] = { nullptr };
 	Sound *engPomp[2] = { nullptr };
 	Sound *redCrash = nullptr;
@@ -568,12 +568,12 @@ int main(int argc, char *argv[])
 	Sound *girovert = nullptr;
 	Sound *podk1 = nullptr;
 	Sound *podk2 = nullptr;
-	Sound *perek1 = nullptr;
-	Sound *perek2 = nullptr;
+	Crane *perek1 = nullptr;
+	Crane *perek2 = nullptr;
 	Sound *ko50 = nullptr;
 	Skv *skv = nullptr;
-	Sound *fire1 = nullptr;
-	Sound *fire2 = nullptr;
+	Crane *fire1 = nullptr;
+	Crane *fire2 = nullptr;
 	Sound *consTank = nullptr;
 	Sound *pstat = nullptr;
 	Runway *runway = nullptr;
@@ -594,11 +594,12 @@ int main(int argc, char *argv[])
 	Reductor *red = nullptr;
 	Sound *beep = nullptr;
 	Sound *undefined1 = nullptr;
-	Sound *kranKolc = nullptr;
+	Crane *kranKolc = nullptr;
 	Sound *vpryam = nullptr;
 	Sound *vadd = nullptr;
 	Sound *shock[4] = { nullptr };
 	Sound *trim = nullptr;
+	Sound *frict = nullptr;
 
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 	Sound::currentTime = localdata.time;
@@ -629,6 +630,7 @@ int main(int argc, char *argv[])
 			/*cout << fixed
 				<< " SOIU: " << Sound::sourcesInUse
 				<< " ESIU: " << Sound::effectSlotsInUse
+				<< " CUTI: " << Sound::currentTime
 				<< "\t\t\r";*/
 
 			if (Sound::currentTime == 0)
@@ -636,17 +638,17 @@ int main(int argc, char *argv[])
 			//Вычисляем изменение времени с прошлого цикла работы программы
 			Sound::deltaTime = localdata.time - Sound::currentTime;
 
-			//Убираем звук при зависании модели
-			if (Sound::deltaTime == 0)
+			//Убираем звук при зависании модели //СЛОМАЛОСЬ
+			/*if (Sound::deltaTime == 0)
 			{
-				Sound::masterGain -= 0.001;
+				Sound::masterGain -= 0.01;
 				Sound::masterGain = (Sound::masterGain < 0) ? 0 : Sound::masterGain;
 			}
 			else
 			{
 				Sound::masterGain += Sound::deltaTime;
 				Sound::masterGain = (Sound::masterGain < localdata.master_gain) ? Sound::masterGain : localdata.master_gain;
-			}
+			}*/
 
 			Sound::currentTime = localdata.time;
 			Sound::tangaz = localdata.tangaz;//тангаж (временно используем параметр инт осадков)
@@ -1136,7 +1138,7 @@ int main(int argc, char *argv[])
 				{
 					if (!kranKolc)//Если объект не создан 
 					{
-						kranKolc = new Sound;//Создаем объект
+						kranKolc = new Crane;//Создаем объект
 					}
 				}
 				if (kranKolc)//Если объект создан - используем его
@@ -1144,7 +1146,7 @@ int main(int argc, char *argv[])
 					kranKolc->channel[0] = 1;
 					kranKolc->channel[1] = 1;
 
-					if (kranKolc->play(localdata.p_kran_kolcev, helicopter.fullName["kran_circle"], "NULL", "NULL", helicopter.circlingCraneFactor))
+					if (kranKolc->play(localdata.p_kran_kolcev, helicopter.fullName["kran_circle"], "NULL", helicopter.fullName["kran_circle"], helicopter.circlingCraneFactor))
 					{
 
 					}
@@ -1161,7 +1163,7 @@ int main(int argc, char *argv[])
 				{
 					if (!perek1)//Если объект не создан 
 					{
-						perek1 = new Sound;//Создаем объект
+						perek1 = new Crane;//Создаем объект
 					}
 				}
 				if (perek1)//Если объект создан - используем его
@@ -1182,7 +1184,7 @@ int main(int argc, char *argv[])
 				{
 					if (!perek2)//Если объект не создан 
 					{
-						perek2 = new Sound;//Создаем объект
+						perek2 = new Crane;//Создаем объект
 					}
 				}
 				if (perek2)//Если объект создан - используем его
@@ -1259,7 +1261,7 @@ int main(int argc, char *argv[])
 			{
 				if (localdata.p_kran_poj_l)//Условие создания объекта
 					if (!fire1)//Если объект не создан 
-						fire1 = new Sound;//Создаем объект
+						fire1 = new Crane;//Создаем объект
 				if (fire1)//Если объект создан - используем его
 				{
 					fire1->channel[0] = 1;//L
@@ -1276,7 +1278,7 @@ int main(int argc, char *argv[])
 
 				if (localdata.p_kran_poj_r)//Условие создания объекта
 					if (!fire2)//Если объект не создан 
-						fire2 = new Sound;//Создаем объект
+						fire2 = new Crane;//Создаем объект
 				if (fire2)//Если объект создан - используем его
 				{
 					fire2->channel[0] = 0;
@@ -1451,7 +1453,7 @@ int main(int argc, char *argv[])
 						trim = new Sound;//Создаем объект
 				if (trim)//Если объект создан - используем его
 				{
-					if (trim->play(localdata.p_tormoz_press, helicopter.fullName["trim_on"], "NULL", helicopter.fullName["trim_off"], helicopter.trim))
+					if (trim->play(localdata.trim, helicopter.fullName["trim_on"], "NULL", helicopter.fullName["trim_off"], helicopter.trim))
 					{
 
 					}
@@ -1461,6 +1463,26 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
+
+			////Если фрикцион включен на борту
+
+			//if (helicopter.frict)
+			//{
+			//	if (localdata.frict)//Условие создания объекта
+			//		if (!frict)//Если объект не создан 
+			//			frict = new Sound;//Создаем объект
+			//	if (frict)//Если объект создан - используем его
+			//	{
+			//		if (frict->play(localdata.frict, "NULL", helicopter.fullName["frict"], "NULL", helicopter.frict))
+			//		{
+			//		}
+			//		else
+			//		{
+			//			Free(frict);//Удаляем объект
+			//		}
+			//	}
+			//}
+
 			//Дождь
 			if (true)
 			{
@@ -1506,7 +1528,7 @@ int main(int argc, char *argv[])
 
 
 					timerNar8 += Sound::deltaTime;
-					if (timerNar8 >= 0.07)
+					if (timerNar8 >= 0.125)
 					{
 						if (!nar8[counterNar8])
 						{
@@ -1595,7 +1617,7 @@ int main(int argc, char *argv[])
 				if (localdata.p_nar_s13)//Условие создания объекта
 				{
 					timerNar13 += Sound::deltaTime;
-					if (timerNar13 >= 0.12)
+					if (timerNar13 >= 0.15)
 					{
 						if (!nar13[counterNar13])
 						{
@@ -2029,7 +2051,7 @@ int main(int argc, char *argv[])
 			{
 				if (localdata.p_kran_perekr_vsu)//Условие создания объекта
 					if (!vsuKran)//Если объект не создан 
-						vsuKran = new Sound;//Создаем объект
+						vsuKran = new Crane;//Создаем объект
 				if (vsuKran)//Если объект создан - используем его
 				{
 					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
@@ -2045,7 +2067,7 @@ int main(int argc, char *argv[])
 					}
 					else
 					{
-						if (vsuKran->play(localdata.p_kran_perekr_vsu, helicopter.fullName["vsu_kran_on"], helicopter.fullName["vsu_kran_w"], "NULL", helicopter.vsuCraneFactor))
+						if (vsuKran->play(localdata.p_kran_perekr_vsu, helicopter.fullName["vsu_kran_on"], helicopter.fullName["vsu_kran_w"], helicopter.fullName["vsu_kran_on"], helicopter.vsuCraneFactor))
 						{
 
 						}
@@ -3094,19 +3116,20 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 	{
 		alGetSourcef(source[id], AL_SEC_OFFSET, &offset[id]);
 		offsetOn = offset[id];
-		offset[!id] = lengthOff * (1 - (offset[id] / lengthOn));
+		if (offset[id] != 0)
+		{
+			offset[!id] = lengthOff * (1 - (offset[id] / lengthOn));
+		}
 	}
 	//Пока идет остановка - высчитываем точку запуска
 	if (soundOff)
 	{
 		alGetSourcef(source[id], AL_SEC_OFFSET, &offset[id]);
 		offsetOff = offset[id];
-		offset[!id] = lengthOn * (1 - (offset[id] / lengthOff));
-	}
-	if (pathW == "NULL")
-	{
-		offset[id] = 0;
-		offset[!id] = 0;
+		if (offset[id] != 0)
+		{
+			offset[!id] = lengthOn * (1 - (offset[id] / lengthOff));
+		}
 	}
 
 	return 1;
@@ -3436,9 +3459,12 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		fade = 1;
 	}
 
-	alSourcef(source[id], AL_GAIN, gain[id] * rise * finalGain);
+	//глушим редуктор на хп двигателей
+	double reductorHp = getParameterFromVector(vector<point>{ { 0, 10 }, { 1, 12 }}, sr.reduktor_gl_obor) * !(sr.p_eng1_zap || sr.p_eng2_zap);
+
+	alSourcef(source[id], AL_GAIN, gain[id] * rise * finalGain * reductorHp);
 	alSourcef(source[id], AL_PITCH, pitch[id]);
-	alSourcef(source[!id], AL_GAIN, gain[!id] * fade * finalGain);
+	alSourcef(source[!id], AL_GAIN, gain[!id] * fade * finalGain * reductorHp);
 	alSourcef(source[!id], AL_PITCH, pitch[!id]);
 
 	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
@@ -6488,4 +6514,217 @@ double Smoother::delay(double nsGain, double deltaTime)
 	}
 
 	return  toCoef(newDbGain);
+}
+
+int Crane::play(char status, string pathOn, string pathW, string pathOff, double gainMult)
+{
+	bool start;
+	bool work;
+	bool end;
+	bool free;
+
+	//Узнаем длинну файлов запуска и остановки
+	if (pathOn != "NULL")
+		lengthOn = getLengthWAV(pathOn);
+	if (pathOff != "NULL")
+		lengthOff = getLengthWAV(pathOff);
+
+	alGetSourcei(source[id], AL_SOURCE_STATE, &sourceStatus[id]);
+
+	//условие запуска когда все звуки присутствуют
+	if (pathOn != "NULL" & pathW != "NULL" & pathOff != "NULL")
+	{
+		start = ((int)status == 1) & !soundOn & !soundWork;
+		work = ((int)status == 0) & soundOn & !soundWork & ((lengthOn - offset[id]) <= crossFadeDuration);
+		end = ((int)status == -1) & !soundOff;
+		free = ((int)status == 0) & soundOff & sourceStatus[id] != AL_PLAYING;
+	}
+	//условие запуска когда отсутствует остановка
+	if (pathOn != "NULL" & pathW != "NULL" & pathOff == "NULL")
+	{
+		start = ((int)status == 1) & !soundOn & !soundWork;
+		work = ((int)status == 0)& soundOn & !soundWork & ((lengthOn - offset[id]) <= crossFadeDuration);
+		end = 0;
+		free = ((int)status == 0);
+	}
+	//условие запуска когда отсутствует работа
+	if (pathOn != "NULL" & pathW == "NULL" & pathOff != "NULL")
+	{
+		start = ((int)status == 1) & !soundOn;
+		work = 0;
+		end = ((int)status == -1) & !soundOff;
+		free = ((int)status == 0) & soundOff & sourceStatus[id] != AL_PLAYING;
+	}
+	//условие запуска когда отсутствует запуск
+	if (pathOn == "NULL" & pathW != "NULL" & pathOff != "NULL")
+	{
+		start = 0;
+		work = ((int)status == 0) & !soundWork;
+		end = ((int)status == -1) & !soundOff;
+		free = ((int)status == 0) & soundOff & sourceStatus[id] != AL_PLAYING;
+	}
+	//условие запуска когда отсутствует запуск и работа
+	if (pathOn == "NULL" & pathW == "NULL" & pathOff != "NULL")
+	{
+		start = 0;
+		work = 0;
+		end = ((int)status == -1) & !soundOff;
+		free = ((int)status == 0) & soundOff & sourceStatus[id] != AL_PLAYING;
+	}
+	//условие запуска когда отсутствует запуск и выключение
+	if (pathOn == "NULL" & pathW != "NULL" & pathOff == "NULL")
+	{
+		start = 0;
+		work = ((int)status == 0) & !soundWork;
+		end = 0;
+		free = ((int)status == 0);
+	}
+	//условие запуска когда отсутствует работа и выключение
+	if (pathOn != "NULL" & pathW == "NULL" & pathOff == "NULL")
+	{
+		start = ((int)status == 1) & !soundOn;
+		work = 0;
+		end = 0;
+		free = ((int)status == 0) & sourceStatus[id] != AL_PLAYING;
+	}
+	//все 0
+	if (pathOn == "NULL" & pathW == "NULL" & pathOff == "NULL")
+	{
+		start = 0;
+		work = 0;
+		end = 0;
+		free = 1;
+	}
+
+	//Включение (если path_o указывает на пустую область -> у агрегата отсутствует звук запуска)
+	if (start)
+	{
+		soundOn = 1;
+		soundWork = 0;
+		soundOff = 0;
+		mode = "on";
+	}
+	//Работа (если pathW указывает на пустую область -> у агрегата отсутствует звук режима работы)
+	if (work)
+	{
+		soundOn = 0;
+		soundWork = 1;
+		soundOff = 0;
+		mode = "w";
+	}
+	//Выключение (если pathOff указывает на пустую область -> у агрегата отсутствует звук выключения)
+	if (end)
+	{
+		soundOn = 0;
+		soundWork = 0;
+		soundOff = 1;
+		mode = "off";
+	}
+	//Освобождение памяти
+	if (free)
+	{
+		soundOn = 0;
+		soundWork = 0;
+		soundOff = 0;
+
+		return 0;
+	}
+
+	if (ModeSequence.back() != mode)
+	{
+		switcher = 0;
+		id = !id;
+		if (mode == "on" || mode == "off")
+		{
+			fileBuffered[id] = "NULL";
+		}
+		ModeSequence.push_back(mode);
+		if (ModeSequence.size() >= 4)
+		{
+			ModeSequence.erase(ModeSequence.begin());
+		}
+	}
+
+	
+	cout.precision(3);
+	cout << fixed
+		<< " ID__: " << id
+		<< " OFF0: " << offset[0]
+		<< " OFF1: " << offset[1]
+		<< " " << ModeSequence[0]
+		<< " " << ModeSequence[1]
+		<< " " << ModeSequence[2]
+		<< "\t\t\r";
+
+	if (mode == "w")
+	{
+		filetoBuffer[id] = pathW;
+		alSourcef(source[id], AL_LOOPING, AL_TRUE);
+	}
+	else if (mode == "on")
+	{
+		filetoBuffer[id] = pathOn;
+		alSourcef(source[id], AL_LOOPING, AL_FALSE);
+	}
+	else if (mode == "off")
+	{
+		filetoBuffer[id] = pathOff;
+		alSourcef(source[id], AL_LOOPING, AL_FALSE);
+	}
+
+	double finalGain = gain[id] * gainMult * masterGain;
+	double rise = 0;
+	double fade = 0;
+	switcher += deltaTime;
+	timeCrossfade(&fade, &rise, crossFadeDuration, switcher);
+
+	if (fileBuffered[id] == "NULL" && filetoBuffer[id] == "NULL")
+	{
+		rise = 0;
+		fade = 1;
+	}
+	else if ((fileBuffered[!id] == "NULL" && filetoBuffer[!id] == "NULL") || pathW == "NULL")
+	{
+		rise = 1;
+		fade = 0;
+	}
+	alSourcef(source[!id], AL_GAIN, fade * finalGain);
+	alSourcef(source[id], AL_GAIN, rise * finalGain);
+
+	for (size_t i = 0; i < 2; i++)
+	{
+		//Загружаем буферы и запускам источники
+		if (fileBuffered[i] != filetoBuffer[i])
+		{
+			sourceStatus[i] = setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
+			fileBuffered[i] = filetoBuffer[i];
+		}
+
+		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
+
+		alSourcef(source[i], AL_PITCH, pitch[i]);
+	}
+
+	//Пока идет запуск - высчитываем точку остановки
+	if (soundOn)
+	{
+		alGetSourcef(source[id], AL_SEC_OFFSET, &offset[id]);
+		offsetOn = offset[id];
+		if (offset[id] != 0)
+		{
+			offset[!id] = lengthOff * (1 - (offset[id] / lengthOn));
+		}
+	}
+	//Пока идет остановка - высчитываем точку запуска
+	if (soundOff)
+	{
+		alGetSourcef(source[id], AL_SEC_OFFSET, &offset[id]);
+		offsetOff = offset[id];
+		if (offset[id] != 0)
+		{
+			offset[!id] = lengthOn * (1 - (offset[id] / lengthOff));
+		}
+	}
+
+	return 1;
 }
