@@ -1424,9 +1424,10 @@ int main(int argc, char *argv[])
 				{
 					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
 					{
-						if (brake->play(localdata.tormoz, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor))
+						if (brake->play(localdata.p_tormoz_press, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor))
 						{
-
+							brake->gain[brake->id] = localdata.tormoz;
+							brake->pitch[brake->id] = getParameterFromVector(vector<point>{ { 5 * 0.277, 0.67 }, { 15 * 0.277, 1 }, { 25 * 0.277, 1.33 }, { 30 * 0.277, 1.4 }}, abs(localdata.v_surf_x));
 						}
 						else
 						{
