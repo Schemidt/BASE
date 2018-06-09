@@ -3460,7 +3460,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	}
 
 	//глушим редуктор на хп двигателей
-	double reductorHp = getParameterFromVector(vector<point>{ { 0, 10 }, { 1, 12 }}, sr.reduktor_gl_obor) * !(sr.p_eng1_zap || sr.p_eng2_zap);
+	double reductorHp = getParameterFromVector(vector<point>{ { 10, 0 }, { 12, 1 }}, sr.reduktor_gl_obor) * !(sr.p_eng1_zap || sr.p_eng2_zap);
 
 	alSourcef(source[id], AL_GAIN, gain[id] * rise * finalGain * reductorHp);
 	alSourcef(source[id], AL_PITCH, pitch[id]);
@@ -6645,7 +6645,7 @@ int Crane::play(char status, string pathOn, string pathW, string pathOff, double
 		}
 	}
 
-	
+
 	cout.precision(3);
 	cout << fixed
 		<< " ID__: " << id
