@@ -1392,14 +1392,14 @@ int main(int argc, char *argv[])
 			//Если тормоза включены на борту
 			if (helicopter.chassisBrakePumpFactor)
 			{
-				if (localdata.p_tormoz_press)//Условие создания объекта
+				if (localdata.p_tormoz_press || localdata.frict)//Условие создания объекта
 					if (!brake)//Если объект не создан 
 						brake = new Sound;//Создаем объект
 				if (brake)//Если объект создан - используем его
 				{
 					if (helicopter.modelName == "ka_27" | helicopter.modelName == "ka_29")
 					{
-						if (brake->play(localdata.p_tormoz_press, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor))
+						if (brake->play(localdata.p_tormoz_press || localdata.frict, "NULL", helicopter.fullName["brake"], "NULL", helicopter.chassisBrakePumpFactor))
 						{
 							brake->gain[brake->id] = localdata.tormoz;
 							brake->pitch[brake->id] = getParameterFromVector(vector<point>{ { 5 * 0.277, 0.67 }, { 15 * 0.277, 1 }, { 25 * 0.277, 1.33 }, { 30 * 0.277, 1.4 }}, abs(localdata.v_surf_x));
@@ -4504,7 +4504,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			sourceStatus[1] = setAndDeploySound(&buffer[1], &source[1], 0, h.fullName["vint_flap_low"]);
 			alSourcei(source[1], AL_LOOPING, AL_TRUE);
 			key[1] = h.fullName["vint_flap_low"];
-
 		}
 
 		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
@@ -4556,7 +4555,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double gainAtk = interpolation(-1, -15, 1, -9, 3, -3, atkXvel);
 
 		//Вычисляем громкость хлопков по атаке
-		double atkFls = pow(10, (turnsGain + gainAtk)*0.05) * vG * hG;
+		double atkFls = toCoef(turnsGain + gainAtk) * vG * hG;
 
 		//Хлопки на висении возникают при 2ом условии хлопков
 		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)))
@@ -4613,7 +4612,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		gain_a = interpolation(-1 + floor, -18, 1 + floor, -12, 3 + floor, -6, atkXvel);
 
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
-		double flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationVectorXZ)) * interpolation(-0.25, 1, 0.5, 0.5, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityVectorXZ);//переходит в усиление нч по vy
+		double flapCGainAccX = interpolation(0.56, 0, 1, 1, abs(accelerationVectorXZ)) * interpolation(-0.25, 1, 0, 0.5, 0.25, 0, velocityY) * interpolation(0, 1, 16.67, 0, velocityVectorXZ);//переходит в усиление нч по vy
 
 		if (((velocityVectorXZ < 0 && accelerationVectorXZ > 0.56) || (velocityVectorXZ > 0 && accelerationVectorXZ < -0.56)))//хлопаем
 		{
