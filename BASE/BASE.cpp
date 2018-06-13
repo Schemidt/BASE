@@ -2245,8 +2245,6 @@ int parametricalCrossfade(double *fadeGain, double *riseGain, double parameter, 
 	}
 	if ((riseLimit > fadeLimit && parameter <= riseLimit && parameter >= fadeLimit) || (riseLimit < fadeLimit && parameter >= riseLimit && parameter <= fadeLimit))
 	{
-		//*fadeGain = getParameterFromVector(vector<point>{ {fadeLimit, 1}, { abs(riseLimit - fadeLimit) / 2, 0.707 }, { riseLimit, 0 }}, parameter);
-		//*riseGain = getParameterFromVector(vector<point>{ {fadeLimit, 0}, { abs(riseLimit - fadeLimit) / 2, 0.707 }, { riseLimit, 1 }}, parameter);
 		double crossfader = getParameterFromVector(vector<point>{ {fadeLimit, -1}, { riseLimit, 1 }}, parameter);
 		*fadeGain = sqrt(0.5*(1 - crossfader));
 		*riseGain = sqrt(0.5*(1 + crossfader));
@@ -4536,8 +4534,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			turnsGain = (sr.reduktor_gl_obor - averangeTurn) * 2 * avrTurnRestrict;
 		}
 
-		double hG = interpolation(0, 0, 0.5, 0.5, 1, 1, hight);
-
 		//Передаточные функции по скорости для хлопков по атаки
 		//vL для НЧ
 		//vH для ВЧ
@@ -4553,7 +4549,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			vL = interpolation(11, 0.5, 21, 1, abs(velocityVectorXZ));//
 			vH = interpolation(11, 0.25, 21, 1, abs(velocityVectorXZ));//
 		}
-		double vG = vL * low + vH * (1 - low);
+		double vG = vL * low + vH * (1 - low);//Ограничение по скорости 
+
+		double hG = interpolation(0, 0, 0.5, 0.5, 1, 1, hight);//Ограничение по высоте 
 
 		double gainAtk = interpolation(-1, -15, 1, -9, 3, -3, atkXvel);
 

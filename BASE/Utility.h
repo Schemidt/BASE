@@ -1,3 +1,7 @@
+/*!
+\file
+\brief ‘ункции и классы общего назначени€ / ќбъ€влени€
+*/
 #pragma once
 
 #include "stdio.h"

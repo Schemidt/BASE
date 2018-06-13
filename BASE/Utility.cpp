@@ -1,3 +1,8 @@
+/*!
+\file
+\brief Функции и классы общего назначения / Определения
+*/
+
 #include "Utility.h"
 
 using namespace std;

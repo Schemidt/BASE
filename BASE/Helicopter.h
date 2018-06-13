@@ -39,12 +39,12 @@ public:
 	double redTurnoverMg1 = 0; //!<обороты редуктора с 1им двигателем на малом газу
 	double redTurnoverMg2 = 0; //!<обороты редуктора с 2мя двигателями на малом газу
 	double redTurnoverAvt = 0; //!<обороты редуктора на режиме автомат
-	double vsuTurnoverFull = 100;
-	double vsuTurnoverHp = 35;
+	double vsuTurnoverFull = 100;//!<обороты ВСУ на пике мощности
+	double vsuTurnoverHp = 35;//!<обороты ВСУ на холодной прокрутке
 	//Множители громкости
 	double vsuFactor = 0;//!<Множитель громкости ВСУ
 	double vsuHpFactor = 0;//!<Множитель громкости ВСУ ХП
-	double vsuCraneFactor = 0;
+	double vsuCraneFactor = 0;//!<Множитель громкости крана ВСУ
 	double engFactor = 0;//!<Множитель громкости двигателя
 	double engHpFactor = 0;//!<Множитель громкости двигателя
 	double redFactor = 0;//!<Множитель громкости редуктора
@@ -87,9 +87,9 @@ public:
 	double trim = 0;//!<Триммер
 	double frict = 0;//!>Фрикцион
 
-	//
-	double redLengthOn = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла запуска агрегата
-	double redLengthOff = 0;//!< Переменная для хранения длительности файла в секундах, как правило для файла остановки агрегата
+	// Переменные для хранения длительности файлов в секундах
+	double redLengthOn = 0;//!<длительность запуска агрегата
+	double redLengthOff = 0;//!<длительность остановки агрегата
 	double redLengthMg1 = 0;
 	double redLengthMg2 = 0;
 	double redLengthAvt = 0;
@@ -106,7 +106,7 @@ public:
 	double vsuLengthHpOn = 0;
 	double vsuLengthOff = 0;
 	double vsuLengthHpOff = 0;
-	//
+	//Вектора переходных функций (время - обороты) запуска и остановки агрегатов
 	vector<point> redFunctionOn;
 	vector<point> redFunctionOff;
 	vector<point> redFunctionOnSwap;
