@@ -482,7 +482,7 @@ int main(int argc, char *argv[])
 	helicopter.setParam(model);//Инициализируем параметры вертолета
 	system("cls");
 	cout << " Using " << helicopter.modelName << endl;
-	
+
 	ALCdevice *device;
 	ALCcontext *context;
 
@@ -567,7 +567,7 @@ int main(int argc, char *argv[])
 	Crane *kranKolc = nullptr;
 	Sound *vpryam = nullptr;
 	Sound *vadd = nullptr;
-	Sound *shock[4] = { nullptr };
+	Sound *shock[4][50] = { nullptr };
 	Sound *trim = nullptr;
 	Sound *frict = nullptr;
 
@@ -591,6 +591,8 @@ int main(int argc, char *argv[])
 	double timerAvr = 0;
 	const double window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
 	double periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
+	bool shockLocker[4] = { 0,0,0,0 };
+	int counterShock[4] = { 0,0,0,0 };
 
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (true)
@@ -608,7 +610,7 @@ int main(int argc, char *argv[])
 
 
 
-			//printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
+				//printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
 
 			if (Sound::currentTime == 0)
 				Sound::currentTime = localdata.time;
@@ -1502,7 +1504,7 @@ int main(int argc, char *argv[])
 			if (helicopter.rocketNar8Factor)
 			{
 				timerNar8 -= Sound::deltaTime;
-				if (timerNar8<=0)
+				if (timerNar8 <= 0)
 				{
 					timerNar8 = 0;
 					check8 = 0;
@@ -1526,71 +1528,33 @@ int main(int argc, char *argv[])
 						}
 						timerNar8 = 0.125;
 					}
-
-					for (int i = 0; i < 50; i++)
-					{
-						//воспроизводим звук выстрела 1го НАР8 каждые 0.07с
-						//каждые ~20 выпусков процесс можно повторить без потери заднего фронта
-						//количество необходимых каналов равно количеству пусков, которое в свою очередь
-						//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
-						if (nar8[i])
-						{
-							if (localdata.p_nar_s8 == 1)
-							{
-								nar8[i]->channel[0] = 1;//L
-								nar8[i]->channel[1] = 0;
-							}
-							else if (localdata.p_nar_s8 == 2)
-							{
-								nar8[i]->channel[0] = 0;//R
-								nar8[i]->channel[1] = 1;
-							}
-							else if (localdata.p_nar_s8 == 3)
-							{
-								nar8[i]->channel[0] = 1;//Both
-								nar8[i]->channel[1] = 1;
-							}
-
-							nar8[i]->play(check8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);
-
-							if (nar8[i]->sourceStatus[nar8[i]->id] != AL_PLAYING)
-							{
-								Free(nar8[i]);
-							}
-						}
-					}
 				}
-				else
+				for (int i = 0; i < 50; i++)
 				{
-					for (int i = 0; i < 50; i++)
+					//воспроизводим звук выстрела 1го НАР8 каждые 0.125с
+					if (nar8[i])
 					{
-						//воспроизводим звук выстрела 1го НАР8 каждые 0.07с
-						//каждые ~20 выпусков процесс можно повторить без потери заднего фронта
-						//количество необходимых каналов равно количеству пусков, которое в свою очередь
-						//зависит от промежуточного интервала и длинны записи звука выстрела НАР8
-						if (nar8[i])
+						if (localdata.p_nar_s8 == 1)
 						{
-							if (localdata.p_nar_s8 == 1)
-							{
-								nar8[i]->channel[0] = 1;//L
-								nar8[i]->channel[1] = 0;
-							}
-							else if (localdata.p_nar_s8 == 2)
-							{
-								nar8[i]->channel[0] = 0;//R
-								nar8[i]->channel[1] = 1;
-							}
-							else if (localdata.p_nar_s8 == 3)
-							{
-								nar8[i]->channel[0] = 1;//Both
-								nar8[i]->channel[1] = 1;
-							}
-							nar8[i]->play(check8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);
+							nar8[i]->channel[0] = 1;//L
+							nar8[i]->channel[1] = 0;
+						}
+						else if (localdata.p_nar_s8 == 2)
+						{
+							nar8[i]->channel[0] = 0;//R
+							nar8[i]->channel[1] = 1;
+						}
+						else if (localdata.p_nar_s8 == 3)
+						{
+							nar8[i]->channel[0] = 1;//Both
+							nar8[i]->channel[1] = 1;
+						}
 
-							if (nar8[i]->sourceStatus[nar8[i]->id] != AL_PLAYING)
-							{
-								Free(nar8[i]);
-							}
+						nar8[i]->play(check8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);
+
+						if (nar8[i]->sourceStatus[nar8[i]->id] != AL_PLAYING)
+						{
+							Free(nar8[i]);
 						}
 					}
 				}
@@ -1625,85 +1589,38 @@ int main(int argc, char *argv[])
 						}
 						timerNar13 = 0.15;
 					}
-
-					for (int i = 0; i < 50; i++)
-					{
-						//воспроизводим звук выстрела 1го НАР13 каждые 0.12с
-						//каждые ~5 выпусков процесс можно повторить без потери заднего фронта
-						//количество необходимых каналов равно количеству пусков, которое в свою очередь
-						//зависит от промежуточного интервала и длинны записи звука выстрела НАР13
-						if (nar13[i])
-						{
-							if (localdata.p_nar_s13 == 1)
-							{
-								nar13[i]->channel[0] = 1;//L
-								nar13[i]->channel[1] = 0;
-							}
-							else if (localdata.p_nar_s13 == 2)
-							{
-								nar13[i]->channel[0] = 0;//R
-								nar13[i]->channel[1] = 1;
-							}
-							else if (localdata.p_nar_s13 == 3)
-							{
-								nar13[i]->channel[0] = 1;//Both
-								nar13[i]->channel[1] = 1;
-							}
-							nar13[i]->play(check13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);
-
-							if (nar13[i]->sourceStatus[nar13[i]->id] != AL_PLAYING)
-							{
-								Free(nar13[i]);
-							}
-						}
-					}
 				}
-				else
+				for (int i = 0; i < 50; i++)
 				{
-					for (int i = 0; i < 50; i++)
+					//воспроизводим звук выстрела 1го НАР13 каждые 0.15с
+					if (nar13[i])
 					{
-						//воспроизводим звук выстрела 1го НАР13 каждые 0.12с
-						//каждые ~5 выпусков процесс можно повторить без потери заднего фронта
-						//количество необходимых каналов равно количеству пусков, которое в свою очередь
-						//зависит от промежуточного интервала и длинны записи звука выстрела НАР13
-						if (nar13[i])
+						if (localdata.p_nar_s13 == 1)
 						{
-							if (localdata.p_nar_s13 == 1)
-							{
-								nar13[i]->channel[0] = 1;//L
-								nar13[i]->channel[1] = 0;
-							}
-							else if (localdata.p_nar_s13 == 2)
-							{
-								nar13[i]->channel[0] = 0;//R
-								nar13[i]->channel[1] = 1;
-							}
-							else if (localdata.p_nar_s13 == 3)
-							{
-								nar13[i]->channel[0] = 1;//Both
-								nar13[i]->channel[1] = 1;
-							}
-							nar13[i]->play(check13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);
+							nar13[i]->channel[0] = 1;//L
+							nar13[i]->channel[1] = 0;
+						}
+						else if (localdata.p_nar_s13 == 2)
+						{
+							nar13[i]->channel[0] = 0;//R
+							nar13[i]->channel[1] = 1;
+						}
+						else if (localdata.p_nar_s13 == 3)
+						{
+							nar13[i]->channel[0] = 1;//Both
+							nar13[i]->channel[1] = 1;
+						}
+						nar13[i]->play(check13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);
 
-							if (nar13[i]->sourceStatus[nar13[i]->id] != AL_PLAYING)
-							{
-								Free(nar13[i]);
-							}
+						if (nar13[i]->sourceStatus[nar13[i]->id] != AL_PLAYING)
+						{
+							Free(nar13[i]);
 						}
 					}
 				}
 			}
 
-			/*cout.precision(3);
-			cout << fixed
-				<< " CO8: " << counterNar8
-				<< " TI8: " << timerNar8
-				<< " C13: " << counterNar13
-				<< " T13: " << timerNar13
-				<< " SIU: " << Sound::sourcesInUse
-				<< "\t\t\r";*/
-
-				//Если ППУ имеется на борту
+			//Если ППУ имеется на борту
 			if (helicopter.ppuFactor)
 			{
 				if (localdata.p_spo_ppu)//Условие создания объекта
@@ -1872,27 +1789,57 @@ int main(int argc, char *argv[])
 
 			//Удар при проходе плит
 			double shockInten[4] = {
+					localdata.styk_l,
 					localdata.styk_hv,
 					localdata.styk_nos,
-					localdata.styk_l,
 					localdata.styk_r };
 
-			for (size_t i = 0; i < 4; i++)
+			//Удар при проходе стыка плит
+			if (helicopter.shock)
 			{
-				if (helicopter.shock)
+				for (size_t i = 0; i < 4; i++)
 				{
 					if (shockInten[i])//Условие создания объекта
-						if (!shock[i])//Если объект не создан 
-							shock[i] = new Sound;//Создаем объект
-					if (shock[i])//Если объект создан - используем его
 					{
-						if (shock[i]->play(shockInten[i], helicopter.fullName["shock"], "NULL", "NULL", helicopter.shock))
+						if (!shock[i][counterShock[i]] && !shockLocker[i])
 						{
-
+							shock[i][counterShock[i]] = new Sound;//Создаем объект
+							shock[i][counterShock[i]]->gain[0] = shockInten[i];
+							shock[i][counterShock[i]]->gain[1] = shockInten[i];
+							counterShock[i]++;
+							shockLocker[i] = 1;
 						}
-						else
+						if (counterShock[i] >= 50)
 						{
-							Free(shock[i]);//Удаляем объект
+							counterShock[i] = 0;
+						}
+					}
+					else
+					{
+						shockLocker[i] = 0;
+					}
+
+					for (size_t j = 0; j < 50; j++)
+					{
+						if (shock[i][j])
+						{
+							if ((i + 1) % 2 == 0)
+							{
+								shock[i][j]->channel[0] = 0;//R
+								shock[i][j]->channel[1] = 1;
+							}
+							else
+							{
+								shock[i][j]->channel[0] = 1;//L
+								shock[i][j]->channel[1] = 0;
+							}
+
+							shock[i][j]->play(shockLocker[i], helicopter.fullName["shock"], "NULL", "NULL", helicopter.shock);
+
+							if (shock[i][j]->sourceStatus[shock[i][j]->id] != AL_PLAYING)
+							{
+								Free(shock[i][j]);
+							}
 						}
 					}
 				}
@@ -3983,7 +3930,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
 	}
 
-	printf(" DT__: %.3lf\tPI1: %.3lf\tPI2: %.3lf\t\r", Sound::deltaTime, pitch[0],pitch[1]);
+	printf(" DT__: %.3lf\tPI1: %.3lf\tPI2: %.3lf\t\r", Sound::deltaTime, pitch[0], pitch[1]);
 
 
 	double lowFreqGain = AL_EQUALIZER_DEFAULT_LOW_GAIN;
