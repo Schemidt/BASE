@@ -2698,59 +2698,15 @@ int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, stri
 	return play;
 }
 
-double Sound::getAverange(string parameter, double seconds)
+double Sound::getAverange(vector<double> vectorOfParameters, double seconds)
 {
 	double averange = 0;
-	if (parameter == "step")
+	int size = vectorOfParameters.size();
+	double window = size / globalWindow * seconds;
+	for (size_t i = size - window; i < size; i++)
 	{
-		int size = vectorAvrStep.size();
-		double window = size / globalWindow * seconds;
-		for (size_t i = size - window; i < size; i++)
-		{
-			averange += vectorAvrStep[i] / window;
-		}
+		averange += vectorOfParameters[i] / window;
 	}
-	else if (parameter == "eng1Turns")
-	{
-		int size = vectorAvrEng1Turn.size();
-		double window = size / globalWindow * seconds;
-		for (size_t i = size - window; i < size; i++)
-		{
-			averange += vectorAvrEng1Turn[i] / window;
-		}
-	}
-	else if (parameter == "eng2Turns")
-	{
-		int size = vectorAvrEng1Turn.size();
-		double window = size / globalWindow * seconds;
-		for (size_t i = size - window; i < size; i++)
-		{
-			averange += vectorAvrEng2Turn[i] / window;
-		}
-	}
-	else if (parameter == "redTurns")
-	{
-		int size = vectorAvrRedTurn.size();
-		double window = size / globalWindow * seconds;
-		for (size_t i = size - window; i < size; i++)
-		{
-			averange += vectorAvrRedTurn[i] / window;
-		}
-	}
-	else if (parameter == "attack")
-	{
-		int size = vectorAvrAtk.size();
-		double window = size / globalWindow * seconds;
-		for (size_t i = size - window; i < size; i++)
-		{
-			averange += vectorAvrAtk[i] / window;
-		}
-	}
-	else
-	{
-		return 0;
-	}
-
 	return averange;
 }
 
@@ -3081,12 +3037,12 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	if (h.modelName == "mi_28")
 	{
 		//Вычисляем средние обороты за последние 30с
-		double averangeTurn = getAverange("redTurns", 30);
+		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
 		//Усиление по атаке
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
-		double averangeAtk = getAverange("attack", 20) * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
+		double averangeAtk = getAverange(vectorAvrAtk, 20) * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
 		double atkGain = (atkXvel - averangeAtk) * -0.4;
 		atkGain = (atkGain < -2) ? -2 : atkGain;
@@ -3167,7 +3123,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	else if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
 		//Вычисляем средние обороты за последние 30с
-		double averangeTurn = getAverange("redTurns", 30);
+		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
 		//усиление от оборотов выше 10000
 		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1.5 * avrTurnRestrict;
@@ -3180,7 +3136,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double velocityGain = (abs(velocityVectorXZ) >= 28) ? (abs(velocityVectorXZ) - 28)* 0.1 : 0;//0.1дб на 1 м/с
 
 		//Вычисляем средний шаг за 35с
-		double averangeStep = getAverange("step", 35);
+		double averangeStep = getAverange(vectorAvrStep, 35);
 
 		//Усиление от шага
 		double stepGain = 0.75 * (step - averangeStep) * interpolation(0, 0, 1, 1, hight);//
@@ -3259,13 +3215,13 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			<< "\t\t\r";*/
 
 			//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-		double averangeTurn = getAverange("redTurns", 30);
+		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
 		//Общее усиление от скорости выше 50м/с
 		double velocityGain = (abs(velocityVectorXZ) >= 50) ? (abs(velocityVectorXZ) - 50)* 0.2 : 0;//0.1дб на 1 м/с
 
 		//Набираем массив для рассчета усиления от среднего значения шага за 50с
-		double averangeStep = getAverange("step", 50);
+		double averangeStep = getAverange(vectorAvrStep, 50);
 
 		//Рассчитываем усиление от среднего
 		double stepGain = (step - averangeStep) * getParameterFromVector(vector<point>{ { 0, 0 }, { 1, 1 } }, hight);
@@ -3363,7 +3319,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
 		//Набираем массив для рассчета усиления от среднего значения оборотов редуктора за 30с
-		double averangeTurn = getAverange("redTurns", 30);
+		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
 		//усиление от скорости выше 50км/ч (14м/c)
 		double velocityGain = 0;
@@ -3382,7 +3338,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		//Набираем массив для рассчета усиления от среднего значения шага за 50с
-		double averangeStep = getAverange("step", 50);
+		double averangeStep = getAverange(vectorAvrStep, 50);
 
 		//Рассчитываем усиление от среднего
 		double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, hight);
@@ -3466,7 +3422,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
 		alSourcef(source[2], AL_GAIN, beatsGain);
 
-		double averangeTurn = getAverange("redTurns", 30);
+		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
 		//усиление от оборотов выше 10000
 		double highFreqTurnGain = (sr.reduktor_gl_obor - averangeTurn) * 1.5 * avrTurnRestrict;
@@ -3475,7 +3431,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		//усиление от оборотов
 		double turnGain = (sr.reduktor_gl_obor - averangeTurn) * 0.75 * avrTurnRestrict;
 
-		double averangeStep = getAverange("step", 20);
+		double averangeStep = getAverange(vectorAvrStep, 20);
 
 		//Усиление от шага
 		double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, hight);
@@ -3544,7 +3500,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[2], AL_PITCH, harmPitch);
 
 		//
-		double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange("eng1Turns", 2) : sr.eng2_obor - getAverange("eng2Turns", 2);
+		double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange(vectorAvrEng1Turn, 2) : sr.eng2_obor - getAverange(vectorAvrEng2Turn, 2);
 
 		//усиление 1го купола
 		double harmMid1Gain = getParameterFromVector(vector<point>{ { 9, 0 }, { 10, 6 }, { 12, 12 }}, step) * getParameterFromVector(vector<point>{ { 0, 1.6 }, { 50, 0.7 }}, velocityVectorXZ);
@@ -3636,7 +3592,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		alSourcef(source[2], AL_GAIN, bumBumGain * masterGain);
 		//
-		double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange("eng1Turns", 2) : sr.eng2_obor - getAverange("eng2Turns", 2);
+		double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange(vectorAvrEng1Turn, 2) : sr.eng2_obor - getAverange(vectorAvrEng2Turn, 2);
 
 		//усиление 2го купола
 		double mid2FreqGainEngTurns = getParameterFromVector(vector<point>{ { -2, -8 }, { -1, -4 }, { 0, 0 }, { 2, 4 }}, avrEngTurns);
@@ -4047,7 +4003,15 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	//Полеты 8 мтв5, 8 амтш, ка 27м, ка 29
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "mi_26" || h.modelName == "ka_27" || h.modelName == "ka_29")
 	{
-		double averangeTurn = getAverange("eng" + to_string(engNum) + "Turns", 25);
+		double averangeTurn;
+		if (engNum == 1)
+		{
+			averangeTurn = getAverange(vectorAvrEng1Turn, 25);
+		}
+		else if (engNum == 2)
+		{
+			averangeTurn = getAverange(vectorAvrEng2Turn, 25);
+		}
 
 		//усиление от оборотов
 		double turnGain = toCoef((parameter - averangeTurn) * 0.35 * avrTurnRestrict);
@@ -4483,7 +4447,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
-		double averangeTurn = getAverange("redTurns", 30);
+		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
 		//Усиление от оборотов
 		//только если атака больше 2х
@@ -4545,7 +4509,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		}
 
-		double averangeTurn = getAverange("redTurns", 30);
+		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
 		double atkXvel = calcA * interpolation(0, 0, 16.67, 1, abs(velocityVectorXZ));
 
@@ -4636,7 +4600,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			key[1] = h.fullName["vint_flap_low"];
 		}
 
-		double averangeTurn = getAverange("redTurns", 30);
+		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
 		double gain_a = 0;
 		double h_g = 0;
@@ -4890,7 +4854,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		//Используем модифицированную атаку
 		double attack = calcA * getValue({ 0, 0 }, { 22.22, 1 }, velocityVectorXZ, 1, "H")
-			+ (step - getAverange("step", 25)) * 5 * ((velocityY < 0) ? 1 : 0)
+			+ (step - getAverange(vectorAvrStep, 25)) * 5 * ((velocityY < 0) ? 1 : 0)
 			* getValue({ 0, 0 }, { 13.89, 1 }, velocityVectorXZ, 0, 1)
 			* getValue({ 13.89, 1 }, { 22.22, 0 }, velocityVectorXZ, 0, 1);
 
@@ -5422,7 +5386,7 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 
 		status = Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 
-		double averangeTurn = getAverange("redTurns", 25);
+		double averangeTurn = getAverange(vectorAvrRedTurn, 25);
 
 		double avrTurngain = (-5) + (sr.reduktor_gl_obor - averangeTurn) * 4;
 		avrTurngain = (avrTurngain > 0) ? 0 : avrTurngain;
@@ -5489,7 +5453,7 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 			alSourcef(source[2], AL_PITCH, harmPitch);
 
 			//Средние обороты дв за 2 с
-			double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange("eng1Turns", 2) : sr.eng2_obor - getAverange("eng2Turns", 2);
+			double avrEngTurns = (sr.eng1_obor > sr.eng2_obor) ? sr.eng1_obor - getAverange(vectorAvrEng1Turn, 2) : sr.eng2_obor - getAverange(vectorAvrEng2Turn, 2);
 
 			//Усиление полосы эквалайзера
 			double harmEqMid1Gain = getParameterFromVector(vector<point>{ {0, 0}, { 4, 18 } }, avrEngTurns);
