@@ -63,8 +63,8 @@ public:
 */
 class point {
 public:
-	double x = 0;
-	double y = 0;
+	double x = 0;//Абсцисса
+	double y = 0;//Ордината
 
 	point()
 	{
@@ -77,6 +77,7 @@ public:
 		y = yi;
 	}
 
+	//!<Меняет x и y местами
 	point swap()
 	{
 		double _x;

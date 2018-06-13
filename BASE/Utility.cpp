@@ -416,6 +416,6 @@ point & point::operator=(const point & copy)
 {
 	this->x = copy.x;
 	this->y = copy.y;
-	// TODO: вставьте здесь оператор return
+
 	return *this;
 }

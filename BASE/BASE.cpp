@@ -465,7 +465,7 @@ int main(int argc, char *argv[])
 
 	//Получаем указатели на функции EFX
 	setEFXPointers();
-	vector <string> helicoptersNames = { "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29" };
+	vector <string> helicoptersNames = { "mi_8_mtv5","mi_8_amtsh","mi_26","mi_28","ka_226","ansat","ka_27","ka_29" };//Возможные комманды 
 	string model = "ka_29";//по умолчанию
 	Helicopter helicopter;//Переменная класса Helicopter для хранения параметров выбранного вертолета
 	if (argc > 1)// если передаем аргументы, то argc будет больше 1(в зависимости от кол-ва аргументов)
@@ -479,7 +479,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	helicopter.setParam(model);
+	helicopter.setParam(model);//Инициализируем параметры вертолета
 	system("cls");
 	cout << " Using " << helicopter.modelName << endl;
 	
@@ -494,20 +494,20 @@ int main(int argc, char *argv[])
 	cout << " " << Sound::maxSources << " - Sources avaliable" << endl;
 	Sound::maxSlots = MAX_AUX_SLOTS;
 
-	device = alcOpenDevice(0);
+	device = alcOpenDevice(0);//Инициализируем устройство
 	if (device == 0)
 	{
 		cout << alcGetString(device, alcGetError(device)) << endl;
 		return AL_FALSE;
 	}
-	context = alcCreateContext(device, attribs);
+	context = alcCreateContext(device, attribs);//Инициализируем контекст (т.е. окружение - кабина вертолета)
 	if (context == 0)
 	{
 		cout << alcGetString(device, alcGetError(device)) << endl;
 		alcCloseDevice(device);
 		return AL_FALSE;
 	}
-	if (!alcMakeContextCurrent(context))
+	if (!alcMakeContextCurrent(context))//Выбираем контекст текущим
 	{
 		cout << alcGetString(device, alcGetError(device)) << endl;
 		alcDestroyContext(context);
@@ -519,7 +519,7 @@ int main(int argc, char *argv[])
 		cout << "shared memory initialization error..." << endl;
 		return 0;
 	}
-	InitRealTime(1);//инициируется "реальное" время с задержкой в 1мс
+	InitRealTime(1);//инициируется "реальное" время с задержкой в 1мс (чтение распределенной памяти раз в 0.001 с)
 
 	//Указатели на объекты определяющие параметры выводимого звука
 	Vsu *vsu = nullptr;
@@ -582,8 +582,8 @@ int main(int argc, char *argv[])
 	Sound::vectorRedTurn.push_back(localdata.reduktor_gl_obor);
 
 	double timerPodk = 0;
-	double timerNar8 = 0;
-	double timerNar13 = 0;
+	double timerNar8 = 0;//период выстрела нар8
+	double timerNar13 = 0;//период выстрела нар8
 	int counterNar8 = 0;
 	int counterNar13 = 0;
 	bool check8 = 0;
@@ -597,13 +597,16 @@ int main(int argc, char *argv[])
 	{
 		//Копируем данные из общей памяти во временное хранилище
 		localdata = soundread;
-		if (IsProcessPresent(L"USPO.exe") && !localdata.p_model_stop)
+		if (IsProcessPresent(L"USPO.exe") && !localdata.p_model_stop)//цикл работает пока uspo активно, и признак остановки модели не активен
 		{
 			/*cout << fixed
 				<< " SOIU: " << Sound::sourcesInUse
 				<< " ESIU: " << Sound::effectSlotsInUse
 				<< " CUTI: " << Sound::currentTime
 				<< "\t\t\r";*/
+
+
+
 
 			//printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
 
@@ -2387,10 +2390,10 @@ int getMaxAvaliableSources()
 
 int Sound::play(bool status, string pathOn, string pathW, string pathOff, double gainMult)
 {
-	bool start;
-	bool work;
-	bool end;
-	bool free;
+	bool start;	//Переменная для смены фазы на запуск
+	bool work;	//Переменная для смены фазы на работу
+	bool end;	//Переменная для смены фазы на выключение
+	bool free;	//Переменная для смены фазы на высвобождение памяти
 
 	//Узнаем длинну файлов запуска и остановки
 	if (pathOn != "NULL")
@@ -2398,7 +2401,7 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 	if (pathOff != "NULL")
 		lengthOff = getLengthWAV(pathOff);
 
-	alGetSourcei(source[id], AL_SOURCE_STATE, &sourceStatus[id]);
+	alGetSourcei(source[id], AL_SOURCE_STATE, &sourceStatus[id]);//Обновляем статус источника
 
 	//условие запуска когда все звуки присутствуют
 	if (pathOn != "NULL" & pathW != "NULL" & pathOff != "NULL")
@@ -2496,24 +2499,25 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 		soundWork = 0;
 		soundOff = 0;
 
-		return 0;
+		return 0; //Возвращаем 0 - признак окончания работы объекта
 	}
 
-	if (ModeSequence.back() != mode)
+	if (ModeSequence.back() != mode)//Если произошла смена режима
 	{
-		switcher = 0;
-		id = !id;
-		if (mode == "on" || mode == "off")
+		switcher = 0;//Обнуляем таймер кроссфеда
+		id = !id;//Меняем номер активного источника
+		if (mode == "on" || mode == "off")//Если текущий режим запуск или выключение - перезапускаем с нужного времени
 		{
 			fileBuffered[id] = "NULL";
 		}
-		ModeSequence.push_back(mode);
-		if (ModeSequence.size() >= 4)
+		ModeSequence.push_back(mode);//Сохраняем режим в историю
+		if (ModeSequence.size() > 3)//Если если история режимов превышает 3 - очищаем лишние режимы
 		{
 			ModeSequence.erase(ModeSequence.begin());
 		}
 	}
 
+	//Инициализируем переменные в зависимости от режима
 	if (mode == "w")
 	{
 		filetoBuffer[id] = pathW;
@@ -2530,7 +2534,7 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 		alSourcef(source[id], AL_LOOPING, AL_FALSE);
 	}
 
-	double finalGain = gain[id] * gainMult * masterGain;
+	double finalGain = gain[id] * gainMult * masterGain;//Вычисляем максимальную громкость 
 	double rise = 0;
 	double fade = 0;
 	switcher += deltaTime;
@@ -2546,6 +2550,8 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 		rise = 1;
 		fade = 0;
 	}
+
+	//Применяем результирующую громкость
 	alSourcef(source[!id], AL_GAIN, fade * finalGain);
 	alSourcef(source[id], AL_GAIN, rise * finalGain);
 
@@ -2583,6 +2589,7 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 
 		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
 
+		//Обновляем высоту тона
 		alSourcef(source[i], AL_PITCH, pitch[i]);
 	}
 
@@ -4464,7 +4471,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 	double avrTurnRestrict = getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, hight);
 
-	//Полеты 8 мтв5
+	//Хлопки 8 мтв5
 	if (h.modelName == "mi_8_mtv5")
 	{
 		if (key[0] != h.fullName["vint_flap"])
@@ -4514,13 +4521,13 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		double gainC = (atkFls > flapCGainAccX) ? atkFls : flapCGainAccX * flapOn;
 
-		//Уменьшаем громкость хлопков на 6дб за каждый градус шага ниже 6
-		double stepDamping = pow(10, ((step < 3.5) ? ((3.5 - step) * -6) : 0)*0.05);
+		//Уменьшаем громкость хлопков на 6дб за каждый градус шага ниже 3.5
+		double stepDamping = pow(10, ((step < 3.5) ? ((3.5 - step) * (-6)) : 0)*0.05);
 
 		alSourcef(source[0], AL_GAIN, gainC * h.vintFlapFactor * masterGain * stepDamping);
 
 	}
-	//Полеты 8 амтш
+	//Хлопки 8 амтш
 	else if (h.modelName == "mi_8_amtsh")
 	{
 		if (key[0] != h.fullName["vint_flap"])
@@ -4613,7 +4620,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[1], AL_GAIN, gainF * h.vintFlapFactor * masterGain * low);
 
 	}
-	//Полеты 28
+	//Хлопки 28
 	else if (h.modelName == "mi_28")
 	{
 		if (key[0] != h.fullName["vint_flap"])
@@ -4680,7 +4687,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 
 	}
-	//Полеты ка 27 - 29
+	//Хлопки ка 27 - 29
 	else if (h.modelName == "ka_27" || h.modelName == "ka_29")
 	{
 		if (key[0] != h.fullName["vint_flap_A"] || key[1] != h.fullName["vint_flap_B"] || key[2] != h.fullName["vint_flap_C"])
@@ -4865,7 +4872,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 
 	}
-	//Полеты ми 26
+	//Хлопки ми 26
 	else if (h.modelName == "mi_26")
 	{
 		if (key[0] != h.fullName["vint_flap"])
@@ -4930,7 +4937,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[1], AL_GAIN, flappingFinalGain * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, hight));
 
 	}
-	//Полеты ка 226
+	//Хлопки ка 226
 	else if (h.modelName == "ka_226")
 	{
 		//Условия наступления хлопков
@@ -4989,7 +4996,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		alSourcef(source[1], AL_PITCH, sr.reduktor_gl_obor / h.redTurnoverAvt);
 	}
-	//Полеты ансат
+	//Хлопки ансат
 	else if (h.modelName == "ansat")
 	{
 		if (key[0] != h.fullName["vint_flap_hi"])
