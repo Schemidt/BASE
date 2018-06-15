@@ -3360,23 +3360,23 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			alSourcei(source[2], AL_DIRECT_FILTER, filter[2]);
 		}
 
+		//регулируем громкость шума
+		double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
+		alSourcef(source[2], AL_GAIN, beatsGain);
+
 		//добавляем отдельный звук взлета
 		if (takeOff != h.fullName["takeOff"])
 		{
-			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["takeOff"]);
-			alSourcei(source[2], AL_LOOPING, AL_TRUE);
+			setAndDeploySound(&buffer[3], &source[3], 0, h.fullName["takeOff"]);
+			alSourcei(source[3], AL_LOOPING, AL_TRUE);
 			takeOff = h.fullName["takeOff"];
 		}
 
 		double takeOffGain = toCoef(min(getParameterFromVector(vector<point>{ { 0, -30 }, { 6, 0 } }, step),
-			getParameterFromVector(vector<point>{ { 0, 0 }/*, { 4, -2.5 }*/, { 10, 0 } }, hight)))
+			getParameterFromVector(vector<point>{ { 0, -30 }/*, { 4, -2.5 }*/, { 10, 0 } }, hight)))
 			* getParameterFromVector(vector<point>{ { 0, 0 }, { h.redTurnoverAvt, 1 } }, sr.reduktor_gl_obor);
 
-		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
-
-		//регулируем громкость шума
-		double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
-		alSourcef(source[2], AL_GAIN, beatsGain);
+		alSourcef(source[3], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
 
 		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
@@ -4844,19 +4844,19 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		printf(" DT__: %.3lf\tHOG: %.3lf\tACG: %.3lf\tVXZ: %.3lf\t\r", Sound::deltaTime, hoveringGain, accelerationVectorXZ, velocityVectorXZ);
 
-		//static double period = 0;
-		//if (period == 0)
-		//{
-		//	remove("flap.txt");
-		//}
-		//period += deltaTime;
-		//if (period > 0.11)
-		//{
-		//	FILE *f=fopen("flap.txt","at");
-		//	fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, hoveringGain, accelerationVectorXZ, sr.v_atm_x);
-		//	fclose(f);
-		//	period = 0.01;
-		//}
+		static double period = 0;
+		if (period == 0)
+		{
+			remove("flap.txt");
+		}
+		period += deltaTime;
+		if (period > 0.11)
+		{
+			FILE *f=fopen("flap.txt","at");
+			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, hoveringGain, accelerationVectorXZ, dashVectorXZ);
+			fclose(f);
+			period = 0.01;
+		}
 
 		//Ослабление звука при падении шага до 1
 		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((groundTouch > 0) ? 0 : 1);
