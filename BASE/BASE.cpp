@@ -2625,22 +2625,22 @@ int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount
 int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, string file_path)
 {
 	int play = 0;
-	alSourceStop(*Source);
-	alSourcei(*Source, AL_BUFFER, NULL);
-	alDeleteBuffers(1, &*Buffer);
-	alGenBuffers(1, &*Buffer);
-	if (file_path == "NULL")
+	alSourceStop(*Source);//Останавливаем воспроизведение
+	alSourcei(*Source, AL_BUFFER, NULL);//Отсоединяем буфер
+	alDeleteBuffers(1, &*Buffer);//Удаляем буфер
+	alGenBuffers(1, &*Buffer);//Пересоздаем буфер
+	if (file_path == "NULL")//Если путь равен "нулю" выходим
 	{
 		return 0;
 	}
-	if (!setBuffer(*Buffer, file_path, channelsSetup, channel))
+	if (!setBuffer(*Buffer, file_path, channelsSetup, channel))//Заполняем буфер
 		return 0;
-	alSourcei(*Source, AL_BUFFER, *Buffer);
-	alSourcef(*Source, AL_SEC_OFFSET, offset);
-	alSourcef(*Source, AL_GAIN, 0);
-	alSourcePlay(*Source);
-	alGetSourcei(*Source, AL_SOURCE_STATE, &play);
-	return play;
+	alSourcei(*Source, AL_BUFFER, *Buffer);//подключаем буфер к источнику
+	alSourcef(*Source, AL_SEC_OFFSET, offset);//Устанавливаем отступ в сек
+	alSourcef(*Source, AL_GAIN, 0);//Устанавливаем громкость в 0
+	alSourcePlay(*Source);//Запускаем вспроизведение
+	alGetSourcei(*Source, AL_SOURCE_STATE, &play);//Получаем статус воспроизведения
+	return play;//Возвращаем статус воспроизведения
 }
 
 double Sound::getAverange(vector<double> vectorOfParameters, double seconds)
@@ -4825,13 +4825,16 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Усиление по dvx
 		double accGain = pow(10, (getParameterFromVector(vector<point>{ {2, 0}, { 0,-12 } }, abs(accelerationVectorXZ)))*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityVectorXZ));
 
-		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
+		//На висении, используем ускорение в качестве переходной функции хлопков
 		double backFront = accGain * getParameterFromVector(vector<point>{ {0, 1}, { 1,0.5 }, { 2,0 }}, abs(velocityVectorXZ));
 		double hoveringGain = ((velocityVectorXZ * accelerationVectorXZ <= 0) ? accGain
 			: (((velocityVectorXZ <= 0 && accelerationVectorXZ <= 0 && dashVectorXZ >= 0) || (velocityVectorXZ >= 0 && accelerationVectorXZ >= 0 && dashVectorXZ <= 0)) ? backFront : 0));
 
+		//Признак касания
+		double touch = (sr.obj_hv + sr.obj_l + sr.obj_nos + sr.obj_r) / 4;
+
 		//Ослабление звука при падении шага до 1
-		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((hight > 0) ? 1 : 0);
+		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((touch > 0) ? 0 : 1);
 
 		//Усиление висения по vy
 		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * (accelerationVectorXZ != 0) ? 1 : 0;
