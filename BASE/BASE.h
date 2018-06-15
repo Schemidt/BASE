@@ -178,9 +178,6 @@ public:
 	int setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, string file_path);
 
 	double getAverange(vector<double> vectorOfParameters, double seconds);
-
-private:
-
 };
 
 /*!

@@ -4826,9 +4826,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double accGain = pow(10, (getParameterFromVector(vector<point>{ {2, 0}, { 0,-12 } }, abs(accelerationVectorXZ)))*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityVectorXZ));
 
 		//На висении, используем ускорение в качестве переходной функции хлопков
-		double backFront = accGain * getParameterFromVector(vector<point>{ {0, 1}, { 1,0.5 }, { 2,0 }}, abs(velocityVectorXZ));
-		double hoveringGain = ((velocityVectorXZ * accelerationVectorXZ <= 0) ? accGain
-			: (((velocityVectorXZ <= 0 && accelerationVectorXZ <= 0 && dashVectorXZ >= 0) || (velocityVectorXZ >= 0 && accelerationVectorXZ >= 0 && dashVectorXZ <= 0)) ? backFront : 0));
+		double hoveringGain = (velocityVectorXZ * accelerationVectorXZ <= 0) ? abs(accGain * velocityVectorXZ) : 0;
 
 		//Признак касания
 		double touch = (sr.obj_hv + sr.obj_l + sr.obj_nos + sr.obj_r) / 4;
