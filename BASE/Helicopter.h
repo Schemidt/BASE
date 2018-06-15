@@ -107,6 +107,7 @@ public:
 	double vsuLengthOff = 0;
 	double vsuLengthHpOff = 0;
 	//¬ектора переходных функций (врем€ - обороты) запуска и остановки агрегатов
+	//redFunctionOnSwap - вектор, где точкам p{x,y} вектора redFunctionOn, соответствуют точки p{y,x}
 	vector<point> redFunctionOn;
 	vector<point> redFunctionOff;
 	vector<point> redFunctionOnSwap;
