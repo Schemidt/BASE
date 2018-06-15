@@ -3360,6 +3360,20 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 			alSourcei(source[2], AL_DIRECT_FILTER, filter[2]);
 		}
 
+		//добавляем отдельный звук взлета
+		if (takeOff != h.fullName["takeOff"])
+		{
+			setAndDeploySound(&buffer[2], &source[2], 0, h.fullName["takeOff"]);
+			alSourcei(source[2], AL_LOOPING, AL_TRUE);
+			takeOff = h.fullName["takeOff"];
+		}
+
+		double takeOffGain = toCoef(min(getParameterFromVector(vector<point>{ { 0, -30 }, { 6, 0 } }, step),
+			getParameterFromVector(vector<point>{ { 0, 0 }/*, { 4, -2.5 }*/, { 10, 0 } }, hight)))
+			* getParameterFromVector(vector<point>{ { 0, 0 }, { h.redTurnoverAvt, 1 } }, sr.reduktor_gl_obor);
+
+		alSourcef(source[2], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
+
 		//регулируем громкость шума
 		double beatsGain = pow(10, (interpolation(70, -12, 78, -8, 90, -2, sr.reduktor_gl_obor)) * 0.05);
 		alSourcef(source[2], AL_GAIN, beatsGain);
@@ -3379,7 +3393,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		double stepGain = (step - averangeStep) * interpolation(0, 0, 1, 1, hight);
 
 		//усиление по шагу в НЧ
-		double mid2FreqStepGain = step * 1 * interpolation(0, 1, 10, 0, hight);
+		//double mid2FreqStepGain = step * 1 * interpolation(0, 1, 10, 0, hight);
 
 		//Усиление по Vy
 		double vyG = (velocityY * (-2) - 10) - 4.43/*коэф 0.6*/;
@@ -3390,8 +3404,8 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		//Усиление редуктора в НЧ в начале движения по ВПП
 		double stalkingGain = (accelerationVectorXZ > 0) ? accelerationVectorXZ * 5 * interpolation(0, 1, 8.3, 0, velocityVectorXZ) * !hight : 0;
 
-		lowFreqGain = pow(10, (velocityYGain + stepGain * 0.25 + stalkingGain + mid2FreqStepGain) * 0.05);
-		mid1FreqGain = pow(10, (turnGain + stepGain * 1 + stalkingGain + mid2FreqStepGain) * 0.05);
+		lowFreqGain = pow(10, (velocityYGain + stepGain * 0.25 + stalkingGain /*+ mid2FreqStepGain*/) * 0.05);
+		mid1FreqGain = pow(10, (turnGain + stepGain * 1 + stalkingGain /*+ mid2FreqStepGain*/) * 0.05);
 		mid2FreqGain = pow(10, (turnGain + stepGain * 1) * 0.05);
 		highFreqGain = pow(10, (turnGain + stepGain * 1 + highFreqTurnGain) * 0.05);
 
@@ -4822,10 +4836,27 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Усиление по dvx
 		double accGain = pow(10, (getParameterFromVector(vector<point>{ {2, 0}, { 0, -12 } }, abs(accelerationVectorXZ)))*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityVectorXZ));
 
-		//На висении, используем ускорение в качестве переходной функции хлопков
-		double hoveringGain = (velocityVectorXZ * accelerationVectorXZ <= 0) ? abs(accGain * getParameterFromVector(vector<point>{ {0, 0}, { 1, 1 } }, abs(velocityVectorXZ))) : 0;
+		//на висении, используем ускорение в качестве переходной функции хлопков
+		double hoveringGain = (velocityVectorXZ * accelerationVectorXZ <= 0) ? accGain : 0;
 
-		printf(" DT__: %.3lf\tHOG: %.3lf\tACG: %.3lf\tVXZ: %.3lf\t\r", Sound::deltaTime, hoveringGain, accGain, velocityVectorXZ);
+		//Сглаживаем появление и исчезание хлопков
+		//double smoothHoveringGain = sm.delay(abs(hoveringGain), deltaTime);
+
+		printf(" DT__: %.3lf\tHOG: %.3lf\tACG: %.3lf\tVXZ: %.3lf\t\r", Sound::deltaTime, hoveringGain, accelerationVectorXZ, velocityVectorXZ);
+
+		//static double period = 0;
+		//if (period == 0)
+		//{
+		//	remove("flap.txt");
+		//}
+		//period += deltaTime;
+		//if (period > 0.11)
+		//{
+		//	FILE *f=fopen("flap.txt","at");
+		//	fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, hoveringGain, accelerationVectorXZ, sr.v_atm_x);
+		//	fclose(f);
+		//	period = 0.01;
+		//}
 
 		//Ослабление звука при падении шага до 1
 		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((groundTouch > 0) ? 0 : 1);
