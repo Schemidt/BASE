@@ -72,7 +72,8 @@ public:
 	static double accelerationVy;//!< Вертикальное ускорение (dvy/dt)
 	static double derivStep;//!< Скорость изменения шага
 	static double calcA;//!< Атака винта
-	static double RedTurnAcc;//!< Ускорение оборотов редуктора (dturn/dt)
+	static double redTurnAcc;//!< Ускорение оборотов редуктора (dturn/dt)
+	static double groundTouch;//!< Признак касания земли
 
 	static vector<double> vectorVy;//!<Массив для рассчета производной от вертикальной скорости
 	static vector<double> vectorVXZ;//!<Массив для рассчета производной от горизонтальной скорости

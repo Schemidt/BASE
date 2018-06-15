@@ -433,7 +433,8 @@ double Sound::dashVectorXZ = 0;
 double Sound::accelerationVy = 0;
 double Sound::derivStep = 0;
 double Sound::calcA = 0;
-double Sound::RedTurnAcc = 0;
+double Sound::redTurnAcc = 0;
+double Sound::groundTouch = 0;
 int Engine::engCount = 0;
 
 vector<double> Sound::vectorVy, Sound::vectorVXZ, Sound::vectorAccXZ, Sound::vectorStep, Sound::vectorTangaz, Sound::vectorTime, Sound::vectorRedTurn;
@@ -607,9 +608,6 @@ int main(int argc, char *argv[])
 				<< " CUTI: " << Sound::currentTime
 				<< "\t\t\r";*/
 
-
-
-
 				//printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
 
 			if (Sound::currentTime == 0)
@@ -635,6 +633,7 @@ int main(int argc, char *argv[])
 			Sound::step = localdata.step; //шаг (временно используем параметр перегрузки)
 			Sound::hight = localdata.hight;
 			Sound::velocityY = localdata.vy;
+			Sound::groundTouch = (localdata.obj_hv + localdata.obj_l + localdata.obj_nos + localdata.obj_r) / 4;//Признак касания
 
 			//Если не пришел признак остановки модели - вычисляем переменные
 			//Если необходимый размер окна достигнут - выбрасываем значения в начале массива
@@ -676,7 +675,7 @@ int main(int argc, char *argv[])
 					Sound::derivStep = (Sound::step - Sound::vectorStep.front()) / periodCalc;
 					Sound::derivTangaz = (Sound::tangaz - Sound::vectorTangaz.front()) / periodCalc;
 					Sound::calcA = attack(Sound::velocityVectorXZ, Sound::vectorVXZ.front(), Sound::tangaz, Sound::velocityY);
-					Sound::RedTurnAcc = (localdata.reduktor_gl_obor - Sound::vectorRedTurn.front()) / periodCalc;
+					Sound::redTurnAcc = (localdata.reduktor_gl_obor - Sound::vectorRedTurn.front()) / periodCalc;
 				}
 			}
 
@@ -1292,9 +1291,7 @@ int main(int argc, char *argv[])
 			}
 
 			//Движение по ВПП и РД
-
-			double contact = (localdata.obj_hv + localdata.obj_l + localdata.obj_nos + localdata.obj_r) / 4;
-			bool land = contact > 0;
+			bool land = Sound::groundTouch > 0;
 
 			//Если звуки движения по ВПП включены в проект борта
 			if (helicopter.runwayFactor)
@@ -4830,11 +4827,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 
 		printf(" DT__: %.3lf\tHOG: %.3lf\tACG: %.3lf\tVXZ: %.3lf\t\r", Sound::deltaTime, hoveringGain, accGain, velocityVectorXZ);
 
-		//Признак касания
-		double touch = (sr.obj_hv + sr.obj_l + sr.obj_nos + sr.obj_r) / 4;
-
 		//Ослабление звука при падении шага до 1
-		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((touch > 0) ? 0 : 1);
+		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((groundTouch > 0) ? 0 : 1);
 
 		//Усиление висения по vy
 		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * (accelerationVectorXZ != 0) ? 1 : 0;
@@ -5474,9 +5468,6 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		}
 	}
 
-	//Интенсивность касания полосы стойками шасси, в среднем по всем стойка
-	double contact = (sr.obj_hv + sr.obj_l + sr.obj_nos + sr.obj_r) / 4;
-
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
 		alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
@@ -5490,14 +5481,14 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 
-		gain[1] = interpolation(0, 0, 8.3, 1, 11.2, 0, abs(sr.v_surf_x)) * 0.25 * contact;/*Уменьшаем движение по полосе*/																																									  //alSourcef(source[1], AL_GAIN, 0);//
-		gain[0] = interpolation(8.3, 0, 11.2, 1, abs(sr.v_surf_x)) * 0.854 * contact;//
+		gain[1] = interpolation(0, 0, 8.3, 1, 11.2, 0, abs(sr.v_surf_x)) * 0.25 * groundTouch;/*Уменьшаем движение по полосе*/																																									  //alSourcef(source[1], AL_GAIN, 0);//
+		gain[0] = interpolation(8.3, 0, 11.2, 1, abs(sr.v_surf_x)) * 0.854 * groundTouch;//
 	}
 	else if (h.modelName == "mi_26")
 	{
 		filetoBuffer[1] = h.fullName["flapping"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = interpolation(0, 0, 8.3, 1, 14, 0, abs(sr.v_surf_x)) * interpolation(78, 0.71, 84, 1, sr.reduktor_gl_obor) * contact;
+		gain[1] = interpolation(0, 0, 8.3, 1, 14, 0, abs(sr.v_surf_x)) * interpolation(78, 0.71, 84, 1, sr.reduktor_gl_obor) * groundTouch;
 	}
 	else if (h.modelName == "ka_226")
 	{
@@ -5505,7 +5496,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = toCoef(drivingGain) * contact;
+		gain[1] = toCoef(drivingGain) * groundTouch;
 	}
 	else if (h.modelName == "ansat")
 	{
@@ -5513,7 +5504,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = toCoef(drivingGain) * contact;
+		gain[1] = toCoef(drivingGain) * groundTouch;
 	}
 	else if (h.modelName == "ka_29" || h.modelName == "ka_27")
 	{
@@ -5521,7 +5512,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = toCoef(drivingGain) * getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, contact);
+		gain[1] = toCoef(drivingGain) * getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
 
 		/*cout.precision(3);
 		cout << fixed
@@ -5534,7 +5525,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 	{
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = interpolation(0, 0, 13.8, 1, abs(sr.v_surf_x)) * contact;
+		gain[1] = interpolation(0, 0, 13.8, 1, abs(sr.v_surf_x)) * groundTouch;
 	}
 
 	for (size_t i = 0; i < sourceNumber; i++)
