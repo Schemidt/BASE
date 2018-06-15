@@ -3930,7 +3930,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
 	}
 
-	printf(" DT__: %.3lf\tPI1: %.3lf\tPI2: %.3lf\t\r", Sound::deltaTime, pitch[0], pitch[1]);
+
 
 
 	double lowFreqGain = AL_EQUALIZER_DEFAULT_LOW_GAIN;
@@ -4823,10 +4823,12 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double flappingGainUnhover = max(max(flappingVyGain, atkGain), flappingVxGain);
 
 		//Усиление по dvx
-		double accGain = pow(10, (getParameterFromVector(vector<point>{ {2, 0}, { 0,-12 } }, abs(accelerationVectorXZ)))*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityVectorXZ));
+		double accGain = pow(10, (getParameterFromVector(vector<point>{ {2, 0}, { 0, -12 } }, abs(accelerationVectorXZ)))*0.05) * interpolation(0, 1, 22.22, 0, abs(velocityVectorXZ));
 
 		//На висении, используем ускорение в качестве переходной функции хлопков
-		double hoveringGain = (velocityVectorXZ * accelerationVectorXZ <= 0) ? abs(accGain * velocityVectorXZ) : 0;
+		double hoveringGain = (velocityVectorXZ * accelerationVectorXZ <= 0) ? abs(accGain * getParameterFromVector(vector<point>{ {0, 0}, { 1, 1 } }, abs(velocityVectorXZ))) : 0;
+
+		printf(" DT__: %.3lf\tHOG: %.3lf\tACG: %.3lf\tVXZ: %.3lf\t\r", Sound::deltaTime, hoveringGain, accGain, velocityVectorXZ);
 
 		//Признак касания
 		double touch = (sr.obj_hv + sr.obj_l + sr.obj_nos + sr.obj_r) / 4;
