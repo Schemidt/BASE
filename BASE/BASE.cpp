@@ -5571,7 +5571,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 		filetoBuffer[0] = h.fullName["runway"];
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
-		gain[0] = toCoef(drivingGain) * getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
+		gain[0] = toCoef(drivingGain) * getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch) * 0.707;
 	}
 	else if (h.modelName == "ka_226")
 	{
