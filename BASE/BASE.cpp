@@ -2855,7 +2855,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	alSourcef(source[!id], AL_GAIN, gain[!id] * fade * finalGain * reductorHpRestrict);
 	alSourcef(source[!id], AL_PITCH, pitch[!id]);
 
-	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
+	/*string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
 	cout.precision(3);
 	cout << fixed
 		<< " ID__: " << id
@@ -2867,7 +2867,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		<< " fade: " << fade
 		<< " FIB0: " << fileBuffered[0]
 		<< " FIB1: " << fileBuffered[1]
-		<< "\t\t\r";
+		<< "\t\t\r";*/
 
 		/*static double period = 0;
 		period += deltaTime;
