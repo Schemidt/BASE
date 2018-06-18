@@ -633,7 +633,7 @@ int main(int argc, char *argv[])
 			{
 				avrDeltaTime += tg / adt.size();
 			}
-			
+
 
 			Sound::currentTime = localdata.time;
 			Sound::masterGain = localdata.master_gain;
@@ -5512,18 +5512,6 @@ Runway::Runway() : Sound(2, 2, 1)
 
 int Runway::play(Helicopter h, SOUNDREAD sr)
 {
-	//Блок настройки эффекта эквалайзер
-	//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
-	if (eq != "set")
-	{
-		alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
-		alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
-		alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
-		alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
-		alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
-		alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
-		eq = "set";
-	}
 
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -5539,6 +5527,19 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5")
 	{
+		//Блок настройки эффекта эквалайзер
+		//прямой выход заглушается, остается только звук прошедший через блок эквалайзера
+		if (eq != "set")
+		{
+			alEffecti(effect[0], AL_EFFECT_TYPE, AL_EFFECT_EQUALIZER);//определяем эффект как эквалайзер
+			alAuxiliaryEffectSloti(effectSlot[0], AL_EFFECTSLOT_EFFECT, effect[0]);//помещаем эффект в слот (в 1 слот можно поместить 1 эффект)
+			alFilteri(filter[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+			alFilterf(filter[0], AL_LOWPASS_GAIN, 0);
+			alSource3i(source[0], AL_AUXILIARY_SEND_FILTER, effectSlot[0], 0, 0);
+			alSourcei(source[0], AL_DIRECT_FILTER, filter[0]);
+			eq = "set";
+		}
+
 		alEffectf(effect[0], AL_EQUALIZER_HIGH_CUTOFF, 4000);
 
 		alEffectf(effect[0], AL_EQUALIZER_HIGH_GAIN, interpolation({ 11.2, 0.126 }, { 14, 1 }, sr.v_surf_x));//
@@ -5555,7 +5556,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 			* getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);/*Уменьшаем движение по полосе*/
 																						  //alSourcef(source[1], AL_GAIN, 0);//
 		gain[0] = interpolation({ 8.3, 0 }, { 11.2, 1 }, abs(sr.v_surf_x))
-			* 0.854 
+			* 0.854
 			* getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
 	}
 	else if (h.modelName == "mi_26")
@@ -5564,7 +5565,13 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
 		gain[1] = interpolation({ 0, 0 }, { 8.3, 1 }, { 14, 0 }, abs(sr.v_surf_x))
 			* interpolation({ 78, 0.71 }, { 84, 1 }, sr.reduktor_gl_obor);
-			//* getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
+		//* getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
+
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -60 }, { 1, -30 }, { 2.77, -8 }, { 5, -5 }, { 8.3, -2 }, { 9, 0 } }, abs(sr.v_surf_x));
+
+		filetoBuffer[0] = h.fullName["runway"];
+		alSourcei(source[0], AL_LOOPING, AL_TRUE);
+		gain[0] = toCoef(drivingGain) * getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
 	}
 	else if (h.modelName == "ka_226")
 	{
@@ -5580,7 +5587,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = toCoef(drivingGain) * groundTouch;
+		gain[1] = toCoef(drivingGain) * getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
 	}
 	else if (h.modelName == "ka_29" || h.modelName == "ka_27")
 	{
@@ -5615,6 +5622,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alGetSourcef(source[i], AL_GAIN, &g[i]);
 	}
 	printf("%.3lf\t%.3lf\t%.3lf\t%.3lf\r", g[1], g[2], g[3]);*/
+
 	return 1;
 }
 
