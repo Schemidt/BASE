@@ -600,6 +600,8 @@ int main(int argc, char *argv[])
 	double periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
 	bool shockLocker[4] = { 0,0,0,0 };
 	int counterShock[4] = { 0,0,0,0 };
+	double avrDeltaTime = 0;
+	vector<double> adt;
 
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (true)
@@ -614,12 +616,24 @@ int main(int argc, char *argv[])
 				<< " CUTI: " << Sound::currentTime
 				<< "\t\t\r";*/
 
-			printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
+			printf(" DT__: %.4lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", avrDeltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
 
 			if (Sound::currentTime == 0)
 				Sound::currentTime = localdata.time;
 			//Вычисляем изменение времени с прошлого цикла работы программы
 			Sound::deltaTime = localdata.time - Sound::currentTime;
+
+			avrDeltaTime = 0;
+			adt.push_back(Sound::deltaTime);
+			if (adt.size() > 500)
+			{
+				adt.erase(adt.begin());
+			}
+			for (auto tg : adt)
+			{
+				avrDeltaTime += tg / adt.size();
+			}
+			
 
 			Sound::currentTime = localdata.time;
 			Sound::masterGain = localdata.master_gain;
@@ -5536,14 +5550,21 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 
-		gain[1] = interpolation({ 0, 0 }, { 8.3, 1 }, { 11.2, 0 }, abs(sr.v_surf_x)) * 0.25 * groundTouch;/*Уменьшаем движение по полосе*/																																									  //alSourcef(source[1], AL_GAIN, 0);//
-		gain[0] = interpolation({ 8.3, 0 }, { 11.2, 1 }, abs(sr.v_surf_x)) * 0.854 * groundTouch;//
+		gain[1] = interpolation({ 0, 0 }, { 8.3, 1 }, { 11.2, 0 }, abs(sr.v_surf_x))
+			* 0.25
+			* getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);/*Уменьшаем движение по полосе*/
+																						  //alSourcef(source[1], AL_GAIN, 0);//
+		gain[0] = interpolation({ 8.3, 0 }, { 11.2, 1 }, abs(sr.v_surf_x))
+			* 0.854 
+			* getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
 	}
 	else if (h.modelName == "mi_26")
 	{
 		filetoBuffer[1] = h.fullName["flapping"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = interpolation({ 0, 0 }, { 8.3, 1 }, { 14, 0 }, abs(sr.v_surf_x)) * interpolation({ 78, 0.71 }, { 84, 1 }, sr.reduktor_gl_obor) * groundTouch;
+		gain[1] = interpolation({ 0, 0 }, { 8.3, 1 }, { 14, 0 }, abs(sr.v_surf_x))
+			* interpolation({ 78, 0.71 }, { 84, 1 }, sr.reduktor_gl_obor);
+			//* getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
 	}
 	else if (h.modelName == "ka_226")
 	{
@@ -5551,7 +5572,7 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 
 		filetoBuffer[1] = h.fullName["runway"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = toCoef(drivingGain) * groundTouch;
+		gain[1] = toCoef(drivingGain) * getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
 	}
 	else if (h.modelName == "ansat")
 	{
@@ -5588,6 +5609,12 @@ int Runway::play(Helicopter h, SOUNDREAD sr)
 		alSourcef(source[i], AL_GAIN, masterGain * h.runwayFactor * sm[i].delay(gain[i], deltaTime));
 	}
 
+	/*float g[3];
+	for (size_t i = 0; i < sourceNumber; i++)
+	{
+		alGetSourcef(source[i], AL_GAIN, &g[i]);
+	}
+	printf("%.3lf\t%.3lf\t%.3lf\t%.3lf\r", g[1], g[2], g[3]);*/
 	return 1;
 }
 
