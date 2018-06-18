@@ -4840,34 +4840,34 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double hoveringGain = (velocityVectorXZ * accelerationVectorXZ <= 0) ? accGain : 0;
 
 		//Сглаживаем появление и исчезание хлопков
-		//double smoothHoveringGain = sm.delay(abs(hoveringGain), deltaTime);
+		double smoothHoveringGain = sm.delay(hoveringGain, deltaTime);
 
-		printf(" DT__: %.3lf\tHOG: %.3lf\tACG: %.3lf\tVXZ: %.3lf\t\r", Sound::deltaTime, hoveringGain, accelerationVectorXZ, velocityVectorXZ);
+		//printf(" DT__: %.3lf\tDBS: %.3lf\tNDB: %.3lf\tHOG: %.3lf\tACX: %.3lf\t\r", Sound::deltaTime, sm.dbPerSec, sm.newDbGain, toDb(hoveringGain), accelerationVectorXZ);
 
-		static double period = 0;
+		/*static double period = 0;
 		if (period == 0)
 		{
 			remove("flap.txt");
 		}
 		period += deltaTime;
-		if (period > 0.11)
+		if (period > 0.05)
 		{
 			FILE *f=fopen("flap.txt","at");
-			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, hoveringGain, accelerationVectorXZ, dashVectorXZ);
+			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, sm.dbPerSec, sm.newDbGain, toDb(hoveringGain));
 			fclose(f);
 			period = 0.01;
-		}
+		}*/
 
 		//Ослабление звука при падении шага до 1
 		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((groundTouch > 0) ? 0 : 1);
 
 		//Усиление висения по vy
-		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * (accelerationVectorXZ != 0) ? 1 : 0;
-		double velocityYGainFlapping = pow(10, velocityY * -1 * 0.05) * (accelerationVectorXZ != 0) ? 1 : 0;
+		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * ((accelerationVectorXZ != 0) ? 1 : 0);
+		double velocityYGainFlapping = pow(10, velocityY * -1 * 0.05) * ((accelerationVectorXZ != 0) ? 1 : 0);
 
 		//Выбираем между хлопками на висении и нет
-		double flappingFinalGain = max(hoveringGain * velocityYGainFlapping, flappingGainUnhover * flappingStepGain);
-		double flapFinalGain = max(hoveringGain * velocityYGainFlap, atkGain * flapStepGain);
+		double flappingFinalGain = max(smoothHoveringGain * velocityYGainFlapping, flappingGainUnhover * flappingStepGain);
+		double flapFinalGain = max(smoothHoveringGain * velocityYGainFlap, atkGain * flapStepGain);
 
 		alSourcef(source[0], AL_GAIN, flapFinalGain * h.vintFlapFactor * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, hight));
 		alSourcef(source[1], AL_GAIN, flappingFinalGain * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, hight));

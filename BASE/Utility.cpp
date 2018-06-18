@@ -83,7 +83,7 @@ double Smoother::delay(double nsGain, double deltaTime)
 	double nsDbGain = toDb(nsGain);
 
 	//В отрицательной области громкость нарастает быстрее
-	dbPerSec = getParameterFromVector(vector<point>{ {-60, 30}, { -20, 15 }, { -15, 7 }, { -10, 3 }}, nsDbGain);
+	dbPerSec = getParameterFromVector(vector<point>{ {-60, 40}, { -20, 16 }, { -15, 10 }, { -10, 6 }, { 0, 3 }}, newDbGain);
 
 	//Берем текущую громкость за начальную
 	if (firstAttempt)
@@ -96,7 +96,7 @@ double Smoother::delay(double nsGain, double deltaTime)
 	{
 		if (newDbGain < nsDbGain)
 		{
-			//Ползем к актуальной громкости со скоростью 3 дб/с
+			//Ползем к актуальной громкости
 			newDbGain += dbPerSec * deltaTime;
 			if (newDbGain > nsDbGain)
 			{
@@ -105,7 +105,7 @@ double Smoother::delay(double nsGain, double deltaTime)
 		}
 		else if (newDbGain > nsDbGain)
 		{
-			//Ползем к актуальной громкости со скоростью 3 дб/с
+			//Ползем к актуальной громкости
 			newDbGain -= dbPerSec * deltaTime;
 			if (newDbGain < nsDbGain)
 			{
@@ -114,7 +114,7 @@ double Smoother::delay(double nsGain, double deltaTime)
 		}
 		else
 		{
-			//Ползем к актуальной громкости со скоростью 3 дб/с
+			//Ползем к актуальной громкости 
 			newDbGain = nsDbGain;
 		}
 	}
