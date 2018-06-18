@@ -615,7 +615,7 @@ int main(int argc, char *argv[])
 				<< " CUTI: " << Sound::currentTime
 				<< "\t\t\r";*/
 
-				//printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
+			//printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
 
 			if (Sound::currentTime == 0)
 				Sound::currentTime = localdata.time;
@@ -623,6 +623,7 @@ int main(int argc, char *argv[])
 			Sound::deltaTime = localdata.time - Sound::currentTime;
 
 			Sound::currentTime = localdata.time;
+			Sound::masterGain = localdata.master_gain;
 			Sound::tangaz = localdata.tangaz;//тангаж (временно используем параметр инт осадков)
 			Sound::velocityVectorXZ = sqrt(pow(localdata.v_atm_x, 2) + pow(localdata.v_atm_z, 2));//приборная скорость
 			Sound::step = localdata.step; //шаг (временно используем параметр перегрузки)
@@ -2101,10 +2102,6 @@ int main(int argc, char *argv[])
 			Sound::masterGain -= 0.01;
 			Sound::masterGain = (Sound::masterGain < 0) ? 0 : Sound::masterGain;
 			
-			if (!Sound::vectorVy.empty())
-			{
-				Sound::vectorVy.clear();
-			}
 			if (!Sound::vectorVXZ.empty())
 			{
 				Sound::vectorVXZ.clear();
@@ -2858,7 +2855,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 	alSourcef(source[!id], AL_GAIN, gain[!id] * fade * finalGain * reductorHpRestrict);
 	alSourcef(source[!id], AL_PITCH, pitch[!id]);
 
-	/*string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
+	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
 	cout.precision(3);
 	cout << fixed
 		<< " ID__: " << id
@@ -2870,7 +2867,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		<< " fade: " << fade
 		<< " FIB0: " << fileBuffered[0]
 		<< " FIB1: " << fileBuffered[1]
-		<< "\t\t\r";*/
+		<< "\t\t\r";
 
 		/*static double period = 0;
 		period += deltaTime;
@@ -3371,7 +3368,10 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//регулируем громкость шума
 		double beatsGain = pow(10, (interpolation({ 70, -12 }, { 78, -8 }, { 90, -2 }, sr.reduktor_gl_obor)) * 0.05);
-		alSourcef(source[2], AL_GAIN, beatsGain);
+
+		gain[2] = beatsGain * masterGain;
+
+		alSourcef(source[2], AL_GAIN, gain[2]);
 
 		//добавляем отдельный звук взлета
 		if (takeOff != h.fullName["takeOff"])
@@ -3389,7 +3389,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		alSourcef(source[3], AL_GAIN, gain[3]);
 
-		printf("\t%.3lf\t%.3lf\r", gain[3],Sound::deltaTime);
+		//printf("\t%.3lf\t%.3lf\r", gain[3],Sound::deltaTime);
 
 		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
