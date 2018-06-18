@@ -272,9 +272,9 @@ void Helicopter::setParam(string model)
 		//Множители громкости
 		vsuFactor = 0.35/*всу*/;
 		vsuHpFactor = 0.04/*всу хп*/;
-		//engFactor = 0.446/*дв*/;//-7
+		engFactor = 0.446/*дв*/;//-7
 		engHpFactor = 0.11/*дв хп*/;
-		//redFactor = 0.35/*Редуктор*/;
+		redFactor = 0.35/*Редуктор*/;
 		tr115Factor = 0.08/*тр115*/;
 		skvFactor = 0.21/*СКВ*/;
 		runwayFactor = 0.35/*ВПП*/;
