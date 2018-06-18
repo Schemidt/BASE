@@ -169,96 +169,117 @@ double getValue(point p1, point p2, double x)
 
 double getParameterFromVector(vector<point> &value, double offset)
 {
+	point p1, p2, p3;
+	double x, a0, a1, a2;
 	int n = value.size();
 	//если вектор из 1ой точки - возвращаем "y" этой точки
 	if (n == 1)
 	{
 		return value[0].y;
 	}
-
-	point p1, p2, p3;
-	double x, a0, a1, a2;
-
-	if (value[0].x <= value[n - 1].x)
+	//если вектор состоит из малого числа значений - перебираем их
+	else if (n < 8)
 	{
-		for (int i = 0; i < n; i++)
+		if (value[0].x <= value[n - 1].x)
 		{
-			if (offset < value[0].x)
+			for (int i = 0; i < n; i++)
 			{
-				return value[i].y;//достаем обороты из базы
-			}
-			if (offset == value[i].x)//реальная отметка времени совпала с отметкой из бд
-			{
-				return value[i].y;//достаем обороты из базы
-			}
-			if (offset > value[n - 1].x)//отметка не совпала с базой
-			{
-				return value[n - 1].y;//достаем обороты из базы
-			}
-			if (offset > value[i].x && offset < value[i + 1].x)//отметка не совпала с базой
-			{
-				if (value.size() > 2)
+				if (offset < value[0].x)
 				{
-					//Выбираем 3 точки (вариант -1 0 +1)
-					if (i - 1 == -1)
+					return value[i].y;//достаем обороты из базы
+				}
+				if (offset == value[i].x)//реальная отметка времени совпала с отметкой из бд
+				{
+					return value[i].y;//достаем обороты из базы
+				}
+				if (offset > value[n - 1].x)//отметка не совпала с базой
+				{
+					return value[n - 1].y;//достаем обороты из базы
+				}
+				if (offset > value[i].x && offset < value[i + 1].x)//отметка не совпала с базой
+				{
+					if (value.size() > 2)
 					{
-						p1 = value[i]; p2 = value[i + 1]; p3 = value[i + 2];
-					}
-					else if (i + 1 == value.size())
-					{
-						p1 = value[i - 2]; p2 = value[i - 1]; p3 = value[i];
+						//Выбираем 3 точки (вариант -1 0 +1)
+						if (i - 1 == -1)
+						{
+							p1 = value[i]; p2 = value[i + 1]; p3 = value[i + 2];
+						}
+						else if (i + 1 == value.size())
+						{
+							p1 = value[i - 2]; p2 = value[i - 1]; p3 = value[i];
+						}
+						else
+						{
+							p1 = value[i - 1]; p2 = value[i]; p3 = value[i + 1];
+						}
 					}
 					else
 					{
-						p1 = value[i - 1]; p2 = value[i]; p3 = value[i + 1];
+						return interpolation(value[0], value[1], offset);
 					}
 				}
-				else
+			}
+		}
+		else
+		{
+			for (int i = 0; i < n; i++)
+			{
+				if (offset > value[0].x)
 				{
-					return interpolation(value[0], value[1], offset);
+					return value[0].y;//достаем обороты из базы
+				}
+				if (offset == value[i].x)//реальная отметка времени совпала с отметкой из бд
+				{
+					return value[i].y;//достаем обороты из базы
+				}
+				if (offset < value[n - 1].x)//отметка не совпала с базой
+				{
+					return value[n - 1].y;//достаем обороты из базы
+				}
+				if (offset < value[i].x && offset > value[i + 1].x)//отметка не совпала с базой
+				{
+					if (value.size() > 2)
+					{
+						//Выбираем 3 точки (вариант -1 0 +1)
+						if (i - 1 == -1)
+						{
+							p1 = value[i]; p2 = value[i + 1]; p3 = value[i + 2];
+						}
+						else if (i + 1 == value.size())
+						{
+							p1 = value[i - 2]; p2 = value[i - 1]; p3 = value[i];
+						}
+						else
+						{
+							p1 = value[i - 1]; p2 = value[i]; p3 = value[i + 1];
+						}
+					}
+					else
+					{
+						return interpolation(value[0], value[1], offset);
+					}
 				}
 			}
 		}
 	}
+	//если вектор длинный и сортирован! (вектора должны быть подготовлены заранее) - используем бинарный поиск
+	//TODO: алгоритм сортировки
 	else
 	{
-		for (int i = 0; i < n; i++)
+		int num = binSer(value, offset);
+		//Выбираем 3 точки (вариант -1 0 +1)
+		if (num - 1 == -1)
 		{
-			if (offset > value[0].x)
-			{
-				return value[0].y;//достаем обороты из базы
-			}
-			if (offset == value[i].x)//реальная отметка времени совпала с отметкой из бд
-			{
-				return value[i].y;//достаем обороты из базы
-			}
-			if (offset < value[n - 1].x)//отметка не совпала с базой
-			{
-				return value[n - 1].y;//достаем обороты из базы
-			}
-			if (offset < value[i].x && offset > value[i + 1].x)//отметка не совпала с базой
-			{
-				if (value.size() > 2)
-				{
-					//Выбираем 3 точки (вариант -1 0 +1)
-					if (i - 1 == -1)
-					{
-						p1 = value[i]; p2 = value[i + 1]; p3 = value[i + 2];
-					}
-					else if (i + 1 == value.size())
-					{
-						p1 = value[i - 2]; p2 = value[i - 1]; p3 = value[i];
-					}
-					else
-					{
-						p1 = value[i - 1]; p2 = value[i]; p3 = value[i + 1];
-					}
-				}
-				else
-				{
-					return interpolation(value[0], value[1], offset);
-				}
-			}
+			p1 = value[num]; p2 = value[num + 1]; p3 = value[num + 2];
+		}
+		else if (num + 1 == value.size())
+		{
+			p1 = value[num - 2]; p2 = value[num - 1]; p3 = value[num];
+		}
+		else
+		{
+			p1 = value[num - 1]; p2 = value[num]; p3 = value[num + 1];
 		}
 	}
 
@@ -307,64 +328,6 @@ int binSer(vector<point> &points, double offset)
 		n = (l + r) / 2;
 	}
 	return n;
-}
-
-double interpolation(double x0, double fx0, double x1, double fx1, double x)
-{
-	if (x0<x1 && x>x1)
-	{
-		return fx1;
-	}
-	if (x0 < x1 && x < x0)
-	{
-		return fx0;
-	}
-	if (x0 > x1 && x < x1)
-	{
-		return fx1;
-	}
-	if (x0 > x1 && x > x0)
-	{
-		return fx0;
-	}
-
-	return	fx0 + ((fx1 - fx0) / (x1 - x0))*(x - x0);
-}
-
-double interpolation(double x0, double fx0, double x1, double fx1, double x2, double fx2, double x)
-{
-	if (x0<x2 && x>x2)
-	{
-		return fx2;
-	}
-	if (x0 < x2 && x < x0)
-	{
-		return fx0;
-	}
-	if (x0 > x2 && x < x2)
-	{
-		return fx2;
-	}
-	if (x0 > x2 && x > x0)
-	{
-		return fx0;
-	}
-
-	//если квадратичная интерполяция не работает - берем линейную
-	if (x1 == x0 | x2 == x1)
-	{
-		return	interpolation(x0, fx0, x1, fx1, x);
-	}
-	else
-	{
-		double fx, a0, a1, a2;
-		a2 = ((fx2 - fx0) / ((x2 - x0)*(x2 - x1))) - ((fx1 - fx0) / ((x1 - x0)*(x2 - x1)));
-		a1 = ((fx1 - fx0) / (x1 - x0)) - (a2*(x1 + x0));
-		a0 = fx0 - a1 * x0 - a2 * x0*x0;
-		return fx = a0 + a1 * x + a2*x*x;
-
-	}
-
 }
 
 double interpolation(point p1, point p2, double x)

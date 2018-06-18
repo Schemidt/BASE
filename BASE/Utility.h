@@ -185,7 +185,8 @@ return fx = a0 + a1 * x + a2*x*x;
 \param[in] x Абсцисса искомой fx
 \return Значение fx в точке x
 */
-double interpolation(double x0, double fx0, double x1, double fx1, double x2, double fx2, double x);
+double interpolation(point p1, point p2, point p3, double x);
+
 /*!
 \brief Вычисляет линейную интерполяцию
 \details В точках x>x1 и x<x0 - возвращает граничные значения
@@ -202,11 +203,7 @@ fx = fx0 + ((fx1 - fx0) / (x1 - x0))*(x - x0);
 \param[in] x Абсцисса искомой fx
 \return Значение fx в точке x
 */
-double interpolation(double x0, double fx0, double x1, double fx1, double x);
-
 double interpolation(point p1, point p2, double x);
-
-double interpolation(point p1, point p2, point p3, double x);
 
 /*!
 \brief Проверяет наличие процесса
