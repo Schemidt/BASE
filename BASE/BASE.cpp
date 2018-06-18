@@ -449,7 +449,6 @@ AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_6;//Конфигурация кана
 //channels[4];//back left
 //channels[5];//back right
 
-
 /*!\brief Основная функция программы*/
 int main(int argc, char *argv[])
 {
@@ -615,7 +614,7 @@ int main(int argc, char *argv[])
 				<< " CUTI: " << Sound::currentTime
 				<< "\t\t\r";*/
 
-			//printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
+			printf(" DT__: %.3lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", Sound::deltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
 
 			if (Sound::currentTime == 0)
 				Sound::currentTime = localdata.time;
@@ -2101,7 +2100,7 @@ int main(int argc, char *argv[])
 			//Убираем звук при зависании модели
 			Sound::masterGain -= 0.01;
 			Sound::masterGain = (Sound::masterGain < 0) ? 0 : Sound::masterGain;
-			
+
 			if (!Sound::vectorVXZ.empty())
 			{
 				Sound::vectorVXZ.clear();
@@ -4545,7 +4544,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//При втором условии, на висении, используем ускорение в качестве переходной функции хлопков
 		//переходит в усиление НЧ редуктора по vy
 		double flapCGainAccX = interpolation({ 0.56, 0 }, { 3, 1 }, abs(accelerationVectorXZ))
-			* interpolation({ -0.25 , 1 }, {0.25, 0}, velocityY)
+			* interpolation({ -0.25 , 1 }, { 0.25, 0 }, velocityY)
 			* flapOn
 			* interpolation({ 0, 1 }, { 16.67, 0 }, velocityVectorXZ);
 
@@ -5379,7 +5378,7 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 			}
 		}
 
-		pitch[0] = 0.029 * max(sr.eng1_obor, sr.eng2_obor) - 1.484;
+		pitch[id] = 0.029 * max(sr.eng1_obor, sr.eng2_obor) - 1.484;
 
 		status = Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 
@@ -5403,7 +5402,7 @@ int Skv::play(Helicopter h, SOUNDREAD sr)
 	}
 	else if (h.modelName == "mi_26")
 	{
-		pitch[0] = 0.03245 * abs(max(sr.eng1_obor, sr.eng2_obor) - h.engTurnoverAvt);
+		pitch[id] = 1 + 0.03245 * abs(max(sr.eng1_obor, sr.eng2_obor) - h.engTurnoverAvt);
 
 		status = Sound::play(sr.p_skv_on, h.fullName["skv_on"], h.fullName["skv_w"], h.fullName["skv_off"], h.skvFactor);//Воспроизводим звук - записываем состояние звука в play
 	}
