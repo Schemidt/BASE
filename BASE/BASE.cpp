@@ -3390,10 +3390,14 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		}
 
 		double takeOffGain = toCoef(min(getParameterFromVector(vector<point>{ { 0, -30 }, { 6, 0 } }, step),
-			getParameterFromVector(vector<point>{ { 0, -30 }/*, { 4, -2.5 }*/, { 10, 0 } }, hight)))
+			getParameterFromVector(vector<point>{ { 0, 0 }/*, { 4, -2.5 }*/, { 10, -30 } }, hight)))
 			* getParameterFromVector(vector<point>{ { 0, 0 }, { h.redTurnoverAvt, 1 } }, sr.reduktor_gl_obor);
 
-		alSourcef(source[3], AL_GAIN, sm.delay(takeOffGain, deltaTime) * masterGain);
+		gain[3] = sm.delay(takeOffGain, deltaTime) * masterGain;
+
+		alSourcef(source[3], AL_GAIN, gain[3]);
+
+		printf("\t%.3lf\r", gain[3]);
 
 		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
@@ -3419,7 +3423,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 
 		//Страгивание
 		//Усиление редуктора в НЧ в начале движения по ВПП
-		double stalkingGain = (accelerationVectorXZ > 0) ? accelerationVectorXZ * 5 * interpolation(0, 1, 8.3, 0, velocityVectorXZ) * !hight : 0;
+		double stalkingGain = (accelerationVectorXZ > 0) ? accelerationVectorXZ * 5 * interpolation(0, 1, 8.3, 0, velocityVectorXZ) * (groundTouch > 0) : 0;
 
 		lowFreqGain = pow(10, (velocityYGain + stepGain * 0.25 + stalkingGain /*+ mid2FreqStepGain*/) * 0.05);
 		mid1FreqGain = pow(10, (turnGain + stepGain * 1 + stalkingGain /*+ mid2FreqStepGain*/) * 0.05);
@@ -4859,7 +4863,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Сглаживаем появление и исчезание хлопков
 		double smoothHoveringGain = sm.delay(hoveringGain, deltaTime);
 
-		printf(" DT__: %.3lf\tSHG: %.3lf\tHOG: %.3lf\tACX: %.3lf\t\r", Sound::deltaTime, smoothHoveringGain, hoveringGain, accelerationVectorXZ);
+		/*printf(" DT__: %.3lf\tSHG: %.3lf\tHOG: %.3lf\tACX: %.3lf\t\r", Sound::deltaTime, smoothHoveringGain, hoveringGain, accelerationVectorXZ);
 
 		static double period = 0;
 		if (period == 0)
@@ -4873,7 +4877,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, smoothHoveringGain, hoveringGain, accelerationVectorXZ);
 			fclose(f);
 			period = 0.01;
-		}
+		}*/
 
 		//Ослабление звука при падении шага до 1
 		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((groundTouch > 0) ? 0 : 1);
