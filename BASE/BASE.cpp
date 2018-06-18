@@ -441,7 +441,14 @@ vector<double> Sound::vectorVy, Sound::vectorVXZ, Sound::vectorAccXZ, Sound::vec
 vector<double> Sound::vectorAvrEng1Turn, Sound::vectorAvrEng2Turn, Sound::vectorAvrRedTurn, Sound::vectorAvrStep, Sound::vectorAvrAtk;
 double Sound::globalWindow = 50;
 
-AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_2;//Конфигурация каналов звука
+AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_6;//Конфигурация каналов звука
+//channels[0];//front left
+//channels[1];//front right
+//channels[2];//front center
+//channels[3];//low freq
+//channels[4];//back left
+//channels[5];//back right
+
 
 /*!\brief Основная функция программы*/
 int main(int argc, char *argv[])
@@ -724,6 +731,15 @@ int main(int argc, char *argv[])
 				}
 				if (vsu)
 				{
+					//Поканальный вывод в задний центральный динамик с номинальной громкостью
+					//Мультипликатор "1" применяется непосредственно к сэмплам буфера, при загрузке
+					if (helicopter.modelName == "mi_26")
+					{
+						vsu->channel[0] = 0;//L
+						vsu->channel[1] = 0;//R
+						vsu->channel[2] = 1;//C
+					}
+
 					if (vsu->play(localdata, helicopter))
 					{
 
@@ -4842,9 +4858,9 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		//Сглаживаем появление и исчезание хлопков
 		double smoothHoveringGain = sm.delay(hoveringGain, deltaTime);
 
-		//printf(" DT__: %.3lf\tDBS: %.3lf\tNDB: %.3lf\tHOG: %.3lf\tACX: %.3lf\t\r", Sound::deltaTime, sm.dbPerSec, sm.newDbGain, toDb(hoveringGain), accelerationVectorXZ);
+		printf(" DT__: %.3lf\tSHG: %.3lf\tHOG: %.3lf\tACX: %.3lf\t\r", Sound::deltaTime, smoothHoveringGain, hoveringGain, accelerationVectorXZ);
 
-		/*static double period = 0;
+		static double period = 0;
 		if (period == 0)
 		{
 			remove("flap.txt");
@@ -4853,25 +4869,27 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		if (period > 0.05)
 		{
 			FILE *f=fopen("flap.txt","at");
-			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, sm.dbPerSec, sm.newDbGain, toDb(hoveringGain));
+			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, smoothHoveringGain, hoveringGain, accelerationVectorXZ);
 			fclose(f);
 			period = 0.01;
-		}*/
+		}
 
 		//Ослабление звука при падении шага до 1
 		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * ((groundTouch > 0) ? 0 : 1);
 
 		//Усиление висения по vy
-		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * ((accelerationVectorXZ != 0) ? 1 : 0);
-		double velocityYGainFlapping = pow(10, velocityY * -1 * 0.05) * ((accelerationVectorXZ != 0) ? 1 : 0);
+		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * (accelerationVectorXZ != 0);
+		double velocityYGainFlapping = pow(10, velocityY * -1 * 0.05) * (accelerationVectorXZ != 0);
 
 		//Выбираем между хлопками на висении и нет
 		double flappingFinalGain = max(smoothHoveringGain * velocityYGainFlapping, flappingGainUnhover * flappingStepGain);
 		double flapFinalGain = max(smoothHoveringGain * velocityYGainFlap, atkGain * flapStepGain);
 
-		alSourcef(source[0], AL_GAIN, flapFinalGain * h.vintFlapFactor * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, hight));
-		alSourcef(source[1], AL_GAIN, flappingFinalGain * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, hight));
+		gain[0] = flapFinalGain * h.vintFlapFactor * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, hight);
+		gain[1] = flappingFinalGain * masterGain * lowStepMuting * interpolation(0, 0, 0.3, 1, hight);
 
+		alSourcef(source[0], AL_GAIN, gain[0]);
+		alSourcef(source[1], AL_GAIN, gain[1]);
 	}
 	//Хлопки ка 226
 	else if (h.modelName == "ka_226")
