@@ -731,13 +731,14 @@ int main(int argc, char *argv[])
 				}
 				if (vsu)
 				{
-					//Поканальный вывод в задний центральный динамик с номинальной громкостью
+					//Поканальный вывод в задние динамики с номинальной громкостью
 					//Мультипликатор "1" применяется непосредственно к сэмплам буфера, при загрузке
 					if (helicopter.modelName == "mi_26")
 					{
-						vsu->channel[0] = 0;//L
-						vsu->channel[1] = 0;//R
-						vsu->channel[2] = 1;//C
+						vsu->channel[0] = 0;//FL
+						vsu->channel[1] = 0;//FR
+						vsu->channel[4] = 1;//BL
+						vsu->channel[5] = 1;//BR
 					}
 
 					if (vsu->play(localdata, helicopter))
