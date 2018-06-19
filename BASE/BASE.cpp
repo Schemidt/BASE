@@ -641,7 +641,7 @@ int main(int argc, char *argv[])
 				<< " CUTI: " << Sound::currentTime
 				<< "\t\t\r";*/
 
-			printf(" DT__: %.4lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", avrDeltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
+			//printf(" DT__: %.4lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", avrDeltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
 
 			if (Sound::currentTime == 0)
 				Sound::currentTime = localdata.time;
@@ -3990,9 +3990,6 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		alGetSourcei(source[i], AL_SOURCE_STATE, &sourceStatus[i]);
 	}
 
-
-
-
 	double lowFreqGain = AL_EQUALIZER_DEFAULT_LOW_GAIN;
 	double mid1FreqGain = AL_EQUALIZER_DEFAULT_MID1_GAIN;
 	double mid2FreqGain = AL_EQUALIZER_DEFAULT_MID2_GAIN;
@@ -4062,6 +4059,18 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		fclose(f);
 		pr = 0;
 	}*/
+
+	/*string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
+	cout.precision(3);
+	cout << fixed
+		<< " ID__: " << id
+		<< " gain[id]: " << gain[id]
+		<< " gain[!id]: " << gain[!id]
+		<< " pitch[id]: " << pitch[id]
+		<< " pitch[!id]: " << pitch[!id]
+		<< " FIB0: " << fileBuffered[0]
+		<< " FIB1: " << fileBuffered[1]
+		<< "\t\t\r";*/
 
 	return 1;
 }

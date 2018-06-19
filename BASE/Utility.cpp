@@ -321,23 +321,46 @@ vector<point> getVectorFromFile(string filename)
 int binSer(vector<point> &points, double offset)
 {
 	int l = 0;
-	int n = points.size() - 1;
-	int r = n;
-	while (abs(l - r) >= 2)
+	int n = points.size() / 2;
+	int r = points.size() - 1;
+
+	if (points.front().x < points.back().x)
 	{
-		if (offset == points[n].x)
+		while (abs(l - r) >= 2)
 		{
-			return n;
+			if (offset == points[n].x)
+			{
+				return n;
+			}
+			else if (offset < points[n].x)
+			{
+				r = n;
+			}
+			else
+			{
+				l = n;
+			}
+			n = (l + r) / 2;
 		}
-		else if (offset < points[n].x)
+	}
+	else
+	{
+		while (abs(l - r) >= 2)
 		{
-			r = n;
+			if (offset == points[n].x)
+			{
+				return n;
+			}
+			else if (offset > points[n].x)
+			{
+				r = n;
+			}
+			else
+			{
+				l = n;
+			}
+			n = (l + r) / 2;
 		}
-		else
-		{
-			l = n;
-		}
-		n = (l + r) / 2;
 	}
 	return n;
 }
