@@ -2659,7 +2659,7 @@ int Sound::setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, stri
 	return play;//Возвращаем статус воспроизведения
 }
 
-double Sound::getAverange(vector<double> vectorOfParameters, double seconds)
+double Sound::getAverange(vector<double> &vectorOfParameters, double seconds)
 {
 	double averange = 0;
 	int size = vectorOfParameters.size();
@@ -2683,7 +2683,7 @@ Reductor::~Reductor()
 {
 }
 
-int Reductor::play(Helicopter h, SOUNDREAD sr)
+int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 {
 	//0 -> мг1дв
 	if (sr.reduktor_gl_obor < h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap) && !(mode == "mg1" && (sr.reduktor_gl_obor > h.redTurnoverMg1 * 0.9)))
@@ -2882,7 +2882,7 @@ int Reductor::play(Helicopter h, SOUNDREAD sr)
 		<< " FIB1: " << fileBuffered[1]
 		<< "\t\t\r";*/
 
-		/*static double period = 0;
+	/*static double period = 0;
 		period += deltaTime;
 		if (period>=0.05)
 		{
@@ -3645,7 +3645,7 @@ Engine::~Engine()
 	engCount--;
 }
 
-int Engine::play(bool status_on, bool status_off, bool status_hp, double parameter, Helicopter h)
+int Engine::play(bool status_on, bool status_off, bool status_hp, double parameter, Helicopter &h)
 {
 	if (status_hp && mode != "mg")
 	{
@@ -4053,7 +4053,7 @@ Vsu::~Vsu()
 
 }
 
-int Vsu::play(SOUNDREAD sr, Helicopter h)
+int Vsu::play(SOUNDREAD &sr, Helicopter &h)
 {
 	if (init != "set")
 	{
@@ -4302,7 +4302,7 @@ VintFlap::VintFlap() : Sound(3, 3, 2)
 
 }
 
-int VintFlap::play(Helicopter h, SOUNDREAD sr)
+int VintFlap::play(Helicopter &h, SOUNDREAD &sr)
 {
 	//Условия хлопков
 	//для отрицательной скорости условия зеркальные
@@ -4822,8 +4822,6 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 			<< " VELY: " << velocityY
 			<< " VELX: " << velocityVectorXZ
 			<< "\t\t\r";*/
-
-
 	}
 	//Хлопки ми 26
 	else if (h.modelName == "mi_26")
@@ -4894,7 +4892,7 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		}*/
 
 		//Ослабление звука при падении шага до 1
-		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * !groundTouch;
+		double lowStepMuting = interpolation({ 1,0.5 }, { 2,1 }, step) * getParameterFromVector(vector<point>{ { 0.625, 0 }, { 0, 1 }}, groundTouch);
 
 		//Усиление висения по vy
 		double velocityYGainFlap = pow(10, velocityY * 1 * 0.05) * (accelerationVectorXZ != 0);
@@ -4904,8 +4902,8 @@ int VintFlap::play(Helicopter h, SOUNDREAD sr)
 		double flappingFinalGain = max(smoothHoveringGain * velocityYGainFlapping, flappingGainUnhover * flappingStepGain);
 		double flapFinalGain = max(smoothHoveringGain * velocityYGainFlap, atkGain * flapStepGain);
 
-		gain[0] = flapFinalGain * h.vintFlapFactor * masterGain * lowStepMuting * !groundTouch;
-		gain[1] = flappingFinalGain * masterGain * lowStepMuting * !groundTouch;
+		gain[0] = flapFinalGain * h.vintFlapFactor * masterGain * lowStepMuting * getParameterFromVector(vector<point>{ { 0.625, 0 }, { 0, 1 }}, groundTouch);
+		gain[1] = flappingFinalGain * masterGain * lowStepMuting * getParameterFromVector(vector<point>{ { 0.625, 0 }, { 0, 1 }}, groundTouch);
 
 		alSourcef(source[0], AL_GAIN, gain[0]);
 		alSourcef(source[1], AL_GAIN, gain[1]);
@@ -5077,7 +5075,7 @@ VintSwish::VintSwish() : Sound(2, 2, 0)
 
 }
 
-int VintSwish::play(Helicopter h, SOUNDREAD sr)
+int VintSwish::play(Helicopter &h, SOUNDREAD &sr)
 {
 	if (h.modelName == "mi_28")
 	{
@@ -5371,7 +5369,7 @@ Skv::Skv() : Sound(3, 3, 2)
 
 }
 
-int Skv::play(Helicopter h, SOUNDREAD sr)
+int Skv::play(Helicopter &h, SOUNDREAD &sr)
 {
 	int status = 0;
 
@@ -5510,7 +5508,7 @@ Runway::Runway() : Sound(2, 2, 1)
 
 }
 
-int Runway::play(Helicopter h, SOUNDREAD sr)
+int Runway::play(Helicopter &h, SOUNDREAD &sr)
 {
 
 	for (size_t i = 0; i < 2; i++)

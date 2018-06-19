@@ -178,7 +178,7 @@ public:
 	*/
 	int setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, string file_path);
 
-	double getAverange(vector<double> vectorOfParameters, double seconds);
+	double getAverange(vector<double> &vectorOfParameters, double seconds);
 };
 
 /*!
@@ -213,7 +213,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int play(Helicopter h, SOUNDREAD sr);
+	int play(Helicopter &h, SOUNDREAD &sr);
 };
 
 /*!
@@ -247,7 +247,7 @@ public:
 	\param[in] h Объект хранящий характеристики вертолета
 	\return Статус источника OpenAL
 	*/
-	int play(bool status_on, bool status_off, bool status_hp, double parameter, Helicopter h);
+	int play(bool status_on, bool status_off, bool status_hp, double parameter, Helicopter &h);
 };
 
 /*!
@@ -282,7 +282,7 @@ public:
 	\param[in] h Объект хранящий характеристики вертолета
 	\return Статус источника OpenAL
 	*/
-	int play(SOUNDREAD sr, Helicopter h);
+	int play(SOUNDREAD &sr, Helicopter &h);
 };
 
 /*!
@@ -309,7 +309,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int play(Helicopter h, SOUNDREAD sr);
+	int play(Helicopter &h, SOUNDREAD &sr);
 };
 
 /*!
@@ -336,7 +336,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int play(Helicopter h, SOUNDREAD sr);
+	int play(Helicopter &h, SOUNDREAD &sr);
 };
 
 /*!
@@ -362,7 +362,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int play(Helicopter h, SOUNDREAD sr);
+	int play(Helicopter &h, SOUNDREAD &sr);
 };
 
 /*!
@@ -388,7 +388,7 @@ public:
 	\param[in] sr Объект хранящий текущие параметры вертолета
 	\return Статус источника OpenAL
 	*/
-	int play(Helicopter h, SOUNDREAD sr);
+	int play(Helicopter &h, SOUNDREAD &sr);
 
 };
 

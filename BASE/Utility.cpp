@@ -177,6 +177,18 @@ double getParameterFromVector(vector<point> &value, double offset)
 	{
 		return value[0].y;
 	}
+	else if (n == 2)
+	{
+		p1 = value[0];
+		p2 = value[1];
+		p3 = p2;
+	}
+	else if (n == 3)
+	{
+		p1 = value[0];
+		p2 = value[1];
+		p3 = value[2];
+	}
 	//если вектор состоит из малого числа значений - перебираем их
 	else if (n < 8)
 	{
