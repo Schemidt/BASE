@@ -437,8 +437,18 @@ double Sound::redTurnAcc = 0;
 double Sound::groundTouch = 0;
 int Engine::engCount = 0;
 
-vector<double> Sound::vectorVy, Sound::vectorVXZ, Sound::vectorAccXZ, Sound::vectorStep, Sound::vectorTangaz, Sound::vectorTime, Sound::vectorRedTurn;
-vector<double> Sound::vectorAvrEng1Turn, Sound::vectorAvrEng2Turn, Sound::vectorAvrRedTurn, Sound::vectorAvrStep, Sound::vectorAvrAtk;
+vector<double> Sound::vectorVy;
+vector<double> Sound::vectorVXZ;
+vector<double> Sound::vectorAccXZ;
+vector<double> Sound::vectorStep;
+vector<double> Sound::vectorTangaz;
+vector<double> Sound::vectorTime;
+vector<double> Sound::vectorRedTurn;
+vector<double> Sound::vectorAvrEng1Turn;
+vector<double> Sound::vectorAvrEng2Turn;
+vector<double> Sound::vectorAvrRedTurn;
+vector<double> Sound::vectorAvrStep;
+vector<double> Sound::vectorAvrAtk;
 double Sound::globalWindow = 50;
 
 AL_SOUND_CHANNELS Sound::channelsSetup = AL_SOUND_CHANNELS_6;//Конфигурация каналов звука
@@ -603,6 +613,21 @@ int main(int argc, char *argv[])
 	double avrDeltaTime = 0;
 	vector<double> adt;
 
+	//Резервируем память
+	adt.reserve(600);
+	Sound::vectorVy.reserve(1000);
+	Sound::vectorVXZ.reserve(1000);
+	Sound::vectorAccXZ.reserve(1000);
+	Sound::vectorStep.reserve(1000);
+	Sound::vectorTangaz.reserve(1000);
+	Sound::vectorTime.reserve(1000);
+	Sound::vectorRedTurn.reserve(20000);
+	Sound::vectorAvrEng1Turn.reserve(20000);
+	Sound::vectorAvrEng2Turn.reserve(20000);
+	Sound::vectorAvrRedTurn.reserve(20000);
+	Sound::vectorAvrStep.reserve(20000);
+	Sound::vectorAvrAtk.reserve(20000);
+
 	//Опрашиваем все блоки программы в бесконечном цикле
 	while (true)
 	{
@@ -623,6 +648,7 @@ int main(int argc, char *argv[])
 			//Вычисляем изменение времени с прошлого цикла работы программы
 			Sound::deltaTime = localdata.time - Sound::currentTime;
 
+			//Среднее время цикла
 			avrDeltaTime = 0;
 			adt.push_back(Sound::deltaTime);
 			if (adt.size() > 500)
@@ -633,7 +659,6 @@ int main(int argc, char *argv[])
 			{
 				avrDeltaTime += tg / adt.size();
 			}
-
 
 			Sound::currentTime = localdata.time;
 			Sound::masterGain = localdata.master_gain;
@@ -1310,7 +1335,7 @@ int main(int argc, char *argv[])
 			}
 
 			//Движение по ВПП и РД
-			
+
 			//Если звуки движения по ВПП включены в проект борта
 			if (helicopter.runwayFactor)
 			{
@@ -2182,6 +2207,7 @@ int main(int argc, char *argv[])
 			{
 				Free(vadd);
 			}
+
 			timerAvr = 0;
 			periodCalc = 0;
 			Sound::vectorTime.push_back(Sound::currentTime);
@@ -2881,15 +2907,15 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 		<< " FIB1: " << fileBuffered[1]
 		<< "\t\t\r";*/
 
-	/*static double period = 0;
-		period += deltaTime;
-		if (period>=0.05)
-		{
-			FILE *f = fopen("abr.txt", "at");
-			fprintf(f, "%lf\t%lf\t%lf\t%lf\t%s\t%s\t%s\n", gain[id] * rise * finalGain, gain[!id] * fade * finalGain,pitch[id],pitch[!id], fileBuffered[0].data(), fileBuffered[1].data(), mode.data());
-			fclose(f);
-			period = 0;
-		}*/
+		/*static double period = 0;
+			period += deltaTime;
+			if (period>=0.05)
+			{
+				FILE *f = fopen("abr.txt", "at");
+				fprintf(f, "%lf\t%lf\t%lf\t%lf\t%s\t%s\t%s\n", gain[id] * rise * finalGain, gain[!id] * fade * finalGain,pitch[id],pitch[!id], fileBuffered[0].data(), fileBuffered[1].data(), mode.data());
+				fclose(f);
+				period = 0;
+			}*/
 
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -5560,7 +5586,7 @@ int Runway::play(Helicopter &h, SOUNDREAD &sr)
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
 		filetoBuffer[1] = h.fullName["flapping"];
 		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		
+
 		double drivingGain = getParameterFromVector(vector<point>{ { 0, -60 }, { 1, -30 }, { 2.77, -8 }, { 5, -5 }, { 8.3, -2 }, { 9, 0 } }, abs(sr.v_surf_x));
 
 		gain[0] = toCoef(drivingGain) * getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch) * 0.707;
