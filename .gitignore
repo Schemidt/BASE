@@ -6,12 +6,7 @@
 *.user
 *.userosscache
 *.sln.docstates
-der.txt
-flap.txt
-red.txt
-der.xlsx
-flap.xlsx
-red.xlsx
+
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -246,19 +241,4 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
-/BASETEST
-/MI_8/front.txt
-/MI_8/ka_27/red_.xlsx
-/MI_8/ka_27/H_.xlsx
-/MI_8/ka_27/H.txt
-/MI_8/ka_27/eng_r_.xlsx
-/MI_8/ka_27/eng_r.txt
-/MI_8/ka_27/eng_l_.xlsx
-/MI_8/ka_27/eng_l.txt
-/MI_8/ka_29/vsu_hp_on.pkf
-/MI_8/ka_29/red_eng_mg_avt_mg.xlsx
-/MI_8/flapCGain.txt
-/MI_8/eng1.txt
-/MI_8/eng2.txt
-/MI_8/test.txt
-/BASE/test.txt
+

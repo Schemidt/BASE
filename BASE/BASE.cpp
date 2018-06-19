@@ -1397,13 +1397,13 @@ int main(int argc, char *argv[])
 			//Если звук хлопков винта включен в проект
 			if (helicopter.vintFlapFactor)
 			{
-				if (Sound::hight > 0)//Условие создания объекта
+				if (!land)//Условие создания объекта
 					if (!vintFlap)//Если объект не создан 
 						vintFlap = new VintFlap;//Создаем объект
 				if (vintFlap)//Если объект создан - используем его
 				{
 					vintFlap->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-					if (Sound::hight <= 0)//Условие удаления объекта
+					if (land)//Условие удаления объекта
 						Free(vintFlap);//Удаляем объект
 				}
 			}
@@ -3402,8 +3402,6 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 
 		alSourcef(source[3], AL_GAIN, gain[3]);
 
-		//printf("\t%.3lf\t%.3lf\r", gain[3],Sound::deltaTime);
-
 		double averangeTurn = getAverange(vectorAvrRedTurn, 30);
 
 		//усиление от оборотов выше 10000
@@ -4875,9 +4873,9 @@ int VintFlap::play(Helicopter &h, SOUNDREAD &sr)
 		//Сглаживаем появление и исчезание хлопков
 		double smoothHoveringGain = sm.delay(hoveringGain, deltaTime);
 
-		/*printf(" DT__: %.3lf\tSHG: %.3lf\tHOG: %.3lf\tACX: %.3lf\t\r", Sound::deltaTime, smoothHoveringGain, hoveringGain, accelerationVectorXZ);
+		//printf(" DT__: %.3lf\tFLP: %.3lf\tFLPP: %.3lf\tATK: %.3lf\t\r", Sound::deltaTime, gain[0], gain[1], attack);
 
-		static double period = 0;
+		/*static double period = 0;
 		if (period == 0)
 		{
 			remove("flap.txt");
@@ -4886,7 +4884,7 @@ int VintFlap::play(Helicopter &h, SOUNDREAD &sr)
 		if (period > 0.05)
 		{
 			FILE *f=fopen("flap.txt","at");
-			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, smoothHoveringGain, hoveringGain, accelerationVectorXZ);
+			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, gain[0], gain[1], attack);
 			fclose(f);
 			period = 0.01;
 		}*/
@@ -5559,17 +5557,30 @@ int Runway::play(Helicopter &h, SOUNDREAD &sr)
 	}
 	else if (h.modelName == "mi_26")
 	{
-		filetoBuffer[1] = h.fullName["flapping"];
-		alSourcei(source[1], AL_LOOPING, AL_TRUE);
-		gain[1] = interpolation({ 0, 0 }, { 8.3, 1 }, { 14, 0 }, abs(sr.v_surf_x))
-			* interpolation({ 78, 0.71 }, { 84, 1 }, sr.reduktor_gl_obor);
-		//* getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch);
-
-		double drivingGain = getParameterFromVector(vector<point>{ { 0, -60 }, { 1, -30 }, { 2.77, -8 }, { 5, -5 }, { 8.3, -2 }, { 9, 0 } }, abs(sr.v_surf_x));
-
 		filetoBuffer[0] = h.fullName["runway"];
 		alSourcei(source[0], AL_LOOPING, AL_TRUE);
+		filetoBuffer[1] = h.fullName["flapping"];
+		alSourcei(source[1], AL_LOOPING, AL_TRUE);
+		
+		double drivingGain = getParameterFromVector(vector<point>{ { 0, -60 }, { 1, -30 }, { 2.77, -8 }, { 5, -5 }, { 8.3, -2 }, { 9, 0 } }, abs(sr.v_surf_x));
+
 		gain[0] = toCoef(drivingGain) * getParameterFromVector(vector<point>{ { 0, 0 }, { 0.625, 1 }}, groundTouch) * 0.707;
+		gain[1] = interpolation({ 0, 0 }, { 8.3, 1 }, { 14, 0 }, abs(sr.v_surf_x))
+			* interpolation({ 78, 0.71 }, { 84, 1 }, sr.reduktor_gl_obor);
+
+		/*static double period = 0;
+		if (period == 0)
+		{
+			remove("driv.txt");
+		}
+		period += deltaTime;
+		if (period > 0.05)
+		{
+			FILE *f = fopen("driv.txt", "at");
+			fprintf(f, "%.3lf\t%.3lf\t%.3lf\t%.3lf\t\n", Sound::currentTime, gain[0], gain[1], groundTouch);
+			fclose(f);
+			period = 0.01;
+		}*/
 	}
 	else if (h.modelName == "ka_226")
 	{
