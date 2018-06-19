@@ -1310,18 +1310,17 @@ int main(int argc, char *argv[])
 			}
 
 			//Движение по ВПП и РД
-			bool land = Sound::groundTouch > 0;
-
+			
 			//Если звуки движения по ВПП включены в проект борта
 			if (helicopter.runwayFactor)
 			{
-				if (localdata.v_surf_x != 0 && land)//Условие создания объекта
+				if (localdata.v_surf_x != 0 && Sound::groundTouch > 0)//Условие создания объекта
 					if (!runway)//Если объект не создан 
 						runway = new Runway;//Создаем объект
 				if (runway)//Если объект создан - используем его
 				{
 					runway->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-					if (localdata.v_surf_x == 0 || !land)//Условие удаления объекта
+					if (localdata.v_surf_x == 0 || !(Sound::groundTouch > 0))//Условие удаления объекта
 						Free(runway);//Удаляем объект
 				}
 			}
@@ -1397,13 +1396,13 @@ int main(int argc, char *argv[])
 			//Если звук хлопков винта включен в проект
 			if (helicopter.vintFlapFactor)
 			{
-				if (!land)//Условие создания объекта
+				if (Sound::groundTouch == 0)//Условие создания объекта
 					if (!vintFlap)//Если объект не создан 
 						vintFlap = new VintFlap;//Создаем объект
 				if (vintFlap)//Если объект создан - используем его
 				{
 					vintFlap->play(helicopter, localdata);//Воспроизводим звук - записываем состояние звука в play
-					if (land)//Условие удаления объекта
+					if (Sound::groundTouch > 0.625)//Условие удаления объекта
 						Free(vintFlap);//Удаляем объект
 				}
 			}
