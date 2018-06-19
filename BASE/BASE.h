@@ -160,7 +160,7 @@ public:
 	\param[in] channels Каналы для вывода
 	\return 1 если успешно, иначе 0
 	*/
-	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, vector<double> channels);
+	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, vector<double> &channels);
 
 	/*!
 	\brief Загружает буфер, подключает к источнику и запускает

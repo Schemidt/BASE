@@ -2603,7 +2603,7 @@ int Sound::play(bool status, string pathOn, string pathW, string pathOff, double
 	return 1;
 }
 
-int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, vector<double>channels)
+int Sound::setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, vector<double>&channels)
 {
 	int format;
 	int size;
@@ -2908,14 +2908,14 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 		<< "\t\t\r";*/
 
 		/*static double period = 0;
-			period += deltaTime;
-			if (period>=0.05)
-			{
-				FILE *f = fopen("abr.txt", "at");
-				fprintf(f, "%lf\t%lf\t%lf\t%lf\t%s\t%s\t%s\n", gain[id] * rise * finalGain, gain[!id] * fade * finalGain,pitch[id],pitch[!id], fileBuffered[0].data(), fileBuffered[1].data(), mode.data());
-				fclose(f);
-				period = 0;
-		}*/
+				period += deltaTime;
+				if (period>=0.05)
+				{
+					FILE *f = fopen("abr.txt", "at");
+					fprintf(f, "%lf\t%lf\t%lf\t%lf\t%s\t%s\t%s\n", gain[id] * rise * finalGain, gain[!id] * fade * finalGain,pitch[id],pitch[!id], fileBuffered[0].data(), fileBuffered[1].data(), mode.data());
+					fclose(f);
+					period = 0;
+			}*/
 
 	for (size_t i = 0; i < 2; i++)
 	{
@@ -3405,7 +3405,7 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 		}
 
 		//регулируем громкость шума
-		double beatsGain = pow(10, (interpolation({ 70, -12 }, { 78, -8 }, { 90, -2 }, sr.reduktor_gl_obor)) * 0.05);
+		double beatsGain = pow(10, (getParameterFromVector(vector<point>{ { 60, -40 }, { 70, -12 }, { 78, -8 }, { 90, -2 }}, sr.reduktor_gl_obor)) * 0.05);
 
 		gain[2] = beatsGain * masterGain;
 
@@ -3876,6 +3876,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		timeCrossfade(&gain[!id], &gain[id], crossFadeDuration, switcher);
 	}
 
+	
 	alSourcef(source[!id], AL_GAIN, gain[!id] * finalGain);
 	alSourcef(source[id], AL_GAIN, gain[id] * finalGain);
 	alSourcef(source[!id], AL_PITCH, pitch[!id]);
@@ -4060,7 +4061,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		pr = 0;
 	}*/
 
-	/*string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
+	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
 	cout.precision(3);
 	cout << fixed
 		<< " ID__: " << id
@@ -4068,9 +4069,11 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		<< " gain[!id]: " << gain[!id]
 		<< " pitch[id]: " << pitch[id]
 		<< " pitch[!id]: " << pitch[!id]
+		<< " offset[id]: " << offset[id]
+		<< " offset[!id]: " << offset[!id]
 		<< " FIB0: " << fileBuffered[0]
 		<< " FIB1: " << fileBuffered[1]
-		<< "\t\t\r";*/
+		<< "\t\t\r";
 
 	return 1;
 }

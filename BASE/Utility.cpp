@@ -340,7 +340,7 @@ int binSer(vector<point> &points, double offset)
 			{
 				l = n;
 			}
-			n = (l + r) / 2;
+			n = trunc((float)(l + r) / 2.0);
 		}
 	}
 	else
@@ -359,7 +359,7 @@ int binSer(vector<point> &points, double offset)
 			{
 				l = n;
 			}
-			n = (l + r) / 2;
+			n = trunc((float)(l + r) / 2.0);
 		}
 	}
 	return n;
