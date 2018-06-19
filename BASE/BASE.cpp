@@ -3876,7 +3876,6 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		timeCrossfade(&gain[!id], &gain[id], crossFadeDuration, switcher);
 	}
 
-	
 	alSourcef(source[!id], AL_GAIN, gain[!id] * finalGain);
 	alSourcef(source[id], AL_GAIN, gain[id] * finalGain);
 	alSourcef(source[!id], AL_PITCH, pitch[!id]);
@@ -3934,6 +3933,20 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 			alSourcei(source[i], AL_LOOPING, AL_FALSE);
 		}
 
+		string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
+		cout.precision(3);
+		cout << fixed
+			<< " ID__: " << id
+			<< " gain[" << id << "]: " << gain[id]
+			<< " gain[" << !id << "]: " << gain[!id]
+			<< " pitch[" << id << "]: " << pitch[id]
+			<< " pitch[" << !id << "]: " << pitch[!id]
+			<< " offset[" << id << "]: " << offset[id]
+			<< " offset[" << !id << "]: " << offset[!id]
+			<< " FIB[" << id << "]: " << fileBuffered[id]
+			<< " FIB[" << !id << "]: " << fileBuffered[!id]
+			<< "\t\t\r";
+
 		//Загружаем буферы и запускам источники
 		if (fileBuffered[i] != filetoBuffer[i])
 		{
@@ -3950,7 +3963,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		else if (fileBuffered[i] == h.fullName["eng_on_hp_w"])
 		{
 			pitch[i] = 1;
-			alGetSourcef(source[i], AL_SEC_OFFSET, &offsetOn);
+			alGetSourcef(source[i], AL_SEC_OFFSET, &offset[i]);
 		}
 		else if (fileBuffered[i] == h.fullName["eng_w_w"])
 		{
@@ -3979,6 +3992,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		else if (fileBuffered[i] == h.fullName["eng_off_hp_w"])
 		{
 			pitch[i] = 1;
+			alGetSourcef(source[i], AL_SEC_OFFSET, &offsetOff);
 		}
 
 		//Выключаем источники если обороты равны 0 и двигатель не запускается
@@ -4061,19 +4075,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		pr = 0;
 	}*/
 
-	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
-	cout.precision(3);
-	cout << fixed
-		<< " ID__: " << id
-		<< " gain[id]: " << gain[id]
-		<< " gain[!id]: " << gain[!id]
-		<< " pitch[id]: " << pitch[id]
-		<< " pitch[!id]: " << pitch[!id]
-		<< " offset[id]: " << offset[id]
-		<< " offset[!id]: " << offset[!id]
-		<< " FIB0: " << fileBuffered[0]
-		<< " FIB1: " << fileBuffered[1]
-		<< "\t\t\r";
+	
 
 	return 1;
 }

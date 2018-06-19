@@ -384,7 +384,14 @@ double interpolation(point p1, point p2, double x)
 		return p1.y;
 	}
 
-	return	p1.y + ((p2.y - p1.y) / (p2.x - p1.x))*(x - p1.x);
+	if ((p2.x - p1.x) == 0)
+	{
+		return p1.y;
+	}
+	else
+	{
+		return	p1.y + ((p2.y - p1.y) / (p2.x - p1.x))*(x - p1.x);
+	}
 }
 
 double interpolation(point p1, point p2, point p3, double x)
