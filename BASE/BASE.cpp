@@ -2915,7 +2915,7 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 				fprintf(f, "%lf\t%lf\t%lf\t%lf\t%s\t%s\t%s\n", gain[id] * rise * finalGain, gain[!id] * fade * finalGain,pitch[id],pitch[!id], fileBuffered[0].data(), fileBuffered[1].data(), mode.data());
 				fclose(f);
 				period = 0;
-			}*/
+		}*/
 
 	for (size_t i = 0; i < 2; i++)
 	{
