@@ -641,7 +641,7 @@ int main(int argc, char *argv[])
 				<< " CUTI: " << Sound::currentTime
 				<< "\t\t\r";*/
 
-			//printf(" DT__: %.4lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", avrDeltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
+			printf(" DT__: %.4lf\tENG1: %.3f\tENG2: %.3f\tRED_: %.3f\tVSU: %.3f\t\r", avrDeltaTime, soundread.eng1_obor, soundread.eng2_obor, soundread.reduktor_gl_obor, soundread.vsu_obor);
 
 			if (Sound::currentTime == 0)
 				Sound::currentTime = localdata.time;
@@ -3933,21 +3933,21 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 			alSourcei(source[i], AL_LOOPING, AL_FALSE);
 		}
 
-		string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
-		cout.precision(3);
-		cout << fixed
-			<< " ID__: " << id
-			<< " gain[" << id << "]: " << gain[id]
-			<< " gain[" << !id << "]: " << gain[!id]
-			<< " pitch[" << id << "]: " << pitch[id]
-			<< " pitch[" << !id << "]: " << pitch[!id]
-			<< " offset[" << id << "]: " << offset[id]
-			<< " offset[" << !id << "]: " << offset[!id]
-			<< " FIB[" << id << "]: " << fileBuffered[id]
-			<< " FIB[" << !id << "]: " << fileBuffered[!id]
-			<< "\t\t\r";
+		/*	string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
+			cout.precision(3);
+			cout << fixed
+				<< " ID__: " << id
+				<< " gain[" << id << "]: " << gain[id]
+				<< " gain[" << !id << "]: " << gain[!id]
+				<< " pitch[" << id << "]: " << pitch[id]
+				<< " pitch[" << !id << "]: " << pitch[!id]
+				<< " offset[" << id << "]: " << offset[id]
+				<< " offset[" << !id << "]: " << offset[!id]
+				<< " FIB[" << id << "]: " << fileBuffered[id]
+				<< " FIB[" << !id << "]: " << fileBuffered[!id]
+				<< "\t\t\r";*/
 
-		//Загружаем буферы и запускам источники
+				//Загружаем буферы и запускам источники
 		if (fileBuffered[i] != filetoBuffer[i])
 		{
 			setAndDeploySound(&buffer[i], &source[i], offset[i], filetoBuffer[i]);
@@ -4075,7 +4075,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		pr = 0;
 	}*/
 
-	
+
 
 	return 1;
 }
