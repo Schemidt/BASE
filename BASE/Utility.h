@@ -17,6 +17,12 @@
 #include "windows.h"
 #include "tlhelp32.h"
 
+#include "AL\al.h"
+#include "AL\alc.h"
+#include "AL\alut.h"
+#include "AL\alext.h"
+#include "AL\efx.h"
+
 using namespace std;
 
 template <class T>
@@ -252,3 +258,15 @@ double roundFloat(double x, double nullsAfterInt);
 \return длительность WAVE файла
 */
 double getLengthWAV(string filename);
+
+/*!
+\brief Загружает буфер данными
+\details Структурирует массив данных для поканального вывода при различных конфигурациях устройств вывода и
+загружает в буфер OpenAL
+\param[in] Buffer Объект буфера
+\param[in] path Имя файла
+\param[in] channelsCount Конфигурация устройств вывода
+\param[in] channels Каналы для вывода
+\return 1 если успешно, иначе 0
+*/
+int setBuffer(ALuint Buffer, string path, vector<double> channels);

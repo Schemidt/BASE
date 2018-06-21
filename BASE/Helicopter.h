@@ -124,6 +124,11 @@ public:
 	//!<Ассоциативный массив с полными именами файлов - звуков
 	map<string, string> fullName;
 
+	//!<Ассоциативный массив с полными именами файлов - звуков
+	map<string, ALuint> bufferMap;
+
+	ALuint *buffers;
+
 	/*!
 	\brief Заполняет массив с полными именами файлов
 	\details Заполняет массив fullName с полными именами файлов: shortName + pathToFile
@@ -137,6 +142,8 @@ public:
 	\param[in] model Модель летательного аппарата
 	*/
 	void setParam(string model);
+
+	void setBufferMap();
 
 	Helicopter();
 	~Helicopter();

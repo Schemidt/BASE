@@ -20,22 +20,14 @@
 #include "vector"
 #include "math.h"
 
-#include "AL\al.h"
-#include "AL\alc.h"
-#include "AL\alut.h"
-#include "AL\alext.h"
-#include "AL\efx.h"
-
 //обмен
 #include "Shared.h"
 #include "realtime.h"
 
 //звук
-#include "Mono2channels.h"
 #include "EFXptr.h"
 #include "Sound.h"
 #include "Helicopter.h"
-#include "Utility.h"
 
 using namespace std;
 
@@ -57,7 +49,6 @@ public:
 	static int maxSources;//!< Переменная хранящая количество максимально возможных источников на устройстве, 256 максимально
 	static int maxSlots;//!< Переменная хранящая количество максимально возможных слотов для эффектов на устройстве, 16 максимально
 	static double masterGain;//!< Глобальный модификатор громкости
-	static AL_SOUND_CHANNELS channelsSetup;//!< Конфигурация каналов - устройств вывода (2.1,4.1,5.1,6.1,7.1)
 	static double currentTime;//!< Переменная хранящая текущее время полученное из общей памяти от USPO
 	static double deltaTime;//!< Переменная для отслеживания изменения времени
 
@@ -151,18 +142,6 @@ public:
 	virtual int play(bool status, string pathOn, string pathW, string pathOff, double gainMult);
 
 	/*!
-	\brief Загружает буфер данными
-	\details Структурирует массив данных для поканального вывода при различных конфигурациях устройств вывода и
-	загружает в буфер OpenAL
-	\param[in] Buffer Объект буфера
-	\param[in] path Имя файла
-	\param[in] channelsCount Конфигурация устройств вывода
-	\param[in] channels Каналы для вывода
-	\return 1 если успешно, иначе 0
-	*/
-	int setBuffer(ALuint Buffer, string path, AL_SOUND_CHANNELS channelsCount, vector<double> &channels);
-
-	/*!
 	\brief Загружает буфер, подключает к источнику и запускает
 	\details
 	<pre>
@@ -176,6 +155,10 @@ public:
 	\param[in] file_path Полное имя файла
 	\return Статус источника OpenAL
 	*/
+	int setSource(ALuint *Buffer, ALuint *Source, string file_path);
+
+	int switchBuffer(ALuint *Buffer, ALuint *Source);
+
 	int setAndDeploySound(ALuint *Buffer, ALuint *Source, double offset, string file_path);
 
 	double getAverange(vector<double> &vectorOfParameters, double seconds);
@@ -231,6 +214,7 @@ public:
 	static int engCount;/*!< Переменная для количества инициализированных двигателей в программе */
 	double phase;//!<Фаза для двигателей, чтобы их звуки не сливались(0-1, смещаем на 0.33 для каждого нового объекта, т.е. запускаем с 33% * n процентов длительности)
 	int engNum;//!<Номер двигателя
+	char angle;
 	string eq[2];/*!< Переменная для однократной загрузки буфера */
 	double reperTurn = 0;
 	string reperSet;
@@ -468,7 +452,7 @@ int parametricalCrossfade(double *fadeGain, double *riseGain, double parameter, 
 \param[in] gainMultiplicator Множитель громкости записей
 \return 1 ,если громкость затухающей записи равняется 0, а нарастающей 1
 */
-int timeCrossfade(double *fadeGain, double *riseGain, double crossFadeDuration, double timer);
+int timeCrossfade(double &fadeGain, double &riseGain, double crossFadeDuration, double timer);
 /*!\brief Определяет указатели на функции расширений EFX*/
 void setEFXPointers();
 

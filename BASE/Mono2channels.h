@@ -8,6 +8,12 @@
 
 #include "string"
 
+#include "AL\al.h"
+#include "AL\alc.h"
+#include "AL\alut.h"
+#include "AL\alext.h"
+#include "AL\efx.h"
+
 using namespace std;
 
 enum AL_SOUND_CHANNELS_FLAGS
@@ -115,7 +121,6 @@ bool mono2channels(T                         *monodata,        /* in  */
 	return true;
 }
 
-// определить формат для буфера
 ALenum getFormat(AL_SOUND_CHANNELS chan, int bitsPerSample)
 {
 	/* готовим строковый вид формата */

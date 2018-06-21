@@ -168,6 +168,7 @@
     <ClCompile Include="BASE.cpp" />
     <ClCompile Include="EFXptr.cpp" />
     <ClCompile Include="Helicopter.cpp" />
+    <ClCompile Include="Mono2channels.cpp" />
     <ClCompile Include="RealTime.cpp" />
     <ClCompile Include="Shared.cpp" />
     <ClCompile Include="Utility.cpp" />

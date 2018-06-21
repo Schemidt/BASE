@@ -4,6 +4,7 @@
 */
 
 #include "Utility.h"
+#include "Mono2channels.h"
 
 using namespace std;
 
@@ -414,9 +415,21 @@ double interpolation(point p1, point p2, point p3, double x)
 	}
 
 	//если квадратичная интерполяция не работает - берем линейную
-	if (p2.x == p1.x | p3.x == p2.x)
+	if (p1.x == p2.x)
+	{
+		return	interpolation(p1, p3, x);
+	}
+	else if (p1.x == p3.x)
 	{
 		return	interpolation(p1, p2, x);
+	}
+	else if (p2.x == p3.x)
+	{
+		return	interpolation(p1, p3, x);
+	}
+	else if (p1.x == p2.x && p2.x == p3.x)
+	{
+		return p3.y;
 	}
 	else
 	{
@@ -426,7 +439,6 @@ double interpolation(point p1, point p2, point p3, double x)
 		a0 = p1.y - a1 * p1.x - a2 * p1.x*p1.x;
 		return a0 + a1 * x + a2*x*x;
 	}
-
 }
 
 point & point::operator=(const point & copy)
@@ -435,4 +447,65 @@ point & point::operator=(const point & copy)
 	this->y = copy.y;
 
 	return *this;
+}
+
+int setBuffer(ALuint Buffer, string path, vector<double>channels)
+{
+	int format;
+	int size;
+	int freq;
+	void *iData;
+	void *rData;
+	int rSize;
+	int bitsPerSample = 0;
+	ALboolean loop;
+	FILE *check;
+	AL_SOUND_CHANNELS channelsCount = AL_SOUND_CHANNELS_6;// Конфигурация каналов - устройств вывода (2.1,4.1,5.1,6.1,7.1)
+
+	check = fopen(path.c_str(), "r");
+	if (!check)
+	{
+		cout << "\n file [" << path << "] is missing\t\t\t\t\t\t\r" << endl;
+		return 0;
+	}
+	fclose(check);
+	alutLoadWAVFile((ALbyte*)path.c_str(), &format, &iData, &size, &freq, &loop);
+
+	//Если файл стерео - просто загружаем буфер
+	if (format == AL_FORMAT_STEREO8 || format == AL_FORMAT_STEREO16)
+	{
+		alBufferData(Buffer, format, iData, size, freq);
+		alutUnloadWAV(format, iData, size, freq);
+		return 1;
+	}
+	//Если файл моно - загружаем буфер в соответствии с конфигурацией динамиков
+	if (channelsCount != 0)//
+	{
+		if (format == AL_FORMAT_MONO8)//8бит
+		{
+			bitsPerSample = 8;
+			unsigned char *monodata0 = ((unsigned char*)iData);
+			mono2channels(monodata0, size, channelsCount, channels.data(), &rData, &rSize);
+		}
+		if (format == AL_FORMAT_MONO16)//16бит
+		{
+			bitsPerSample = 16;
+			short *monodata1 = ((short*)iData);
+			mono2channels(monodata1, size, channelsCount, channels.data(), &rData, &rSize);
+		}
+		if (format != AL_FORMAT_MONO16 && format != AL_FORMAT_MONO8)//неподдерживаемый формат
+			return 0;
+
+		format = getFormat(channelsCount, bitsPerSample);
+		alBufferData(Buffer, format, rData, rSize, freq);
+		free(rData);
+	}
+	//Если конфигурация с 1им динамиком
+	else
+	{
+		alBufferData(Buffer, format, iData, size, freq);
+	}
+	//Высвобождаем память
+	alutUnloadWAV(format, iData, size, freq);
+	return 1;
 }

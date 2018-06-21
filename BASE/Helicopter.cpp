@@ -187,6 +187,8 @@ void Helicopter::setParam(string model)
 
 	setPath(modelName + "/");
 
+	setBufferMap();
+
 	if (model == "mi_8_mtv5")
 	{
 		//Константы		
@@ -441,7 +443,7 @@ void Helicopter::setParam(string model)
 		//frict = 1;
 
 		rocketSturmFactor = 1/*ШТУРМ*/;
-		rocketNar8Factor =  1/*НАР8*/;
+		rocketNar8Factor = 1/*НАР8*/;
 		rocketNar13Factor = 1/*НАР13*/;
 		rocketHitFactor = 0.8/*Попадание ракеты*/;
 		upkFactor = 1/*УПК*/;
@@ -503,6 +505,62 @@ void Helicopter::setParam(string model)
 	{
 		swp.swap();
 	}
+}
+
+void Helicopter::setBufferMap()
+{
+	buffers = new ALuint[fullName.size() * 2];
+	vector<double> channel = { 1,1,0,0,0,0,0 };
+
+	int i = 0;
+	for (auto it : fullName)
+	{
+		if (it.first == "eng_on_w"		||
+			it.first == "eng_w_w"		||
+			it.first == "eng_off_w"		||
+			it.first == "eng_on_hp_w"	||
+			it.first == "eng_w_hp_w"	||
+			it.first == "eng_off_hp_w"	||
+			it.first == "eng_w_avt_w"	||
+			it.first == "eng_on_avt_w"	||
+			it.first == "eng_avt_mg_w")
+		{
+			alGenBuffers(1, &buffers[i]);
+			channel = { 1,-1,0,0,0,0,0 };
+			setBuffer(buffers[i], it.second, channel);
+			bufferMap[it.second + "l"] = buffers[i];
+			i++;
+
+			alGenBuffers(1, &buffers[i]);
+			channel = { 0,2,0,0,0,0,0 };
+			setBuffer(buffers[i], it.second, channel);
+			bufferMap[it.second + "r"] = buffers[i];
+			i++;
+		}
+		else if ((	it.first == "vsu_on"		||
+					it.first == "vsu_w"			||
+					it.first == "vsu_off"		||
+					it.first == "vsu_hp_on"		||
+					it.first == "vsu_hp_w"		||
+					it.first == "vsu_hp_off")
+					&& modelName == "mi_26")
+		{
+			alGenBuffers(1, &buffers[i]);
+			channel = { 0,0,1,1,0,0,0 };
+			setBuffer(buffers[i], it.second, channel);
+			bufferMap[it.second] = buffers[i];
+			i++;
+		}
+		else
+		{
+			alGenBuffers(1, &buffers[i]);
+			channel = { 1,1,0,0,0,0,0 };
+			setBuffer(buffers[i], it.second, channel);
+			bufferMap[it.second] = buffers[i];
+			i++;
+		}
+	}
+	bufferMap["NULL"] = -1;//служебное значение
 }
 
 Helicopter::Helicopter()
