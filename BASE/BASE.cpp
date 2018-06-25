@@ -2721,9 +2721,9 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 		mode = "on_hp";
 	}
 	//0 -> мг1дв
-	else if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap) && redTurnAcc > 0 && !(mode == "mg1" && (sr.reduktor_gl_obor > h.redTurnoverMg1 * 0.9)))
+	else if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap) && redTurnAcc > 0)
 	{
-		if (h.redLengthOn - offsetOn <= crossFadeDuration || sr.reduktor_gl_obor >= h.redTurnoverMg1 * 0.93)
+		if ((h.redLengthOn - offsetOn <= crossFadeDuration) || (sr.reduktor_gl_obor >= h.redTurnoverMg1 * 0.93))
 		{
 			mode = "mg1";
 		}
@@ -2741,7 +2741,7 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 		}
 		else
 		{
-			if (mode == "on" && h.redLengthOn - offsetOn > crossFadeDuration)
+			if (mode == "on" && ((h.redLengthOn - offsetOn > crossFadeDuration) || (sr.reduktor_gl_obor < h.redTurnoverMg1 * 0.93)))
 			{
 				mode = "on";
 			}
@@ -2852,10 +2852,46 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 	double rise = 1;
 	double fade = 1;
 
-	if (filetoBuffer[id] == h.fullName["red_on_w"] || filetoBuffer[id] == h.fullName["red_off_w"] || filetoBuffer[!id] == h.fullName["red_on_w"] || filetoBuffer[!id] == h.fullName["red_off_w"])
+	if (filetoBuffer[id] == h.fullName["red_off_w"] ||
+		filetoBuffer[!id] == h.fullName["red_on_w"] ||
+		filetoBuffer[!id] == h.fullName["red_off_w"])
 	{
 		switcher += deltaTime;
 		timeCrossfade(fade, rise, crossFadeDuration, switcher);
+	}
+	else if (filetoBuffer[id] == h.fullName["red_on_w"])
+	{
+		if (reperSet != "set")
+		{
+			reperTurn = sr.reduktor_gl_obor;
+			reperSet = "set";
+		}
+
+		double timeGain[2];
+		double turnGain[2];
+
+		if (sr.reduktor_gl_obor <= h.redTurnoverMg1)
+		{
+			parametricalCrossfade(&turnGain[!id], &turnGain[id], sr.reduktor_gl_obor, reperTurn, h.redTurnoverMg1);
+		}
+		else
+		{
+			turnGain[id] = 1;
+			turnGain[!id] = 0;
+		}
+
+		if (offsetOn != 0)
+		{
+			timeCrossfade(timeGain[!id], timeGain[id], crossFadeDuration, crossFadeDuration - (h.redLengthOn - offsetOn));
+		}
+		else
+		{
+			timeGain[id] = 1;
+			timeGain[!id] = 0;
+		}
+
+		rise = max(timeGain[id], turnGain[id]);
+		fade = min(timeGain[!id], turnGain[!id]);
 	}
 
 	//string modes = "[" + ModeSequence[0] + " " + ModeSequence[1] + " " + ModeSequence[2] + "]";
@@ -4068,13 +4104,14 @@ int Vsu::play(SOUNDREAD &sr, Helicopter &h)
 		init = "set";
 	}
 
+	double vsuGainDown = 1;
 	//Для 27 29 и 8
 	if (h.modelName == "ka_27" || h.modelName == "ka_29" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_8_amtsh")
 	{
 		//Подсадка ВСУ при запущенном двигателе, но до запуска редуктора
 		if (sr.reduktor_gl_obor > 0)
 		{
-			gain[0] = interpolation({ 0, 0.7 }, { 2.5, 0.85 }, { 5, 1 }, vsuUpTimer);
+			vsuGainDown = interpolation({ 0, 0.7 }, { 2.5, 0.85 }, { 5, 1 }, vsuUpTimer);
 			vsuUpTimer += Sound::deltaTime;
 			vsuDownTimer = 0;
 		}
@@ -4082,13 +4119,13 @@ int Vsu::play(SOUNDREAD &sr, Helicopter &h)
 		{
 			if (sr.p_eng1_zap || sr.p_eng1_hp || sr.p_eng2_zap || sr.p_eng2_hp)
 			{
-				gain[0] = interpolation({ 0, 1 }, { 0.25, 0.85 }, { 0.5, 0.7 }, vsuDownTimer);
+				vsuGainDown = interpolation({ 0, 1 }, { 0.25, 0.85 }, { 0.5, 0.7 }, vsuDownTimer);
 				vsuDownTimer += Sound::deltaTime;
 				vsuUpTimer = 0;
 			}
 			else
 			{
-				gain[0] = interpolation({ 0, 0.7 }, { 2.5, 0.85 }, { 5, 1 }, vsuUpTimer);
+				vsuGainDown = interpolation({ 0, 0.7 }, { 2.5, 0.85 }, { 5, 1 }, vsuUpTimer);
 				vsuUpTimer += Sound::deltaTime;
 				vsuDownTimer = 0;
 			}
@@ -4220,8 +4257,8 @@ int Vsu::play(SOUNDREAD &sr, Helicopter &h)
 		fade = 0;
 	}
 
-	alSourcef(source[!id], AL_GAIN, fade * finalGain);
-	alSourcef(source[id], AL_GAIN, rise * finalGain);
+	alSourcef(source[!id], AL_GAIN, fade * vsuGainDown * finalGain);
+	alSourcef(source[id], AL_GAIN, rise * vsuGainDown * finalGain);
 
 	for (size_t i = 0; i < 2; i++)
 	{
