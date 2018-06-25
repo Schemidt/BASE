@@ -96,7 +96,7 @@ public:
 	vector<string> ModeSequence = { "0","0","0" };//Вектор истории режимов 
 	string mode = "0";//Переменная текущего режима
 	double switcher = 0;//Переменная - таймер, для кроссфейда по времени
-	double crossFadeDuration = 0.5;//Кроссфейд по времени за crossFadeDuration секунд
+	double crossFadeDuration = 1;//Кроссфейд по времени за crossFadeDuration секунд
 	int id = 0;//Текущий используемый источник
 
 	bool soundOn = 0;//!< Переменная для определения состояния звука
@@ -175,6 +175,8 @@ public:
 class Reductor : public Sound
 {
 public:
+
+	//bool setup = 0;
 
 	bool hovering = 0;/*!< Переменная для статуса полета на висении */
 	string eq[2];/*!< Переменная для однократной загрузки буфера */

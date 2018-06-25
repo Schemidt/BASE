@@ -270,3 +270,5 @@ double getLengthWAV(string filename);
 \return 1 если успешно, иначе 0
 */
 int setBuffer(ALuint Buffer, string path, vector<double> channels);
+
+double getPitch(double maxPar, double currentPar, double supposedPar);

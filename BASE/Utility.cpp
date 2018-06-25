@@ -191,7 +191,7 @@ double getParameterFromVector(vector<point> &value, double offset)
 		p3 = value[2];
 	}
 	//если вектор состоит из малого числа значений - перебираем их
-	else if (n < 8)
+	else /*if (n < 8)*/
 	{
 		if (value[0].x <= value[n - 1].x)
 		{
@@ -278,23 +278,23 @@ double getParameterFromVector(vector<point> &value, double offset)
 	}
 	//если вектор длинный и сортирован! (вектора должны быть подготовлены заранее) - используем бинарный поиск
 	//TODO: алгоритм сортировки
-	else
-	{
-		int num = binSer(value, offset);
-		//Выбираем 3 точки (вариант -1 0 +1)
-		if (num - 1 == -1)
-		{
-			p1 = value[num]; p2 = value[num + 1]; p3 = value[num + 2];
-		}
-		else if (num + 1 == value.size())
-		{
-			p1 = value[num - 2]; p2 = value[num - 1]; p3 = value[num];
-		}
-		else
-		{
-			p1 = value[num - 1]; p2 = value[num]; p3 = value[num + 1];
-		}
-	}
+	//else
+	//{
+	//	int num = binSer(value, offset);
+	//	//Выбираем 3 точки (вариант -1 0 +1)
+	//	if (num - 1 == -1)
+	//	{
+	//		p1 = value[num]; p2 = value[num + 1]; p3 = value[num + 2];
+	//	}
+	//	else if (num + 1 == value.size())
+	//	{
+	//		p1 = value[num - 2]; p2 = value[num - 1]; p3 = value[num];
+	//	}
+	//	else
+	//	{
+	//		p1 = value[num - 1]; p2 = value[num]; p3 = value[num + 1];
+	//	}
+	//}
 
 	return interpolation(p1, p2, p3, offset);
 }
@@ -508,4 +508,16 @@ int setBuffer(ALuint Buffer, string path, vector<double>channels)
 	//Высвобождаем память
 	alutUnloadWAV(format, iData, size, freq);
 	return 1;
+}
+
+double getPitch(double maxPar, double currentPar, double supposedPar)
+{
+	try
+	{
+		return maxPar / (maxPar - (currentPar - supposedPar));
+	}
+	catch (const std::exception&)
+	{
+		return 1;
+	}
 }

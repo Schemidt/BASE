@@ -515,14 +515,14 @@ void Helicopter::setBufferMap()
 	int i = 0;
 	for (auto it : fullName)
 	{
-		if (it.first == "eng_on_w"		||
-			it.first == "eng_w_w"		||
-			it.first == "eng_off_w"		||
-			it.first == "eng_on_hp_w"	||
-			it.first == "eng_w_hp_w"	||
-			it.first == "eng_off_hp_w"	||
-			it.first == "eng_w_avt_w"	||
-			it.first == "eng_on_avt_w"	||
+		if (it.first == "eng_on_w" ||
+			it.first == "eng_w_w" ||
+			it.first == "eng_off_w" ||
+			it.first == "eng_on_hp_w" ||
+			it.first == "eng_w_hp_w" ||
+			it.first == "eng_off_hp_w" ||
+			it.first == "eng_w_avt_w" ||
+			it.first == "eng_on_avt_w" ||
 			it.first == "eng_avt_mg_w")
 		{
 			alGenBuffers(1, &buffers[i]);
@@ -537,21 +537,34 @@ void Helicopter::setBufferMap()
 			bufferMap[it.second + "r"] = buffers[i];
 			i++;
 		}
-		else if ((	it.first == "vsu_on"		||
-					it.first == "vsu_w"			||
-					it.first == "vsu_off"		||
-					it.first == "vsu_hp_on"		||
-					it.first == "vsu_hp_w"		||
-					it.first == "vsu_hp_off")
-					&& modelName == "mi_26")
+		else if (it.first == "vsu_on" ||
+			it.first == "vsu_w" ||
+			it.first == "vsu_off" ||
+			it.first == "vsu_hp_on" ||
+			it.first == "vsu_hp_w" ||
+			it.first == "vsu_hp_off")
 		{
 			alGenBuffers(1, &buffers[i]);
-			channel = { 0,0,1,1,0,0,0 };
+			if (modelName == "mi_26")
+			{
+				channel = { 0,0,1,1,0,0,0 };
+			}
+			else
+			{
+				channel = { 1,1,0,0,0,0,0 };
+			}
 			setBuffer(buffers[i], it.second, channel);
 			bufferMap[it.second] = buffers[i];
 			i++;
 		}
-		else
+		else if (it.first == "red_on_w" ||
+			it.first == "red_w_w" ||
+			it.first == "red_on_mg_w" ||
+			it.first == "red_w_mg_w" ||
+			it.first == "red_mg_avt_w" ||
+			it.first == "red_w_avt_w" ||
+			it.first == "red_avt_mg_w" ||
+			it.first == "red_off_w")
 		{
 			alGenBuffers(1, &buffers[i]);
 			channel = { 1,1,0,0,0,0,0 };
