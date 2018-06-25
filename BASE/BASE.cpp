@@ -3022,7 +3022,7 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 	double mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;//купол 2 1000-8000
 	double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;//ВЧ 4000-16000
 
-	double avrTurnRestrict = getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, hight);
+	double avrTurnRestrict = getParameterFromVector(vector<point>{ { 0, 1 }, { 0.625, 0 }}, groundTouch);
 
 	//Полеты ми 28
 	if (h.modelName == "mi_28")
@@ -4016,7 +4016,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	double mid2CutoffFreq = AL_EQUALIZER_DEFAULT_MID2_CENTER;//купол 2 1000-8000
 	double highCutoffFreq = AL_EQUALIZER_DEFAULT_HIGH_CUTOFF;//ВЧ 4000-16000
 
-	double avrTurnRestrict = getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, hight);
+	double avrTurnRestrict = getParameterFromVector(vector<point>{ { 0, 1 }, { 0.625, 0 }}, groundTouch);
 
 	//Полеты 8 мтв5, 8 амтш, ка 27м, ка 29
 	if (h.modelName == "mi_8_amtsh" || h.modelName == "mi_8_mtv5" || h.modelName == "mi_28" || h.modelName == "mi_26" || h.modelName == "ka_27" || h.modelName == "ka_29")
@@ -4468,7 +4468,7 @@ int VintFlap::play(Helicopter &h, SOUNDREAD &sr)
 		}
 	}
 
-	double avrTurnRestrict = getParameterFromVector(vector<point>{ { 0, 0 }, { 0.5, 1 }}, hight);
+	double avrTurnRestrict = getParameterFromVector(vector<point>{ { 0, 1 }, { 0.625, 0 }}, groundTouch);
 
 	//Хлопки 8 мтв5
 	if (h.modelName == "mi_8_mtv5")
