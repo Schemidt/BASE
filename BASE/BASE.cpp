@@ -558,9 +558,9 @@ int main(int argc, char *argv[])
 	VintFlap *vintFlap = nullptr;
 	Sound *brake = nullptr;
 	Sound *rain = nullptr;
-	Sound *sturm = nullptr;
-	Sound *igla = nullptr;
-	Sound *rocket = nullptr;
+	Sound *sturm[50] = { nullptr };
+	Sound *igla[50] = { nullptr };
+	Sound *rocket[50] = { nullptr };
 	Sound *ppu = nullptr;
 	Sound *upk = nullptr;
 	Sound *nar8[50] = { nullptr };
@@ -579,17 +579,30 @@ int main(int argc, char *argv[])
 	SOUNDREAD localdata = soundread;//локальная копия общего с USPO файла
 
 	double timerPodk = 0;
+
 	double timerNar8 = 0;//период выстрела нар8
 	double timerNar13 = 0;//период выстрела нар8
 	int counterNar8 = 0;
 	int counterNar13 = 0;
-	bool check8 = 0;
-	bool check13 = 0;
+	int check8 = 0;
+	int check13 = 0;
+
+	int shockLocker[4] = { 0,0,0,0 };
+	int counterShock[4] = { 0,0,0,0 };
+
+	int sturmLocker = 0;
+	int counterSturm = 0;
+
+	int iglaLocker = 0;
+	int counterIgla = 0;
+
+	int rocketHitLocker = 0;
+	int counterRocketHit = 0;
+
 	double timerAvr = 0;
 	const double window = 1;//При вычислении приближенной производной берем изменение значения за секунду 
 	double periodCalc = 0;//переменная для реального значения периода вычисления, равно или немного более window
-	bool shockLocker[4] = { 0,0,0,0 };
-	int counterShock[4] = { 0,0,0,0 };
+
 	double avrDeltaTime = 0;
 	vector<double> adt;
 
@@ -1489,17 +1502,49 @@ int main(int argc, char *argv[])
 			if (helicopter.rocketHitFactor)
 			{
 				if (localdata.p_rocket_hit)//Условие создания объекта
-					if (!rocket)//Если объект не создан 
-						rocket = new Sound;//Создаем объект
-				if (rocket)//Если объект создан - используем его
 				{
-					if (rocket->play(localdata.p_rocket_hit, helicopter.fullName["rocket"], "NULL", "NULL", helicopter.rocketHitFactor))
+					if (!rocket[counterRocketHit] && !rocketHitLocker)
 					{
-
+						rocket[counterRocketHit] = new Sound;//Создаем объект
+						counterRocketHit++;
+						rocketHitLocker = localdata.p_rocket_hit;
 					}
-					else
+					if (counterRocketHit >= 50)
 					{
-						Free(rocket);//Удаляем объект
+						counterRocketHit = 0;
+					}
+				}
+				else
+				{
+					rocketHitLocker = 0;
+				}
+
+				for (size_t i = 0; i < 50; i++)
+				{
+					if (rocket[i])
+					{
+						switch (rocketHitLocker)
+						{
+						case 1:
+							rocket[i]->channel[0] = 1;//L
+							rocket[i]->channel[1] = 0;
+							break;
+						case 2:
+							rocket[i]->channel[0] = 0;//R
+							rocket[i]->channel[1] = 1;
+							break;
+						case 3:
+							rocket[i]->channel[0] = 1;//centre
+							rocket[i]->channel[1] = 1;
+							break;
+						}
+
+						rocket[i]->play(rocketHitLocker, helicopter.fullName["rocket"], "NULL", "NULL", helicopter.rocketSturmFactor);
+
+						if (rocket[i]->sourceStatus[rocket[i]->id] != AL_PLAYING)
+						{
+							Free(rocket[i]);
+						}
 					}
 				}
 			}
@@ -1515,7 +1560,7 @@ int main(int argc, char *argv[])
 				}
 				if (localdata.p_nar_s8)//Условие создания объекта
 				{
-					check8 = 1;
+					check8 = localdata.p_nar_s8;
 				}
 				if (check8)//Условие создания объекта
 				{
@@ -1538,20 +1583,20 @@ int main(int argc, char *argv[])
 					//воспроизводим звук выстрела 1го НАР8 каждые 0.125с
 					if (nar8[i])
 					{
-						if (localdata.p_nar_s8 == 1)
+						switch (check8)
 						{
+						case 1:
 							nar8[i]->channel[0] = 1;//L
 							nar8[i]->channel[1] = 0;
-						}
-						else if (localdata.p_nar_s8 == 2)
-						{
+							break;
+						case 2:
 							nar8[i]->channel[0] = 0;//R
 							nar8[i]->channel[1] = 1;
-						}
-						else if (localdata.p_nar_s8 == 3)
-						{
-							nar8[i]->channel[0] = 1;//Both
+							break;
+						case 3:
+							nar8[i]->channel[0] = 1;//centre
 							nar8[i]->channel[1] = 1;
+							break;
 						}
 
 						nar8[i]->play(check8, helicopter.fullName["nar8"], "NULL", "NULL", helicopter.rocketNar8Factor);
@@ -1575,7 +1620,7 @@ int main(int argc, char *argv[])
 				}
 				if (localdata.p_nar_s13)//Условие создания объекта
 				{
-					check13 = 1;
+					check13 = localdata.p_nar_s13;
 				}
 				if (check13)//Условие создания объекта
 				{
@@ -1599,21 +1644,22 @@ int main(int argc, char *argv[])
 					//воспроизводим звук выстрела 1го НАР13 каждые 0.15с
 					if (nar13[i])
 					{
-						if (localdata.p_nar_s13 == 1)
+						switch (check13)
 						{
+						case 1:
 							nar13[i]->channel[0] = 1;//L
 							nar13[i]->channel[1] = 0;
-						}
-						else if (localdata.p_nar_s13 == 2)
-						{
+							break;
+						case 2:
 							nar13[i]->channel[0] = 0;//R
 							nar13[i]->channel[1] = 1;
-						}
-						else if (localdata.p_nar_s13 == 3)
-						{
-							nar13[i]->channel[0] = 1;//Both
+							break;
+						case 3:
+							nar13[i]->channel[0] = 1;//centre
 							nar13[i]->channel[1] = 1;
+							break;
 						}
+
 						nar13[i]->play(check13, helicopter.fullName["nar13"], "NULL", "NULL", helicopter.rocketNar13Factor);
 
 						if (nar13[i]->sourceStatus[nar13[i]->id] != AL_PLAYING)
@@ -1632,21 +1678,22 @@ int main(int argc, char *argv[])
 						ppu = new Sound;//Создаем объект
 				if (ppu)//Если объект создан - используем его
 				{
-					if (localdata.p_spo_ppu == 1)
+					switch (localdata.p_spo_ppu)
 					{
+					case 1:
 						ppu->channel[0] = 1;//L
 						ppu->channel[1] = 0;
-					}
-					else if (localdata.p_spo_ppu == 2)
-					{
+						break;
+					case 2:
 						ppu->channel[0] = 0;//R
 						ppu->channel[1] = 1;
-					}
-					else if (localdata.p_spo_ppu == 3)
-					{
+						break;
+					case 3:
 						ppu->channel[0] = 1;//centre
 						ppu->channel[1] = 1;
+						break;
 					}
+
 					if (ppu->play(localdata.p_spo_ppu, "NULL", helicopter.fullName["ppu"], "NULL", helicopter.ppuFactor))
 					{
 
@@ -1665,20 +1712,20 @@ int main(int argc, char *argv[])
 						upk = new Sound;//Создаем объект
 				if (upk)//Если объект создан - используем его
 				{
-					if (localdata.p_spo_upk == 1)
+					switch (localdata.p_spo_upk)
 					{
+					case 1:
 						upk->channel[0] = 1;//L
 						upk->channel[1] = 0;
-					}
-					else if (localdata.p_spo_upk == 2)
-					{
+						break;
+					case 2:
 						upk->channel[0] = 0;//R
 						upk->channel[1] = 1;
-					}
-					else if (localdata.p_spo_upk == 3)
-					{
+						break;
+					case 3:
 						upk->channel[0] = 1;//centre
 						upk->channel[1] = 1;
+						break;
 					}
 
 					if (upk->play(localdata.p_spo_upk, "NULL", helicopter.fullName["upk"], "NULL", helicopter.upkFactor))
@@ -1695,66 +1742,100 @@ int main(int argc, char *argv[])
 			if (helicopter.rocketSturmFactor)
 			{
 				if (localdata.p_ur_ataka)//Условие создания объекта
-					if (!sturm)//Если объект не создан 
-						sturm = new Sound;//Создаем объект
-				if (sturm)//Если объект создан - используем его
 				{
-					if (localdata.p_ur_ataka == 1)
+					if (!sturm[counterSturm] && !sturmLocker)
 					{
-						sturm->channel[0] = 1;//L
-						sturm->channel[1] = 0;
+						sturm[counterSturm] = new Sound;//Создаем объект
+						counterSturm++;
+						sturmLocker = localdata.p_ur_ataka;
 					}
-					else if (localdata.p_ur_ataka == 2)
+					if (counterSturm >= 50)
 					{
-						sturm->channel[0] = 0;//R
-						sturm->channel[1] = 1;
+						counterSturm = 0;
 					}
-					else if (localdata.p_ur_ataka == 3)
-					{
-						sturm->channel[0] = 1;//centre
-						sturm->channel[1] = 1;
-					}
+				}
+				else
+				{
+					sturmLocker = 0;
+				}
 
-					if (sturm->play(localdata.p_ur_ataka, helicopter.fullName["sturm"], "NULL", "NULL", helicopter.rocketSturmFactor))
+				for (size_t i = 0; i < 50; i++)
+				{
+					if (sturm[i])
 					{
+						switch (sturmLocker)
+						{
+						case 1:
+							sturm[i]->channel[0] = 1;//L
+							sturm[i]->channel[1] = 0;
+							break;
+						case 2:
+							sturm[i]->channel[0] = 0;//R
+							sturm[i]->channel[1] = 1;
+							break;
+						case 3:
+							sturm[i]->channel[0] = 1;//centre
+							sturm[i]->channel[1] = 1;
+							break;
+						}
 
-					}
-					else
-					{
-						Free(sturm);//Удаляем объект
+						sturm[i]->play(sturmLocker, helicopter.fullName["sturm"], "NULL", "NULL", helicopter.rocketSturmFactor);
+
+						if (sturm[i]->sourceStatus[sturm[i]->id] != AL_PLAYING)
+						{
+							Free(sturm[i]);
+						}
 					}
 				}
 			}
+
 			//Если УР ИГЛА имеется на борту
 			if (helicopter.rocketIglaFactor)
 			{
 				if (localdata.p_ur_igla)//Условие создания объекта
-					if (!igla)//Если объект не создан 
-						igla = new Sound;//Создаем объект
-				if (igla)//Если объект создан - используем его
 				{
-					if (localdata.p_ur_igla == 1)
+					if (!igla[counterIgla] && !iglaLocker)
 					{
-						igla->channel[0] = 1;//L
-						igla->channel[1] = 0;
+						igla[counterIgla] = new Sound;//Создаем объект
+						counterIgla++;
+						iglaLocker = localdata.p_ur_igla;
 					}
-					else if (localdata.p_ur_igla == 2)
+					if (counterIgla >= 50)
 					{
-						igla->channel[0] = 0;//R
-						igla->channel[1] = 1;
+						counterIgla = 0;
 					}
-					else if (localdata.p_ur_igla == 3)
-					{
-						igla->channel[0] = 1;//centre
-						igla->channel[1] = 1;
-					}
-					if (igla->play(localdata.p_ur_igla, helicopter.fullName["igla"], "NULL", "NULL", helicopter.rocketIglaFactor))
-					{
+				}
+				else
+				{
+					iglaLocker = 0;
+				}
 
-					}
-					else
+				for (size_t i = 0; i < 50; i++)
+				{
+					if (igla[i])
 					{
-						Free(igla);//Удаляем объект
+						switch (iglaLocker)
+						{
+						case 1:
+							igla[i]->channel[0] = 1;//L
+							igla[i]->channel[1] = 0;
+							break;
+						case 2:
+							igla[i]->channel[0] = 0;//R
+							igla[i]->channel[1] = 1;
+							break;
+						case 3:
+							igla[i]->channel[0] = 1;//centre
+							igla[i]->channel[1] = 1;
+							break;
+						}
+
+						igla[i]->play(iglaLocker, helicopter.fullName["igla"], "NULL", "NULL", helicopter.rocketIglaFactor);
+
+						if (igla[i]->sourceStatus[igla[i]->id] != AL_PLAYING)
+						{
+							Free(igla[i]);
+						}
 					}
 				}
 			}
@@ -2716,14 +2797,14 @@ Reductor::~Reductor()
 int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 {
 	//0 -> хп
-	if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_hp | sr.p_eng2_hp))
+	if (sr.p_eng1_hp || sr.p_eng2_hp)
 	{
 		mode = "on_hp";
 	}
 	//0 -> мг1дв
-	else if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && (sr.p_eng1_zap | sr.p_eng2_zap) && redTurnAcc > 0)
+	else if (sr.reduktor_gl_obor <= h.redTurnoverMg1 * 0.9 && redTurnAcc > 0 && !(sr.p_eng1_ostanov && sr.p_eng2_ostanov))
 	{
-		if ((h.redLengthOn - offsetOn <= crossFadeDuration) || (sr.reduktor_gl_obor >= h.redTurnoverMg1 * 0.93))
+		if (h.redLengthOn - offsetOn <= crossFadeDuration && offsetOn/*не ноль*/)
 		{
 			mode = "mg1";
 		}
@@ -2733,7 +2814,7 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 		}
 	}
 	//мг1дв
-	else if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && !sr.p_eng1_hp && !sr.p_eng2_hp && !sr.p_eng1_zap && !sr.p_eng2_zap && !(sr.p_eng1_ostanov && sr.p_eng2_ostanov))
+	else if (sr.reduktor_gl_obor <= h.redTurnoverMg1 && !(sr.p_eng1_ostanov && sr.p_eng2_ostanov))
 	{
 		if (mode == "on_hp" || mode == "w_hp" || mode == "off_hp")
 		{
@@ -2741,14 +2822,7 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 		}
 		else
 		{
-			if (mode == "on" && ((h.redLengthOn - offsetOn > crossFadeDuration) || (sr.reduktor_gl_obor < h.redTurnoverMg1 * 0.93)))
-			{
-				mode = "on";
-			}
-			else
-			{
-				mode = "mg1";
-			}
+			mode = "mg1";
 		}
 	}
 	//мг1дв <-> мг2дв
@@ -2853,13 +2927,13 @@ int Reductor::play(Helicopter &h, SOUNDREAD &sr)
 	double fade = 1;
 
 	if (filetoBuffer[id] == h.fullName["red_off_w"] ||
-		filetoBuffer[!id] == h.fullName["red_on_w"] ||
+		filetoBuffer[id] == h.fullName["red_on_w"] ||
 		filetoBuffer[!id] == h.fullName["red_off_w"])
 	{
 		switcher += deltaTime;
 		timeCrossfade(fade, rise, crossFadeDuration, switcher);
 	}
-	else if (filetoBuffer[id] == h.fullName["red_on_w"])
+	else if ((filetoBuffer[!id] == h.fullName["red_on_w"]) && (filetoBuffer[id] == h.fullName["red_w_w"]))
 	{
 		if (reperSet != "set")
 		{
@@ -3693,9 +3767,9 @@ Engine::~Engine()
 
 int Engine::play(bool status_on, bool status_off, bool status_hp, double parameter, Helicopter &h)
 {
-	if (status_hp && mode != "w_hp")
+	if (status_hp)
 	{
-		if (h.engLengthHpOn - offsetOn <= crossFadeDuration)
+		if (h.engLengthHpOn - offsetOn <= crossFadeDuration && offsetOn)
 		{
 			mode = "w_hp";
 		}
@@ -3712,9 +3786,9 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	{
 		mode = "off_hp";
 	}
-	else if (status_on && mode != "mg")
+	else if (status_on && parameter <= h.engTurnoverMg * 0.9)
 	{
-		if (h.engLengthOn - offsetOn <= crossFadeDuration || parameter >= h.engTurnoverMg * 0.93)
+		if (h.engLengthOn - offsetOn <= crossFadeDuration && offsetOn)
 		{
 			mode = "mg";
 		}
@@ -3727,14 +3801,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	{
 		if (parameter <= h.engTurnoverMg)
 		{
-			if (mode == "on" && h.engLengthOn - offsetOn > crossFadeDuration)
-			{
-				mode = "on";
-			}
-			else
-			{
-				mode = "mg";
-			}
+			mode = "mg";
 		}
 		else
 		{
@@ -3845,7 +3912,6 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	double fade = 0;
 	if (filetoBuffer[id] == h.fullName["eng_on_w"]
 		|| filetoBuffer[id] == h.fullName["eng_off_w"]
-		|| filetoBuffer[!id] == h.fullName["eng_on_w"]
 		|| filetoBuffer[!id] == h.fullName["eng_off_w"]
 		|| filetoBuffer[id] == h.fullName["eng_on_hp_w"]
 		|| filetoBuffer[id] == h.fullName["eng_off_hp_w"]
@@ -3854,6 +3920,40 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 	{
 		switcher += deltaTime;
 		timeCrossfade(fade, rise, crossFadeDuration, switcher);
+	}
+	else if ((filetoBuffer[!id] == h.fullName["eng_on_w"]) && (filetoBuffer[id] == h.fullName["eng_w_w"]))
+	{
+		if (reperSet != "set")
+		{
+			reperTurn = parameter;
+			reperSet = "set";
+		}
+
+		double timeGain[2];
+		double turnGain[2];
+
+		if (parameter <= h.engTurnoverMg)
+		{
+			parametricalCrossfade(&turnGain[!id], &turnGain[id], parameter, reperTurn, h.engTurnoverMg);
+		}
+		else
+		{
+			turnGain[id] = 1;
+			turnGain[!id] = 0;
+		}
+
+		if (offsetOn != 0)
+		{
+			timeCrossfade(timeGain[!id], timeGain[id], crossFadeDuration, crossFadeDuration - (h.engLengthOn - offsetOn));
+		}
+		else
+		{
+			timeGain[id] = 1;
+			timeGain[!id] = 0;
+		}
+
+		rise = max(timeGain[id], turnGain[id]);
+		fade = min(timeGain[!id], turnGain[!id]);
 	}
 	else
 	{
@@ -3890,6 +3990,7 @@ int Engine::play(bool status_on, bool status_off, bool status_hp, double paramet
 		//	//<< " fade: " << fade
 		//	<< " offset[" << id << "]: " << getParameterFromVector(h.engFunctionOnSwap, parameter)
 		//	<< " offsetOn: " << offsetOn
+		//	<< " mode: " << mode
 		//	//<< " offset[" << !id << "]: " << offset[!id]
 		//	//<< " FIB[" << id << "]: " << fileBuffered[id]
 		//	//<< " FIB[" << !id << "]: " << fileBuffered[!id]
